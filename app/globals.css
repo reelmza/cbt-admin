@@ -3,7 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
   --accent: #3175c4;
+  --accent-light: #e6f1fd;
   --accent-dim:#153457;
 }
 
@@ -13,6 +15,7 @@
   --color-foreground: var(--foreground);
 
   --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
   --color-accent-dim: var(--accent-dim);
 
   /* Fonts */

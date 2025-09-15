@@ -10,8 +10,8 @@ export default function Home() {
       <div className="col-span-6 bg-blue-50 flex flex-col items-center justify-center">
         <Image
           src={"/images/students_collage.png"}
-          width={364}
-          height={364}
+          width={384}
+          height={384}
           alt="Sauki CBT"
           className="aspect-square flex"
         />
@@ -33,7 +33,7 @@ export default function Home() {
       <div className="col-span-6 flex flex-col justify-center items-center">
         <div className="w-5/10 bg-reds-50 rounded-lg">
           {/* School Name */}
-          <div className="text-sm font-sans font-semibold bg-blue-100 text-blue-900 w-fit  rounded-full px-3 mb-5 py-1 leading-none">
+          <div className="text-sm font-sans font-semibold bg-accent-light text-accent-dim w-fit  rounded-full px-3 mb-5 py-1 leading-none">
             Adamawa State University, Mubi.
           </div>
 
