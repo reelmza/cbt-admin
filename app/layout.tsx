@@ -26,7 +26,7 @@ export default function RootLayout({
         <div className="lg:hidden h-full w-full bg-neutral-50 flex flex-col items-center justify-center">
           <Info size={32} className="text-accent-dim" />
           <div className="px-5 py-5 text-center text-accent-dim font-sans font">
-            This app is in development, <br /> please use a bigger device to
+            This app is in development, <br /> please use a destkop device to
             preview.
           </div>
 
