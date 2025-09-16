@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ArrowRight, Info } from "lucide-react";
+import SideBar from "@/components/sections/side-bar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -42,7 +43,10 @@ export default function RootLayout({
         </div>
 
         {/* Show app only on desktop */}
-        <div className="hidden lg:block h-full w-full">{children}</div>
+        <div className="hidden lg:flex items-center justify-center h-full w-full">
+          <SideBar />
+          {children}
+        </div>
       </body>
     </html>
   );

@@ -8,7 +8,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="grid h-full grid-cols-12 font-sans">
+    <div className="grid h-full w-full grid-cols-12 font-sans">
       {/* Side Box */}
       <SideBox />
 

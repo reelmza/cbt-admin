@@ -1,5 +1,7 @@
 const Dashboard = () => {
-  return <div>Dashboard</div>;
+  return (
+    <div className="grow min-h-full p-10 font-sans">Dashboard goes here</div>
+  );
 };
 
 export default Dashboard;
