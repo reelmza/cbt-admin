@@ -2,7 +2,7 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import SideBox from "@/components/sections/side-box";
 import Spacer from "@/components/spacer";
-import { Key, Lock, MoveRight, UserRound } from "lucide-react";
+import { Key, Lock, Mail, MoveRight, UserRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -22,30 +22,22 @@ export default function Home() {
 
           {/* Form Heading */}
           <div className="text-2xl font-bold mb-5 text-accent-dim">
-            Login to your Exam.
+            Reset your Password.
           </div>
 
           <form>
-            <Input
-              placeholder="Enter your username"
-              icon={<UserRound size={16} />}
-            />
+            <Input placeholder="Enter your email" icon={<Mail size={16} />} />
             <Spacer size="sm" />
-            <Input placeholder="Enter your password" icon={<Key size={16} />} />
-            <Spacer size="md" />
 
             <div className="flex items-center text-sm text-accent-dim">
-              Forgot password?
-              <Link
-                href="/reset-password"
-                className="ml-1 inline-block text-accent"
-              >
-                Reset Here.
+              Have account? Back to
+              <Link href="/" className="ml-1 inline-block text-accent">
+                Log in.
               </Link>
             </div>
             <Spacer size="md" />
             <Button
-              title="Proceed to Exam"
+              title="Request Password Reset"
               icon={<MoveRight size={20} strokeWidth={2} />}
             />
           </form>
