@@ -26,7 +26,7 @@ const Exams = () => {
           { value: "Status", colSpan: "col-span-1" },
           { value: "Actions", colSpan: "col-span-1" },
         ]}
-        tableData={assessmentTableData.map((item) => [
+        tableData={assessmentTableData.map((item, key) => [
           { value: item.name, colSpan: "col-span-3" },
           { value: item.due, colSpan: "col-span-3" },
           { value: item.sections, colSpan: "col-span-1" },
@@ -45,7 +45,7 @@ const Exams = () => {
                 : "success"
             }`,
           },
-          { value: "Action", colSpan: "col-span-1" },
+          { value: key, colSpan: "col-span-1", type: "link" },
         ])}
         showSearch={false}
         showOptions={false}

@@ -1,10 +1,13 @@
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+
 type TableType = {
   tableHeading: { value: string; colSpan: string }[];
   tableData: {
     value: string | number;
     colSpan: string;
     color?: "warning" | "info" | "success" | "error";
-    type?: "badge" | "button";
+    type?: "badge" | "button" | "link";
   }[][];
   showSearch?: boolean | undefined;
   showOptions?: boolean | undefined;
@@ -53,6 +56,10 @@ const Table = ({
               }`}
               key={key}
             >
+              {/* Unset Row Column Type */}
+              {rowCol.type === undefined ? rowCol.value : ""}
+
+              {/* Badge Row Column Type */}
               {rowCol.type === "badge" ? (
                 <span
                   className={`text-xs rounded-sm py-[1px] px-1.5 ${
@@ -68,7 +75,19 @@ const Table = ({
                   {rowCol.value}
                 </span>
               ) : (
-                rowCol.value
+                ""
+              )}
+
+              {rowCol.type === "link" ? (
+                <Link
+                  href={`/${rowCol.value}`}
+                  className="flex items-center justify-center gap-1 hover:text-theme-info"
+                >
+                  <span>View</span>
+                  <ArrowRight size={14} />
+                </Link>
+              ) : (
+                ""
               )}
             </div>
           ))}
