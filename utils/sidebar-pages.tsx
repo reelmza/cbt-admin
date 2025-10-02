@@ -22,32 +22,32 @@ export const sideBarPages = [
     name: "Users",
     route: "/users",
     icon: <UserRound size={18} />,
-    children: [
-      { name: "Staff", route: "/users", icon: <UsersRound size={16} /> },
-      {
-        name: "Students",
-        route: "/students",
-        icon: <GraduationCap size={16} />,
-      },
-    ],
+    // children: [
+    //   { name: "Staff", route: "/users", icon: <UsersRound size={16} /> },
+    //   {
+    //     name: "Students",
+    //     route: "/students",
+    //     icon: <GraduationCap size={16} />,
+    //   },
+    // ],
   },
 
   {
     name: "Assessments",
     route: "/assessment",
     icon: <Library size={18} />,
-    children: [
-      {
-        name: "Ongoing",
-        route: "/exams",
-        icon: <Monitor size={16} />,
-      },
-      {
-        name: "Completed Exams",
-        route: "/exams/complete",
-        icon: <Check size={16} />,
-      },
-    ],
+    // children: [
+    //   {
+    //     name: "Ongoing",
+    //     route: "/exams",
+    //     icon: <Monitor size={16} />,
+    //   },
+    //   {
+    //     name: "Completed Exams",
+    //     route: "/exams/complete",
+    //     icon: <Check size={16} />,
+    //   },
+    // ],
   },
   {
     name: "Notifications",
