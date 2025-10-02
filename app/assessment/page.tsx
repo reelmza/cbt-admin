@@ -1,9 +1,13 @@
+import PageNavigator from "@/components/sections/page-navigator";
+import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import { assessmentTableData } from "@/utils/dummy-data";
 
 const Exams = () => {
   return (
     <div className="w-full h-full p-10 font-sans">
+      <PageNavigator />
+      <Spacer size="lg" />
       <Table
         tableHeading={[
           { value: "Course", colSpan: "col-span-3" },

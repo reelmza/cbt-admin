@@ -39,6 +39,7 @@ export default function Home() {
             <Button
               title="Request Password Reset"
               icon={<MoveRight size={20} strokeWidth={2} />}
+              variant="fill"
             />
           </form>
         </div>

@@ -10,7 +10,7 @@ const TableSearchBox = () => {
         placeholder="Search for an assessment"
       />
       <button
-        className="flex items-center justify-center h-10 w-12 bg-theme-gray-light hover:bg-theme-gray-light/50 cursor-pointer animate-all duration-20 ease-in"
+        className="flex items-center justify-center h-10 w-12 bg-transparent border-l border-theme-gray-light hover:bg-theme-gray-light/50 cursor-pointer animate-all duration-200 ease-in"
         type="submit"
       >
         <Search size={16} className="text-theme-gray" />

@@ -58,6 +58,7 @@ export default function Home() {
             <Button
               title="Proceed to Exam"
               icon={<MoveRight size={20} strokeWidth={2} />}
+              variant="fill"
             />
           </form>
         </div>

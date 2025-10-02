@@ -11,8 +11,21 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
+import { JSX } from "react";
 
-export const sideBarPages = [
+type SideBarStructure = {
+  name: string;
+  route: string;
+  icon: JSX.Element;
+};
+
+type SideBarPageType = {
+  name: string;
+  route: string;
+  icon: JSX.Element;
+  children?: SideBarStructure[];
+};
+export const sideBarPages: SideBarPageType[] = [
   {
     name: "Dashboard",
     route: "/dashboard",
