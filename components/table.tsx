@@ -1,9 +1,12 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CloudUpload, Plus } from "lucide-react";
 import Link from "next/link";
 import CheckBox from "./table-checkbox";
 import { useState } from "react";
+import Button from "./button";
+import Spacer from "./spacer";
+import TableSearchBox from "./table-searchbox";
 
 type TableType = {
   tableHeading: { value: string; colSpan: string }[];
@@ -26,6 +29,34 @@ const Table = ({
   const [checkList, setCheckList] = useState<number[]>([]);
   return (
     <div className="w-full h-fit flex flex-col font-sans">
+      {/* Options Row */}
+
+      <div className="flex items-center justify-between">
+        {/* Search Box */}
+        <TableSearchBox />
+
+        {/* Buttons */}
+        <div className="w-fit flex items-center gap-2">
+          <div className="w-48">
+            <Button
+              title="Create Assesment"
+              icon={<Plus size={16} strokeWidth={2.5} />}
+              variant="fill"
+            />
+          </div>
+
+          <div className="w-48">
+            <Button
+              title="Upload Assessment"
+              icon={<CloudUpload size={16} strokeWidth={2.5} />}
+              variant="outline"
+            />
+          </div>
+        </div>
+      </div>
+
+      <Spacer size="lg" />
+
       {/* Table Heading */}
       <div className="h-10 grid grid-cols-12 bg-accent-light font-medium text-accent rounded-md">
         {tableHeading.map((rowCol, key) => (
