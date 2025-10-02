@@ -1,5 +1,6 @@
 export const assessmentTableData = [
   {
+    id: "1",
     name: "CYB 101 - Computing Algorithms",
     sections: 3,
     questions: 50,
@@ -9,6 +10,7 @@ export const assessmentTableData = [
     pass: "50%",
   },
   {
+    id: "2",
     name: "CHE 101 - Introduction to Chemistry",
     sections: 4,
     questions: 60,
@@ -18,6 +20,7 @@ export const assessmentTableData = [
     pass: "50%",
   },
   {
+    id: "3",
     name: "CYB 408 - Cyber Law",
     sections: 2,
     questions: 40,
@@ -27,6 +30,7 @@ export const assessmentTableData = [
     pass: "70%",
   },
   {
+    id: "4",
     name: "CYB 407 - Ethical Hacking 1",
     sections: 5,
     questions: 55,
@@ -36,6 +40,7 @@ export const assessmentTableData = [
     pass: "50%",
   },
   {
+    id: "5",
     name: "CYB 205 - Network Security",
     sections: 3,
     questions: 45,
@@ -45,6 +50,7 @@ export const assessmentTableData = [
     pass: "60%",
   },
   {
+    id: "6",
     name: "CSC 102 - Data Structures",
     sections: 4,
     questions: 50,
@@ -54,6 +60,7 @@ export const assessmentTableData = [
     pass: "55%",
   },
   {
+    id: "7",
     name: "MTH 201 - Calculus II",
     sections: 2,
     questions: 35,
@@ -63,6 +70,7 @@ export const assessmentTableData = [
     pass: "50%",
   },
   {
+    id: "8",
     name: "CYB 312 - Digital Forensics",
     sections: 3,
     questions: 42,
@@ -72,6 +80,7 @@ export const assessmentTableData = [
     pass: "65%",
   },
   {
+    id: "9",
     name: "PHY 301 - Applied Mechanics",
     sections: 5,
     questions: 58,
@@ -81,6 +90,7 @@ export const assessmentTableData = [
     pass: "50%",
   },
   {
+    id: "10",
     name: "CYB 410 - Cloud Security",
     sections: 3,
     questions: 48,

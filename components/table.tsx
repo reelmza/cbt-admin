@@ -1,5 +1,9 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import CheckBox from "./check-box";
+import { useState } from "react";
 
 type TableType = {
   tableHeading: { value: string; colSpan: string }[];
@@ -19,6 +23,7 @@ const Table = ({
   showSearch,
   showOptions,
 }: TableType) => {
+  const [checkList, setCheckList] = useState<number[]>([]);
   return (
     <div className="w-full h-fit flex flex-col font-sans">
       {/* Table Heading */}
@@ -32,11 +37,10 @@ const Table = ({
           >
             {/* Select  */}
             {key === 0 ? (
-              <input
-                type="checkbox"
-                className="text-theme-gray"
-                name={key.toLocaleString()}
-                id={key.toString()}
+              <CheckBox
+                type="all"
+                state={{ checkList, setCheckList }}
+                tableData={tableData}
               />
             ) : (
               ""
@@ -70,11 +74,10 @@ const Table = ({
             >
               {/* Select  */}
               {rowColKey === 0 ? (
-                <input
-                  type="checkbox"
-                  className="text-theme-gray"
-                  name={rowColKey.toLocaleString()}
-                  id={rowColKey.toString()}
+                <CheckBox
+                  type="single"
+                  value={key + 1}
+                  state={{ checkList, setCheckList }}
                 />
               ) : (
                 ""
