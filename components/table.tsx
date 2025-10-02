@@ -2,7 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import CheckBox from "./check-box";
+import CheckBox from "./table-checkbox";
 import { useState } from "react";
 
 type TableType = {
@@ -72,7 +72,7 @@ const Table = ({
               }`}
               key={rowColKey}
             >
-              {/* Select  */}
+              {/* Table Select toggler  */}
               {rowColKey === 0 ? (
                 <CheckBox
                   type="single"
