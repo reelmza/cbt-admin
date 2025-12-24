@@ -27,7 +27,7 @@ export default function Home() {
         <div className="w-5/10 rounded-lg">
           {/* School Name */}
           <div className="text-sm font-sans font-semibold bg-accent-light text-accent-dim w-fit  rounded-full px-3 mb-5 py-1 leading-none">
-            Sauki Sytems
+            Sauki Systems, 2026
           </div>
 
           {/* Form Heading */}

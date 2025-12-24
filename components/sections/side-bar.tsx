@@ -9,7 +9,11 @@ const SideBar = () => {
   const path = usePathname();
 
   // Hide sidebar on pre-auth pages
-  if (path === "/" || path.includes("/reset-password")) {
+  if (
+    path === "/" ||
+    path.includes("/reset-password") ||
+    path.includes("/school-signup")
+  ) {
     return;
   }
 
