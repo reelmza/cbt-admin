@@ -3,7 +3,7 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import SideBox from "@/components/sections/side-box";
 import Spacer from "@/components/spacer";
-import { Key, MoveRight, UserRound } from "lucide-react";
+import { Key, Mail, MapPin, MoveRight, Phone, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -11,9 +11,15 @@ export default function Home() {
   const router = useRouter();
 
   // Signup Logic
-  const doLogin = async (e: React.SyntheticEvent) => {
+  const createSchool = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    router.push("/dashboard");
+
+    const target = e.target as typeof e.target & {
+      name: { value: string };
+      email: { value: string };
+      phoneNumber: { value: string };
+      address: { value: string };
+    };
     return;
   };
 
@@ -24,41 +30,89 @@ export default function Home() {
 
       {/* Form Box */}
       <div className="col-span-6 flex flex-col justify-center items-center">
-        <div className="w-5/10 rounded-lg">
-          {/* School Name */}
-          <div className="text-sm font-sans font-semibold bg-accent-light text-accent-dim w-fit  rounded-full px-3 mb-5 py-1 leading-none">
-            Sauki Systems, 2026
-          </div>
-
+        <div className="w-7/10 rounded-lg">
           {/* Form Heading */}
           <div className="text-2xl font-bold mb-5 text-accent-dim">
-            Login to your Exam.
+            Create a school account.
           </div>
 
-          <form onSubmit={doLogin}>
-            <Input
-              placeholder="Enter your username"
-              icon={<UserRound size={16} />}
-            />
-            <Spacer size="sm" />
-            <Input placeholder="Enter your password" icon={<Key size={16} />} />
-            <Spacer size="md" />
-
-            <div className="flex items-center text-sm text-accent-dim">
-              Forgot password?
-              <Link
-                href="/reset-password"
-                className="ml-1 inline-block text-accent"
-              >
-                Reset Here.
-              </Link>
+          <form
+            onSubmit={createSchool}
+            className="flex flex-wrap justify-between"
+          >
+            {/* School Name */}
+            <div className="w-[100%]">
+              <Input
+                name="name"
+                type="text"
+                placeholder="Enter school name"
+                icon={<UserRound size={16} />}
+              />
+              <Spacer size="sm" />
             </div>
-            <Spacer size="md" />
-            <Button
-              title="Proceed to Exam"
-              icon={<MoveRight size={20} strokeWidth={2} />}
-              variant="fill"
-            />
+
+            {/* School Address */}
+            <div className="w-[100%]">
+              <Input
+                name="address"
+                type="text"
+                placeholder="Brief school address"
+                icon={<MapPin size={16} />}
+              />
+              <Spacer size="sm" />
+            </div>
+
+            {/* School Email */}
+            <div className="w-[49%]">
+              <Input
+                name="email"
+                type="text"
+                placeholder="E-mail"
+                icon={<Mail size={16} />}
+              />
+            </div>
+
+            {/* School Phone Number */}
+            <div className="w-[49%]">
+              <Input
+                name="phoneNumber"
+                type="text"
+                placeholder="Phone number"
+                icon={<Phone size={16} />}
+              />
+              <Spacer size="sm" />
+            </div>
+
+            {/* Password */}
+            <div className="w-[49%]">
+              <Input
+                name="password"
+                type="password"
+                placeholder="Enter password"
+                icon={<Key size={16} />}
+              />
+              <Spacer size="sm" />
+            </div>
+
+            {/* Confirm Password */}
+            <div className="w-[49%]">
+              <Input
+                name="confirmPassword"
+                type="password"
+                placeholder="Enter password again"
+                icon={<Key size={16} />}
+              />
+              <Spacer size="md" />
+            </div>
+
+            {/* Submit Button */}
+            <div className="w-[100%]">
+              <Button
+                title="Create school account"
+                icon={<MoveRight size={20} strokeWidth={2} />}
+                variant="fill"
+              />
+            </div>
           </form>
         </div>
       </div>
