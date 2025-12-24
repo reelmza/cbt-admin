@@ -4,15 +4,19 @@ import Input from "@/components/input";
 import SideBox from "@/components/sections/side-box";
 import Spacer from "@/components/spacer";
 import { Key, Mail, MapPin, MoveRight, Phone, UserRound } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function Home() {
   const router = useRouter();
 
+  //   States
+  const [loading, setLoading] = useState<string | null>(null);
+
   // Signup Logic
   const createSchool = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    setLoading("createSchool");
 
     const target = e.target as typeof e.target & {
       name: { value: string };
@@ -20,6 +24,10 @@ export default function Home() {
       phoneNumber: { value: string };
       address: { value: string };
     };
+
+    setTimeout(() => {
+      setLoading(null);
+    }, 2000);
     return;
   };
 
@@ -109,6 +117,7 @@ export default function Home() {
             <div className="w-[100%]">
               <Button
                 title="Create school account"
+                loading={loading === "createSchool"}
                 icon={<MoveRight size={20} strokeWidth={2} />}
                 variant="fill"
               />
