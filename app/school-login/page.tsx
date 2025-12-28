@@ -6,6 +6,7 @@ import Spacer from "@/components/spacer";
 import { localAxios } from "@/lib/axios";
 import { AxiosError } from "axios";
 import { Key, Mail, MapPin, MoveRight, Phone, UserRound } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,7 +14,7 @@ import { toast } from "sonner";
 export default function Home() {
   const router = useRouter();
 
-  //   States
+  // States
   const [loading, setLoading] = useState<string | null>(null);
 
   // Signup Logic
@@ -26,37 +27,66 @@ export default function Home() {
     };
 
     setLoading("login");
-    try {
-      const res = await localAxios.post("/school/login", {
-        email: target.email.value,
-        password: target.password.value,
+
+    const res = await signIn("credentials", {
+      email: target.email.value,
+      password: target.password.value,
+      loginClient: "school",
+      redirect: false,
+    });
+
+    if (!res!.error) {
+      toast.success("Login successfull.", {
+        position: "bottom-left",
       });
-
-      if (res.status == 200) {
-        toast.success("Login successful.");
-      }
-
-      setLoading(null);
-    } catch (error: any) {
-      console.log(error);
-
-      // School not found error from server
-      if (error.status === 400) {
-        toast.error("Wrong email or password entered.");
-      }
-
-      // Validation error from server
-      if (error.status === 422) {
-        toast.error(error.response.data.message);
-      }
-
-      // Some other unspecified error
-      if (!error.status) {
-        toast.error("An error occured, please try again.");
-      }
-
       setLoading(null);
     }
+
+    if (res!.error === "CredentialsSignin") {
+      toast.error("Incorrect details provided.", {
+        position: "bottom-left",
+      });
+      setLoading(null);
+    }
+
+    if (res!.error === "Configuration") {
+      toast.error("An error occured, try again.", {
+        position: "bottom-left",
+      });
+      setLoading(null);
+    }
+
+    // try {
+    //   const res = await localAxios.post("/school/login", {
+    //     email: target.email.value,
+    //     password: target.password.value,
+    //   });
+
+    //   if (res.status == 200) {
+    //     toast.success("Login successful.");
+    //   }
+
+    //   setLoading(null);
+    // } catch (error: any) {
+    //   console.log(error);
+
+    //   // School not found error from server
+    //   if (error.status === 400) {
+    //     toast.error("Wrong email or password entered.");
+    //   }
+
+    //   // Validation error from server
+    //   if (error.status === 422) {
+    //     toast.error(error.response.data.message);
+    //   }
+
+    //   // Some other unspecified error
+    //   if (!error.status) {
+    //     toast.error("An error occured, please try again.");
+    //   }
+
+    //   setLoading(null);
+    // }
   };
 
   return (
