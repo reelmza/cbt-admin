@@ -12,8 +12,8 @@ const SideBar = () => {
   if (
     path === "/" ||
     path.includes("/reset-password") ||
-    path.includes("/school-signup") ||
-    path.includes("/school-login")
+    path.includes("signup") ||
+    path.includes("login")
   ) {
     return;
   }
