@@ -5,15 +5,26 @@ import PageNavigator from "@/components/sections/page-navigator";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import TableSearchBox from "@/components/table-searchbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
-import { studentsData } from "@/utils/dummy-data";
+
 import { CloudUpload } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const Page = () => {
   const controller = new AbortController();
+  const [openBulkUpload, setOpenBulkUpload] = useState(false);
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<
     | null
@@ -30,6 +41,36 @@ const Page = () => {
       }[]
   >(null);
   const { data: session } = useSession();
+
+  const bulkUpload = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      bulkUpload: { files: File[] };
+    };
+
+    var formdata = new FormData();
+    formdata.append("file", target.bulkUpload.files[0], "students.csv");
+
+    setLoading("bulkUpload");
+    try {
+      const res = await localAxios.post(
+        "/school/bulk-student-upload",
+        formdata
+      );
+
+      console.log(res);
+
+      if (res.status === 201) {
+        setLoading(null);
+        setOpenBulkUpload(false);
+        toast.success(res.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+      setLoading(null);
+    }
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -83,6 +124,7 @@ const Page = () => {
               icon={<CloudUpload size={16} strokeWidth={2.5} />}
               variant="fill"
               loading={false}
+              onClick={() => setOpenBulkUpload((prev) => !prev)}
             />
           </div>
         </div>
@@ -118,7 +160,7 @@ const Page = () => {
         showOptions={false}
       />
 
-      {/* Loading */}
+      {/* Page Loading */}
       {loading === "page" ? (
         <div className="flex items-center gap-2 mt-2 text-theme-gray">
           <Spinner />
@@ -127,6 +169,41 @@ const Page = () => {
       ) : (
         ""
       )}
+
+      <Dialog open={openBulkUpload} onOpenChange={setOpenBulkUpload}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Students</DialogTitle>
+            <DialogDescription className="pr-28">
+              Add students to the database so that you can assign them to
+              assessments later on.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="pr-28" onSubmit={bulkUpload}>
+            <Input
+              id="bulkUpload"
+              name="bulkUpload"
+              type="file"
+              className="cursor-pointer"
+              required
+            />
+            <Spacer size="sm" />
+            <Button
+              title={"Upload File"}
+              loading={loading === "bulkUpload"}
+              variant={"fill"}
+              icon={<CloudUpload size={20} />}
+            />
+
+            <Spacer size="md" />
+            <div className="text-sm text-theme-gray">
+              Use the template provided, if there is an error, no student will
+              be uploaded.
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
