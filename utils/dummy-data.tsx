@@ -100,3 +100,17 @@ export const assessmentTableData = [
     pass: "70%",
   },
 ];
+
+export const studentsData = [
+  {
+    _id: "1",
+    fullName: "Moses, Kwagga Jesse",
+    email: "jessemoses71@gmail.com",
+    phoneNumber: "09077666666",
+    password: "12345678",
+    regNumber: "BHU/22/04/09/0090",
+    gender: "M",
+    assessments: [],
+    school: "68ed1aefee43426aad23fbfb",
+  },
+];

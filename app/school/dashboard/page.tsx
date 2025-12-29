@@ -2,27 +2,33 @@
 import Spacer from "@/components/spacer";
 import { CloudUpload, Notebook, Plus, UsersRound } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
+  const router = useRouter();
   const { data: session } = useSession();
+  console.log(session);
 
   const quickLinks = [
     {
       name: "Bulk Upload Students",
       description: "Bulk upload students from a template file.",
       icon: <CloudUpload size={40} className="text-accent-dim" />,
+      route: "/users",
     },
 
     {
       name: "Create an Assessment",
       description: "Create an instant assesment or schedule for a future date.",
       icon: <Notebook size={40} className="text-accent-dim" />,
+      route: "/assessment",
     },
 
     {
       name: "Create a Group",
       description: "Create a group or a subgroup for a particular assessment.",
       icon: <UsersRound size={40} className="text-accent-dim" />,
+      route: "/groups",
     },
   ];
 
@@ -46,6 +52,7 @@ const Page = () => {
             <button
               className="w-[32%] min-h-52 p-10 pr-14 border border-theme-gray-mid shadow-xl shadow-theme-gray/5 rounded-xl cursor-pointer text-left hover:bg-accent-light/50 hover:border-accent-light animate-all duration-500 ease-in-out"
               key={key}
+              onClick={() => router.push(link.route)}
             >
               {link.icon}
               <Spacer size="md" />
