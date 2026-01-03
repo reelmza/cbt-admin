@@ -126,7 +126,7 @@ const Create = () => {
             <Spacer size="md" />
 
             {/* Questions */}
-            {activeSection === "objective" && (
+            {activeSection === "multiple_choice" && (
               <ObjQuestionForm sectionParams={{ sections, setSections }} />
             )}
           </div>
@@ -356,7 +356,7 @@ const Create = () => {
                 <SelectValue placeholder="Section Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="objective">Objective</SelectItem>
+                <SelectItem value="multiple_choice">Objective</SelectItem>
                 <SelectItem value="subjective">Subjective</SelectItem>
                 <SelectItem value="theory">Theory</SelectItem>
               </SelectContent>
