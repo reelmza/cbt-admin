@@ -2,6 +2,8 @@ import React, { JSX } from "react";
 type InputType = {
   name: string;
   type: string;
+  value?: string;
+  onChange?: (e: any) => void;
   placeholder: string;
   size?: "big" | "small";
   required?: boolean;
@@ -11,6 +13,8 @@ type InputType = {
 const Input = ({
   name,
   type,
+  value,
+  onChange,
   placeholder,
   size,
   required,
@@ -36,6 +40,8 @@ const Input = ({
         placeholder={placeholder || "Some input"}
         required={required || true}
         className="grow h-full text-sm outline-none px-3 text-accent-dim"
+        value={value}
+        onChange={onChange}
       />
     </div>
   );

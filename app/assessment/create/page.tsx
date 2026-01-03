@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
-import { Plus, RefreshCcw, X } from "lucide-react";
+import { Plus, RefreshCcw, Trash2Icon, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
@@ -44,6 +45,7 @@ const Create = () => {
     startDate: string;
     dueDate: string;
   } | null>(null);
+  const [activeSection, setActiveSection] = useState<null | string>(null);
   const [sections, setSections] = useState<
     | { title: string; type: string; instructions: string; questions: [] }[]
     | null
@@ -111,7 +113,7 @@ const Create = () => {
             <Spacer size="md" />
 
             {/* Questions */}
-            <ObjQuestionForm />
+            {activeSection === "objective" && <ObjQuestionForm />}
           </div>
 
           {/* Sidebar */}
@@ -311,6 +313,7 @@ const Create = () => {
                 sectionTitle: { value: string };
                 sectionInstructions: { value: string };
               };
+
               setSections([
                 {
                   type: target.sectionType.value,
@@ -321,6 +324,7 @@ const Create = () => {
               ]);
 
               setShowSectionsModal(false);
+              setActiveSection(target.sectionType.value);
             }}
           >
             {/* Section Title */}
@@ -375,17 +379,141 @@ const Page = () => {
 };
 
 const ObjQuestionForm = () => {
+  const [options, setOptions] = useState<string[]>([]);
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>("A");
   return (
-    <div>
-      <div className="font-semibold">Question 1</div>
+    <form action="">
+      {/* Questions */}
+      <div className="font-semibold">Question</div>
       <Spacer size="sm" />
-      <form action="">
-        <textarea
-          className="w-full outline-none border rounded-md p-3 min-h-38 max-h-38"
-          placeholder="Type your question"
-        ></textarea>
-      </form>
-    </div>
+      <textarea
+        className="w-full outline-none border rounded-md p-3 min-h-38 max-h-38"
+        placeholder="Type your question"
+      ></textarea>
+      <Spacer size="sm" />
+
+      {/* Options Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="font-semibold border-r pr-2">Options</div>
+          <button
+            className="text-sm text-accent cursor-pointer leading-none border-r pr-2"
+            type="button"
+            onClick={() =>
+              setOptions((prev) => {
+                if (prev.length > 3) return prev;
+                return [...prev, ""];
+              })
+            }
+          >
+            Add an Option
+          </button>
+
+          <button
+            className="text-sm text-theme-error cursor-pointer leading-none"
+            type="button"
+            onClick={() => setOptions([])}
+          >
+            Clear All Options
+          </button>
+        </div>
+
+        {options.length > 0 && (
+          <div className="text-sm text-theme-success">
+            Corect Answer: {correctAnswer || "Nill"}
+          </div>
+        )}
+      </div>
+
+      <Spacer size="sm" />
+
+      {/* Options */}
+      <div className="w-full flex">
+        {/* Options Radio */}
+        {options.length > 0 && (
+          <div className="w-10">
+            <RadioGroup
+              value={correctAnswer}
+              className="gap-0"
+              onValueChange={(val: string) => {
+                console.log(val);
+                setCorrectAnswer(val);
+              }}
+            >
+              {options.map((item, key) => {
+                const opt: any = { 0: "A", 1: "B", 2: "C", 3: "D" };
+                return (
+                  <div
+                    className="flex items-center justify-center h-10 mb-1"
+                    key={key}
+                  >
+                    <RadioGroupItem value={opt[`${key}`]} id={`R${key + 1}`} />
+                  </div>
+                );
+              })}
+            </RadioGroup>
+          </div>
+        )}
+
+        {/* Options Main */}
+        <div className="grow">
+          {options.map((option, key) => {
+            return (
+              <div className="flex items-center mb-1" key={key}>
+                {/* Label */}
+                <div className="h-full w-10 flex items-center justify-center text-sm font-semibold">
+                  {key == 0 && "A"}
+                  {key == 1 && "B"}
+                  {key == 2 && "C"}
+                  {key == 3 && "D"}
+                </div>
+
+                {/* Text Box */}
+                <Input
+                  name={`option-${key + 1}`}
+                  type={"text"}
+                  placeholder={"Enter an option"}
+                  value={option[key]}
+                  onChange={(e) => {
+                    setOptions((prev) => {
+                      let newArr = [...prev];
+                      prev[key] = e.target.value;
+
+                      return newArr;
+                    });
+                  }}
+                />
+
+                {/* Delete a Question */}
+                <button
+                  className="h-10 w-10 hover:text-theme-error flex items-center justify-center cursor-pointer"
+                  type="button"
+                  onClick={() =>
+                    setOptions((prev) => {
+                      const newArr = [
+                        ...prev.slice(0, key),
+                        ...prev.slice(key + 1, prev.length),
+                      ];
+                      setCorrectAnswer("A");
+                      return newArr;
+                    })
+                  }
+                >
+                  <Trash2Icon size={14} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <Spacer size="sm" />
+
+      {/* Submit Question */}
+      <div className="w-42">
+        <Button title={"Add Question"} loading={false} variant={"fill"} />
+      </div>
+    </form>
   );
 };
 
