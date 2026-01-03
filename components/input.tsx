@@ -3,13 +3,25 @@ type InputType = {
   name: string;
   type: string;
   placeholder: string;
+  size?: "big" | "small";
   required?: boolean;
   icon?: JSX.Element;
 };
 
-const Input = ({ name, type, placeholder, required, icon }: InputType) => {
+const Input = ({
+  name,
+  type,
+  placeholder,
+  size,
+  required,
+  icon,
+}: InputType) => {
   return (
-    <div className={`w-full h-12 flex border border-accent-light rounded-md`}>
+    <div
+      className={`w-full ${
+        !size || size == "small" ? "h-10" : "12"
+      } flex border border-accent-light rounded-md`}
+    >
       {/* Input Icon */}
       {icon ? (
         <div className="flex items-center justify-center h-full w-12 shrink-0 bg-accent-light text-accent-dim rounded-l-md border-accent-light border">

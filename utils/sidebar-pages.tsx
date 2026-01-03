@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Library,
   Monitor,
+  NotebookPen,
   Shield,
   UserRound,
   UsersRound,
@@ -43,6 +44,11 @@ export const sideBarPages: SideBarPageType[] = [
     //     icon: <GraduationCap size={16} />,
     //   },
     // ],
+  },
+  {
+    name: "Courses",
+    route: "/courses",
+    icon: <NotebookPen size={18} />,
   },
 
   {

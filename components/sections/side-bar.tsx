@@ -3,7 +3,7 @@ import { sideBarPages } from "@/utils/sidebar-pages";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Spacer from "../spacer";
-import { Divide, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 const SideBar = () => {

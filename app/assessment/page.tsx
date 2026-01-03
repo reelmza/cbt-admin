@@ -1,9 +1,17 @@
+"use client";
+import Button from "@/components/button";
 import PageNavigator from "@/components/sections/page-navigator";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
+import TableSearchBox from "@/components/table-searchbox";
 import { assessmentTableData } from "@/utils/dummy-data";
+import { Plus } from "lucide-react";
+import { SessionProvider } from "next-auth/react";
+import Link from "next/link";
+import { useState } from "react";
 
-const Exams = () => {
+const Page = () => {
+  const [showCreate, setShowCreate] = useState(false);
   return (
     <div className="w-full h-full p-10 font-sans">
       <PageNavigator
@@ -14,6 +22,19 @@ const Exams = () => {
         ]}
       />
       <Spacer size="lg" />
+
+      <div className="flex items-center justify-between">
+        <TableSearchBox placeholder="Search an assessment" />
+
+        <Link href="/assessment/create" className="block w-52">
+          <Button
+            title={"Create an Assessment"}
+            loading={false}
+            variant={"fill"}
+            icon={<Plus size={16} />}
+          />
+        </Link>
+      </div>
       <Table
         tableHeading={[
           { value: "Course", colSpan: "col-span-3" },
@@ -46,10 +67,18 @@ const Exams = () => {
           },
           { value: key, colSpan: "col-span-1", type: "link" },
         ])}
-        showSearch={true}
-        showOptions={true}
+        showSearch={false}
+        showOptions={false}
       />
     </div>
+  );
+};
+
+const Exams = () => {
+  return (
+    <SessionProvider>
+      <Page />
+    </SessionProvider>
   );
 };
 
