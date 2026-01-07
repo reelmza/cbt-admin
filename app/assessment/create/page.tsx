@@ -505,6 +505,7 @@ const ObjQuestionForm = ({
     let newArr;
     const opt: any = { 0: "A", 1: "B", 2: "C", 3: "D" };
 
+    // Arrange formdata
     let formatedQuestion = {
       question: question,
       type: "multiple_choice",
@@ -542,6 +543,30 @@ const ObjQuestionForm = ({
       setOptions([]);
       setActiveSection([formType, activeSection![1] + 1]);
     }
+  };
+
+  const deleteQuestion = () => {
+    setSections((prev) =>
+      prev!.map((sect) => {
+        if (sect.type === "multiple_choice") {
+          return {
+            ...sect,
+            questions: sect.questions.filter(
+              (_, index) => index !== activeSection![1]
+            ),
+          };
+        }
+
+        return sect;
+      })
+    );
+    setOptions([]);
+    setCorrectAnswer("A");
+    setQuestion("");
+    setActiveSection([
+      formType,
+      sections!.find((sect) => sect.type === formType)!.questions.length,
+    ]);
   };
 
   return (
@@ -712,6 +737,7 @@ const ObjQuestionForm = ({
               title={"Delete Question"}
               loading={false}
               variant={"fillError"}
+              onClick={deleteQuestion}
             />
           </div>
         )}
