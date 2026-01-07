@@ -4,6 +4,12 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import Spacer from "@/components/spacer";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -25,9 +31,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { Plus, RefreshCcw, Trash2Icon, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
+import { setDefaultAutoSelectFamily } from "node:net";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
-// Types
+// Type declarations
 type SectionType = {
   title: string;
   type: string;
@@ -39,7 +46,7 @@ type SectionType = {
     options: { label: string; text: string }[];
     correctAnswer: string;
   }[];
-};
+}[];
 
 type AssessmentType = {
   course: string;
@@ -49,20 +56,57 @@ type AssessmentType = {
   dueDate: string;
 };
 
-const Create = () => {
+type ObjQuestionFormType = {
+  formType: string;
+  sectionParams: {
+    sections: SectionType | null;
+    setSections: Dispatch<SetStateAction<SectionType | null>>;
+  };
+  questionParams: {
+    question: string;
+    setQuestion: Dispatch<SetStateAction<string>>;
+  };
+
+  optionsParams: {
+    options: string[];
+    setOptions: Dispatch<SetStateAction<string[]>>;
+  };
+
+  correctAnswerParams: {
+    correctAnswer: string | null;
+    setCorrectAnswer: Dispatch<SetStateAction<string | null>>;
+  };
+
+  activeSectionParams: {
+    activeSection: [string, number] | null;
+    setActiveSection: Dispatch<SetStateAction<[string, number] | null>>;
+  };
+};
+
+const Main = () => {
   const controller = new AbortController();
   const { data: session } = useSession();
 
+  // Modal States
   const [showDetailModal, setShowDetailModal] = useState(true);
   const [showSectionsModal, setShowSectionsModal] = useState(false);
 
+  // Main Page States
   const [loading, setLoading] = useState<string | null>("page");
   const [courses, setCourses] = useState<
     { _id: string; code: string; title: string }[] | null
   >(null);
+
   const [assDetails, setAssDetails] = useState<AssessmentType | null>(null);
-  const [activeSection, setActiveSection] = useState<null | string>(null);
-  const [sections, setSections] = useState<SectionType[] | null>(null);
+  const [activeSection, setActiveSection] = useState<null | [string, number]>(
+    null
+  );
+  const [sections, setSections] = useState<SectionType | null>(null);
+
+  // Question component states
+  const [question, setQuestion] = useState("");
+  const [options, setOptions] = useState<string[]>([]);
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>("A");
 
   useEffect(() => {
     if (!session) return;
@@ -75,7 +119,6 @@ const Create = () => {
         });
 
         if (res.status === 201) {
-          console.log(res);
           setCourses(res.data.data.courses);
         }
         setLoading(null);
@@ -86,18 +129,22 @@ const Create = () => {
         }
       }
     };
+
+    // Compensate for dev mode double data fetching
     !courses && getData();
 
     return () => {
+      // Cancel any api request on page unmount
       controller.abort();
     };
   }, [session]);
 
   return (
     <div className="w-full h-full flex p-10 font-sans">
+      {/* Main Page Content */}
       {assDetails && (
         <>
-          {/* Main Bar */}
+          {/* Main Content */}
           <div className="w-7/10 pr-5">
             {/* Assessment Details */}
             <div className="w-fit">
@@ -126,8 +173,17 @@ const Create = () => {
             <Spacer size="md" />
 
             {/* Questions */}
-            {activeSection === "multiple_choice" && (
-              <ObjQuestionForm sectionParams={{ sections, setSections }} />
+            {activeSection && activeSection[0] === "multiple_choice" ? (
+              <ObjQuestionForm
+                formType="multiple_choice"
+                sectionParams={{ sections, setSections }}
+                questionParams={{ question, setQuestion }}
+                optionsParams={{ options, setOptions }}
+                correctAnswerParams={{ correctAnswer, setCorrectAnswer }}
+                activeSectionParams={{ activeSection, setActiveSection }}
+              />
+            ) : (
+              ""
             )}
           </div>
 
@@ -137,18 +193,60 @@ const Create = () => {
             <div className="font-semibold text-xl">Questions</div>
 
             {/* Sections */}
-            <div>
-              {sections &&
-                sections.map((item, key) => {
-                  return (
-                    <div key={key}>
-                      <div className="text-sm">{item.title}</div>
-                    </div>
-                  );
-                })}
-            </div>
+            <Accordion type="single" collapsible>
+              {sections
+                ? sections.map((section, sectionkey) => {
+                    return (
+                      <AccordionItem value={section.title} key={sectionkey}>
+                        <AccordionTrigger className="text-sm cursor-pointer">
+                          {section.title}
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="flex flex-wrap gap-2">
+                            {section.questions.map((qst, qstkey) => (
+                              <button
+                                key={qstkey}
+                                className={`h-6 w-6 rounded-md ${
+                                  qstkey == activeSection![1]
+                                    ? "bg-accent/10 border border-accent text-accent"
+                                    : "bg-accent hover:bg-accent-dim text-white"
+                                }  cursor-pointer text-xs`}
+                                onClick={() => {
+                                  setQuestion(qst.question);
+                                  setOptions(qst.options.map((q) => q.text));
+                                  setCorrectAnswer(qst.correctAnswer);
+                                  setActiveSection([section.type, qstkey]);
+                                }}
+                              >
+                                {qstkey + 1}
+                              </button>
+                            ))}
+
+                            {section.questions.length < 60 && (
+                              <button
+                                className="h-6 w-fit px-2 rounded-md bg-transaprent border border-accent hover:bg-accent-dim text-accent cursor-pointer"
+                                onClick={() => {
+                                  setQuestion("");
+                                  setOptions([]);
+                                  setActiveSection([
+                                    section.type,
+                                    section.questions.length + 1,
+                                  ]);
+                                }}
+                              >
+                                new
+                              </button>
+                            )}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })
+                : ""}
+            </Accordion>
             <Spacer size="sm" />
 
+            {/* Add Section Button */}
             <button
               className="text-sm flex items-center text-accent hover:text-accent-dim gap-2 cursor-pointer"
               onClick={() => setShowSectionsModal(true)}
@@ -160,6 +258,7 @@ const Create = () => {
         </>
       )}
 
+      {/* Dialog modals */}
       {/* Dialog - Create Assessment */}
       <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
         <DialogContent>
@@ -329,17 +428,19 @@ const Create = () => {
                 sectionInstructions: { value: string };
               };
 
-              setSections([
-                {
-                  type: target.sectionType.value,
-                  title: target.sectionTitle.value,
-                  instructions: target.sectionInstructions.value,
-                  questions: [],
-                },
-              ]);
+              const newSection = {
+                type: target.sectionType.value,
+                title: target.sectionTitle.value,
+                instructions: target.sectionInstructions.value,
+                questions: [],
+              };
+
+              setSections((prev) =>
+                prev ? [...prev, newSection] : [newSection]
+              );
 
               setShowSectionsModal(false);
-              setActiveSection(target.sectionType.value);
+              setActiveSection([target.sectionType.value, 0]);
             }}
           >
             {/* Section Title */}
@@ -385,29 +486,23 @@ const Create = () => {
   );
 };
 
-const Page = () => {
-  return (
-    <SessionProvider>
-      <Create />
-    </SessionProvider>
-  );
-};
-
 const ObjQuestionForm = ({
+  formType,
   sectionParams,
-}: {
-  sectionParams: {
-    sections: SectionType[] | null;
-    setSections: Dispatch<SetStateAction<SectionType[] | null>>;
-  };
-}) => {
+  questionParams,
+  optionsParams,
+  correctAnswerParams,
+  activeSectionParams,
+}: ObjQuestionFormType) => {
   const { sections, setSections } = sectionParams;
-  const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState<string[]>([]);
-  const [correctAnswer, setCorrectAnswer] = useState<string | null>("A");
+  const { question, setQuestion } = questionParams;
+  const { options, setOptions } = optionsParams;
+  const { correctAnswer, setCorrectAnswer } = correctAnswerParams;
+  const { activeSection, setActiveSection } = activeSectionParams;
 
   const addQuestion = (e: React.SyntheticEvent) => {
     e.preventDefault();
+    let newArr;
     const opt: any = { 0: "A", 1: "B", 2: "C", 3: "D" };
 
     let formatedQuestion = {
@@ -417,25 +512,51 @@ const ObjQuestionForm = ({
       options: options.map((item, key) => {
         return { label: opt[`${key}`], text: item };
       }),
-      correctAnswer,
+      correctAnswer: correctAnswer as string,
     };
 
-    setSections((prev) => {
-      let newArr = [...prev];
-      newArr
-        .find((sect) => sect.type == "multiple_choice")
-        .questions.push(formatedQuestion);
+    const needsUpdate =
+      sections!.find((item) => item.type === formType)!.questions?.length >
+      activeSection![1];
 
-      console.log(newArr);
-      return newArr;
-    });
+    //@ts-expect-error Non-applicable section probably null
+    newArr = [...sections];
+
+    if (needsUpdate) {
+      newArr.find((sect) => sect.type == "multiple_choice").questions[
+        activeSection![1]
+      ] = formatedQuestion;
+
+      setSections(newArr);
+      return;
+    }
+
+    newArr
+      .find((sect) => sect.type == "multiple_choice")
+      .questions.push(formatedQuestion);
+    setSections(newArr);
+
+    if (newArr.find((sect) => sect.type == formType).questions.length < 60) {
+      setCorrectAnswer("A");
+      setQuestion("");
+      setOptions([]);
+      setActiveSection([formType, activeSection![1] + 1]);
+    }
   };
 
   return (
     <form onSubmit={addQuestion}>
-      {/* Questions */}
-      <div className="font-semibold">Question</div>
+      {/* Questions Heading*/}
+      <div className="font-semibold">
+        {sections &&
+        sections.find((item) => item.type === formType)!.questions.length >
+          activeSection![1]
+          ? "Question " + (activeSection![1] + 1)
+          : "New Question"}
+      </div>
       <Spacer size="sm" />
+
+      {/* Question Text Box */}
       <textarea
         className="w-full outline-none border rounded-md p-3 min-h-38 max-h-38"
         placeholder="Type your question"
@@ -564,14 +685,46 @@ const ObjQuestionForm = ({
           })}
         </div>
       </div>
-
       <Spacer size="sm" />
 
-      {/* Submit Question */}
-      <div className="w-42">
-        <Button title={"Add Question"} loading={false} variant={"fill"} />
+      <div className="flex gap-2">
+        {/* Submit Question */}
+        <div className="w-42">
+          <Button
+            title={
+              sections &&
+              activeSection &&
+              sections?.find((item) => item.type === formType)!.questions
+                ?.length > activeSection[1]
+                ? "Update Question"
+                : "Add Question"
+            }
+            loading={false}
+            variant={"fill"}
+          />
+        </div>
+
+        {/* Delete Question */}
+        {sections!.find((item) => item.type === formType)!.questions?.length >
+          activeSection![1] && (
+          <div className="w-42">
+            <Button
+              title={"Delete Question"}
+              loading={false}
+              variant={"fillError"}
+            />
+          </div>
+        )}
       </div>
     </form>
+  );
+};
+
+const Page = () => {
+  return (
+    <SessionProvider>
+      <Main />
+    </SessionProvider>
   );
 };
 

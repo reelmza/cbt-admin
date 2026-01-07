@@ -4,14 +4,26 @@ import { Spinner } from "./ui/spinner";
 type ButtonType = {
   title: string;
   loading: boolean;
-  variant: "fill" | "outline";
+  variant: "fill" | "outline" | "fillError";
   icon?: JSX.Element;
+  type?: "submit" | "button";
   onClick?: () => void;
 };
 
-const Button = ({ title, loading, icon, variant, onClick }: ButtonType) => {
+const Button = ({
+  title,
+  type,
+  loading,
+  icon,
+  variant,
+  onClick,
+}: ButtonType) => {
   const buttonVariants = {
     fill: `flex items-center justify-center h-10 w-full font-medium rounded-md leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-accent hover:bg-accent/80 text-accent-light shadow shadow-accent-light/20 ${
+      loading ? "opacity-75 pointer-events-none" : ""
+    }`,
+
+    fillError: `flex items-center justify-center h-10 w-full font-medium rounded-md leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-theme-error hover:bg-theme-error/80 text-white shadow shadow-theme-error-light/20 ${
       loading ? "opacity-75 pointer-events-none" : ""
     }`,
 
@@ -21,6 +33,7 @@ const Button = ({ title, loading, icon, variant, onClick }: ButtonType) => {
   };
   return (
     <button
+      type={type || "submit"}
       className={buttonVariants[variant]}
       disabled={loading}
       onClick={onClick}
