@@ -108,6 +108,15 @@ const Main = () => {
   const [options, setOptions] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>("A");
 
+  // Dele section function
+  const deleteSection = (type: String) => {
+    setSections((prev) => {
+      if (!prev) return prev;
+
+      return prev.filter((sect) => sect.type !== type);
+    });
+  };
+
   useEffect(() => {
     if (!session) return;
 
@@ -173,7 +182,10 @@ const Main = () => {
             <Spacer size="md" />
 
             {/* Questions */}
-            {activeSection && activeSection[0] === "multiple_choice" ? (
+            {sections &&
+            sections?.length > 0 &&
+            activeSection &&
+            activeSection[0] === "multiple_choice" ? (
               <ObjQuestionForm
                 formType="multiple_choice"
                 sectionParams={{ sections, setSections }}
@@ -193,13 +205,21 @@ const Main = () => {
             <div className="font-semibold text-xl">Questions</div>
 
             {/* Sections */}
-            <Accordion type="single" collapsible>
+            <Accordion type="single" collapsible defaultValue="multiple_choice">
               {sections
                 ? sections.map((section, sectionkey) => {
                     return (
-                      <AccordionItem value={section.title} key={sectionkey}>
-                        <AccordionTrigger className="text-sm cursor-pointer">
-                          {section.title}
+                      <AccordionItem value={section.type} key={sectionkey}>
+                        <AccordionTrigger>
+                          <div className="text-sm cursor-pointer flex items-center gap-4 ">
+                            <div
+                              className="cursor-pointer hover:text-red-600"
+                              onClick={() => deleteSection(section.type)}
+                            >
+                              <Trash2Icon size={16} />
+                            </div>
+                            <span className="">{section.title}</span>
+                          </div>
                         </AccordionTrigger>
                         <AccordionContent>
                           <div className="flex flex-wrap gap-2">
@@ -573,11 +593,12 @@ const ObjQuestionForm = ({
     <form onSubmit={addQuestion}>
       {/* Questions Heading*/}
       <div className="font-semibold">
-        {sections &&
-        sections.find((item) => item.type === formType)!.questions.length >
-          activeSection![1]
-          ? "Question " + (activeSection![1] + 1)
-          : "New Question"}
+        {sections?.map((sect) => {
+          if (sect.type !== formType) return "";
+          if (sect.questions && sect.questions.length < activeSection![1])
+            return "New Question";
+          return "Question " + (activeSection![1] + 1);
+        })}
       </div>
       <Spacer size="sm" />
 
@@ -719,8 +740,7 @@ const ObjQuestionForm = ({
             title={
               sections &&
               activeSection &&
-              sections?.find((item) => item.type === formType)!.questions
-                ?.length > activeSection[1]
+              sections[activeSection[1]]?.questions?.length > activeSection[1]
                 ? "Update Question"
                 : "Add Question"
             }
@@ -730,17 +750,18 @@ const ObjQuestionForm = ({
         </div>
 
         {/* Delete Question */}
-        {sections!.find((item) => item.type === formType)!.questions?.length >
-          activeSection![1] && (
-          <div className="w-42">
-            <Button
-              title={"Delete Question"}
-              loading={false}
-              variant={"fillError"}
-              onClick={deleteQuestion}
-            />
-          </div>
-        )}
+        {sections &&
+          activeSection &&
+          sections[activeSection[1]]?.questions?.length > activeSection[1] && (
+            <div className="w-42">
+              <Button
+                title={"Delete Question"}
+                loading={false}
+                variant={"fillError"}
+                onClick={deleteQuestion}
+              />
+            </div>
+          )}
       </div>
     </form>
   );
