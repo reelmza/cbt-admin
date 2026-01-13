@@ -15,7 +15,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -31,8 +30,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { Plus, RefreshCcw, Trash2Icon, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
-import { Questrial } from "next/font/google";
-import { setDefaultAutoSelectFamily } from "node:net";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 // Type declarations
@@ -111,7 +108,7 @@ const Main = () => {
   const [options, setOptions] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>("A");
 
-  // Dele section function
+  // Delete a section
   const deleteSection = (type: String) => {
     setSections((prev) => {
       if (!prev) return prev;
@@ -584,10 +581,10 @@ const QuestionForm = ({
 
   const addQuestion = (e: React.SyntheticEvent) => {
     e.preventDefault();
-    let newArr;
+    let newSections;
     let formatedQuestion;
 
-    // Letter Mapping For objective
+    // Letter mapping for objective
     const opt: any = { 0: "A", 1: "B", 2: "C", 3: "D" };
 
     // Arrange formdata for objective
@@ -613,6 +610,7 @@ const QuestionForm = ({
         }),
       };
 
+    // Arrange formdata for subjective
     if (formType === "theory")
       formatedQuestion = {
         question: question,
@@ -624,31 +622,32 @@ const QuestionForm = ({
 
     // Check if update needed
     let needsUpdate;
-
     if (sections && activeSection) {
       needsUpdate =
         (sections.find((item) => item.type === formType)?.questions?.length ??
           0) > activeSection[1];
     }
 
-    newArr = [...sections];
+    newSections = [...sections];
 
     if (needsUpdate) {
-      newArr.find((sect) => sect.type == formType).questions[
+      newSections.find((sect) => sect.type == formType).questions[
         activeSection![1]
       ] = formatedQuestion;
 
-      setSections(newArr);
+      setSections(newSections);
       return;
     }
 
-    newArr
+    newSections
       .find((sect) => sect.type == formType)
       .questions.push(formatedQuestion);
-    setSections(newArr);
+    setSections(newSections);
 
     // Reset form only when questions are less than 60
-    if (newArr.find((sect) => sect.type == formType).questions.length < 60) {
+    if (
+      newSections.find((sect) => sect.type == formType).questions.length < 60
+    ) {
       setCorrectAnswer("A");
       setQuestion("");
       setOptions([]);
