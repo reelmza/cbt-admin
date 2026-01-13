@@ -31,6 +31,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { Plus, RefreshCcw, Trash2Icon, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
+import { Questrial } from "next/font/google";
 import { setDefaultAutoSelectFamily } from "node:net";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
@@ -45,7 +46,7 @@ type SectionType = {
     score: number;
     options: { label: string; text: string }[];
     answerSlots: { slotNumber: number; possibleAnswers: string[] }[];
-
+    expectedAnswer: string;
     correctAnswer: string;
   }[];
 }[];
@@ -125,7 +126,7 @@ const Main = () => {
   const [activeSection, setActiveSection] = useState<null | [string, number]>(
     null
   );
-  const [sections, setSections] = useState<SectionType | null>(null);
+  const [sections, setSections] = useState<SectionType | null>([]);
 
   // Question component states
   const [question, setQuestion] = useState("");
@@ -136,9 +137,9 @@ const Main = () => {
   const deleteSection = (type: String) => {
     setSections((prev) => {
       if (!prev) return prev;
-
       return prev.filter((sect) => sect.type !== type);
     });
+    setActiveSection(null);
   };
 
   useEffect(() => {
@@ -205,11 +206,11 @@ const Main = () => {
             </div>
             <Spacer size="md" />
 
+            <div className="text-sm text-emerald-600 font-semibold">
+              {activeSection || "No Active Section"}
+            </div>
             {/* Objective Questions */}
-            {sections &&
-            sections?.length > 0 &&
-            activeSection &&
-            activeSection[0] === "multiple_choice" ? (
+            {activeSection && activeSection[0] === "multiple_choice" ? (
               <ObjQuestionForm
                 formType="multiple_choice"
                 sectionParams={{ sections, setSections }}
@@ -223,7 +224,7 @@ const Main = () => {
             )}
 
             {/* Subjective Questions */}
-            {sections &&
+            {/* {sections &&
             sections?.length > 0 &&
             activeSection &&
             activeSection[0] === "subjective" ? (
@@ -236,13 +237,29 @@ const Main = () => {
               />
             ) : (
               ""
-            )}
+            )} */}
+
+            {/* Theory Questions */}
+            {/* {sections &&
+            sections?.length > 0 &&
+            activeSection &&
+            activeSection[0] === "theory" ? (
+              <TheoryQuestionForm
+                formType="theory"
+                sectionParams={{ sections, setSections }}
+                questionParams={{ question, setQuestion }}
+                optionsParams={{ options, setOptions }}
+                activeSectionParams={{ activeSection, setActiveSection }}
+              />
+            ) : (
+              ""
+            )} */}
           </div>
 
           {/* Sidebar */}
           <div className="w-3/10 border rounded-md shadow-xl shadow-theme-gray-light/30 px-5 py-3">
             {/* Sidebar Heading */}
-            <div className="font-semibold text-xl">Questions</div>
+            <div className="font-semibold text-xl">Sections & Questions</div>
 
             {/* Sections */}
             <Accordion type="single" collapsible defaultValue="multiple_choice">
@@ -259,16 +276,9 @@ const Main = () => {
                               section.questions.length + 1,
                             ]);
                           }}
+                          className="cursor-pointer"
                         >
-                          <div className="text-sm cursor-pointer flex items-center gap-4 ">
-                            <div
-                              className="cursor-pointer hover:text-red-600"
-                              onClick={() => deleteSection(section.type)}
-                            >
-                              <Trash2Icon size={16} />
-                            </div>
-                            <span className="">{section.title}</span>
-                          </div>
+                          <div className="text-sm">{section.title}</div>
                         </AccordionTrigger>
                         <AccordionContent>
                           <div className="flex flex-wrap gap-2">
@@ -281,7 +291,7 @@ const Main = () => {
                                     : "bg-accent hover:bg-accent-dim text-white"
                                 }  cursor-pointer text-xs`}
                                 onClick={() => {
-                                  if (section.type == "objective") {
+                                  if (section.type == "multiple_choice") {
                                     setOptions(qst.options.map((q) => q.text));
                                     setCorrectAnswer(qst.correctAnswer);
                                   }
@@ -294,6 +304,10 @@ const Main = () => {
                                     );
                                   }
 
+                                  if (section.type == "theory") {
+                                    setOptions([qst.expectedAnswer]);
+                                  }
+
                                   setQuestion(qst.question);
                                   setActiveSection([section.type, qstkey]);
                                 }}
@@ -301,10 +315,15 @@ const Main = () => {
                                 {qstkey + 1}
                               </button>
                             ))}
+                          </div>
 
+                          {/* Sidebar Options */}
+
+                          <div className="w-full flex items-center gap-2 mt-2">
+                            {/* Add a question */}
                             {section.questions.length < 60 && (
                               <button
-                                className="h-6 w-fit px-2 rounded-md bg-transaprent border border-accent hover:bg-accent-dim text-accent cursor-pointer"
+                                className="w-5/10 h-6 text-xs flex items-center gap-2 text-accent cursor-pointer leading-none"
                                 onClick={() => {
                                   setQuestion("");
                                   setOptions([]);
@@ -314,9 +333,18 @@ const Main = () => {
                                   ]);
                                 }}
                               >
-                                new
+                                <Plus size={12} />
+                                <span>Add Question</span>
                               </button>
                             )}
+                            {/* Delete Section */}
+                            <button
+                              className="grow flex items-center gap-2 text-xs   text-red-600 cursor-pointer "
+                              onClick={() => deleteSection(section.type)}
+                            >
+                              <Trash2Icon size={12} />
+                              <span>Delete Section</span>
+                            </button>
                           </div>
                         </AccordionContent>
                       </AccordionItem>
@@ -328,7 +356,7 @@ const Main = () => {
 
             {/* Add Section Button */}
             <button
-              className="text-sm flex items-center text-accent hover:text-accent-dim gap-2 cursor-pointer"
+              className="text-sm flex items-center text-theme-gray hover:text-accent-dim gap-2 cursor-pointer"
               onClick={() => setShowSectionsModal(true)}
             >
               <span>Add a Section</span>
@@ -628,7 +656,7 @@ const ObjQuestionForm = ({
   const deleteQuestion = () => {
     setSections((prev) =>
       prev!.map((sect) => {
-        if (sect.type === "multiple_choice") {
+        if (sect.type === formType) {
           return {
             ...sect,
             questions: sect.questions.filter(
@@ -640,12 +668,13 @@ const ObjQuestionForm = ({
         return sect;
       })
     );
+
     setOptions([]);
     setCorrectAnswer("A");
     setQuestion("");
     setActiveSection([
       formType,
-      sections!.find((sect) => sect.type === formType)!.questions.length,
+      sections!.find((sect) => sect.type === formType)!.questions.length - 1,
     ]);
   };
 
@@ -655,7 +684,7 @@ const ObjQuestionForm = ({
       <div className="font-semibold">
         {sections?.map((sect) => {
           if (sect.type !== formType) return "";
-          if (sect.questions && sect.questions.length < activeSection![1])
+          if (sect.questions && sect.questions.length - 1 < activeSection![1])
             return "New Question";
           return "Question " + (activeSection![1] + 1);
         })}
@@ -754,17 +783,9 @@ const ObjQuestionForm = ({
                   value={option}
                   onChange={(e) =>
                     setOptions((prev) => {
-                      let newArr = [...prev];
-
-                      if (newArr.length < 1) {
-                        newArr.push(e.target.value);
-                        return newArr;
-                      }
-
-                      newArr[key] = e.target.value;
-                      console.log(newArr);
-
-                      return [...newArr];
+                      const next = [...prev];
+                      next[key] = e.target.value;
+                      return next;
                     })
                   }
                 />
@@ -773,16 +794,10 @@ const ObjQuestionForm = ({
                 <button
                   className="h-10 w-10 hover:text-theme-error flex items-center justify-center cursor-pointer"
                   type="button"
-                  onClick={() =>
-                    setOptions((prev) => {
-                      const newArr = [
-                        ...prev.slice(0, key),
-                        ...prev.slice(key + 1, prev.length),
-                      ];
-                      setCorrectAnswer("A");
-                      return newArr;
-                    })
-                  }
+                  onClick={() => {
+                    setOptions((prev) => prev.filter((_, i) => i !== key));
+                    setCorrectAnswer("A");
+                  }}
                 >
                   <Trash2Icon size={14} />
                 </button>
@@ -800,7 +815,8 @@ const ObjQuestionForm = ({
             title={
               sections &&
               activeSection &&
-              sections[activeSection[1]]?.questions?.length > activeSection[1]
+              sections.find((sct) => sct.type === formType)!.questions.length >
+                activeSection[1]
                 ? "Update Question"
                 : "Add Question"
             }
@@ -812,7 +828,8 @@ const ObjQuestionForm = ({
         {/* Delete Question */}
         {sections &&
           activeSection &&
-          sections[activeSection[1]]?.questions?.length > activeSection[1] && (
+          sections.find((sct) => sct.type === formType)!.questions.length >
+            activeSection[1] && (
             <div className="w-42">
               <Button
                 title={"Delete Question"}
@@ -944,7 +961,7 @@ const SubQuestionForm = ({
               })
             }
           >
-            Add an Option
+            Add Slots Values
           </button>
 
           <button
@@ -1027,7 +1044,8 @@ const SubQuestionForm = ({
             title={
               sections &&
               activeSection &&
-              sections[activeSection[1]]?.questions?.length > activeSection[1]
+              sections!.find((sct) => sct.type == formType)?.questions.length >
+                activeSection[1]
                 ? "Update Question"
                 : "Add Question"
             }
@@ -1040,6 +1058,192 @@ const SubQuestionForm = ({
         {sections &&
           activeSection &&
           sections[activeSection[1]]?.questions?.length > activeSection[1] && (
+            <div className="w-42">
+              <Button
+                title={"Delete Question"}
+                loading={false}
+                variant={"fillError"}
+                onClick={deleteQuestion}
+              />
+            </div>
+          )}
+      </div>
+    </form>
+  );
+};
+
+const TheoryQuestionForm = ({
+  formType,
+  sectionParams,
+  questionParams,
+  optionsParams,
+  activeSectionParams,
+}: SubQuestionFormType) => {
+  const { sections, setSections } = sectionParams;
+  const { question, setQuestion } = questionParams;
+  const { options, setOptions } = optionsParams;
+  const { activeSection, setActiveSection } = activeSectionParams;
+
+  const addQuestion = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    let newArr;
+
+    // Arrange formdata
+    let formatedQuestion = {
+      question: question,
+      type: formType,
+      score: 5,
+      expectedAnswer: options[0],
+      requiresManualMarking: true,
+    };
+
+    // Check if the current section has questions
+    // and if the question in view is being edited
+    const needsUpdate =
+      sections!.find((item) => item.type === formType)!.questions?.length >
+      activeSection![1];
+
+    //@ts-expect-error Non-applicable section probably null
+    newArr = [...sections];
+
+    if (needsUpdate) {
+      newArr.find((sect) => sect.type == formType).questions[
+        activeSection![1]
+      ] = formatedQuestion;
+
+      setSections(newArr);
+      return;
+    }
+
+    newArr
+      .find((sect) => sect.type == formType)
+      .questions.push(formatedQuestion);
+    setSections(newArr);
+
+    // Reset form only when questions are less than 60
+    if (newArr.find((sect) => sect.type == formType).questions.length < 60) {
+      setQuestion("");
+      setOptions([]);
+      setActiveSection([formType, activeSection![1] + 1]);
+    }
+  };
+
+  const deleteQuestion = () => {
+    setSections((prev) =>
+      prev!.map((sect) => {
+        if (sect.type === "theory") {
+          return {
+            ...sect,
+            questions: sect.questions.filter(
+              (_, index) => index !== activeSection![1]
+            ),
+          };
+        }
+
+        return sect;
+      })
+    );
+    setOptions([]);
+
+    setQuestion("");
+    setActiveSection([
+      formType,
+      sections!.find((sect) => sect.type === formType)!.questions.length,
+    ]);
+  };
+
+  return (
+    <form onSubmit={addQuestion}>
+      {/* Questions Heading*/}
+      <div className="font-semibold">
+        {sections?.map((sect) => {
+          if (sect.type !== formType) return "";
+          if (sect.questions && sect.questions.length < activeSection![1])
+            return "New Question";
+          return "Question " + (activeSection![1] + 1);
+        })}
+      </div>
+      <Spacer size="sm" />
+
+      {/* Question Text Box */}
+      <textarea
+        className="w-full outline-none border rounded-md p-3 min-h-38 max-h-38"
+        placeholder="Type your question"
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+        required
+      ></textarea>
+      <Spacer size="sm" />
+
+      {/* Options Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="font-semibold border-r pr-2">Options</div>
+          <button
+            className="text-sm text-accent cursor-pointer leading-none border-r pr-2"
+            type="button"
+            onClick={() =>
+              setOptions((prev) => {
+                if (prev.length < 1) return [""];
+                return prev;
+              })
+            }
+          >
+            Add Expected Answer
+          </button>
+
+          <button
+            className="text-sm text-theme-error cursor-pointer leading-none"
+            type="button"
+            onClick={() => setOptions([])}
+          >
+            Clear All Options
+          </button>
+        </div>
+      </div>
+      <Spacer size="sm" />
+
+      {/* Options */}
+      <div className="w-full flex">
+        {/* Options Main */}
+        <div className="grow">
+          <div className="flex items-center mb-1">
+            {/* Text Box */}
+            <Input
+              name={`expectedAnswer`}
+              type={"text"}
+              placeholder={"Enter expected answer"}
+              value={options[0] || ""}
+              onChange={(e) => setOptions([e.target.value])}
+              required
+            />
+          </div>
+        </div>
+      </div>
+      <Spacer size="sm" />
+
+      <div className="flex gap-2">
+        {/* Submit Question */}
+        <div className="w-42">
+          <Button
+            title={
+              sections &&
+              activeSection &&
+              sections.find((item) => item.type == formType)!.questions
+                ?.length > activeSection[1]
+                ? "Update Question"
+                : "Add Question"
+            }
+            loading={false}
+            variant={"fill"}
+          />
+        </div>
+
+        {/* Delete Question */}
+        {sections &&
+          activeSection &&
+          sections.find((item) => item.type == formType)!.questions?.length >
+            activeSection[1] && (
             <div className="w-42">
               <Button
                 title={"Delete Question"}

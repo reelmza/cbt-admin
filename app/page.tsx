@@ -42,7 +42,12 @@ export default function Home() {
               icon={<UserRound size={16} />}
             />
             <Spacer size="sm" />
-            <Input placeholder="Enter your password" icon={<Key size={16} />} />
+            <Input
+              name="password"
+              type="password"
+              placeholder="Enter your password"
+              icon={<Key size={16} />}
+            />
             <Spacer size="md" />
 
             <div className="flex items-center text-sm text-accent-dim">
