@@ -31,11 +31,7 @@ import { attachHeaders, localAxios } from "@/lib/axios";
 import { ArrowRight, Plus, RefreshCcw, Trash2Icon, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import {
-  QuestionFormType,
-  AssessmentType,
-  SectionType,
-} from "../assessment.types";
+import { QuestionFormType, AssessmentType, SectionType } from "./create.types";
 
 const Main = () => {
   const controller = new AbortController();

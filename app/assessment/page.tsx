@@ -4,6 +4,7 @@ import PageNavigator from "@/components/sections/page-navigator";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import TableSearchBox from "@/components/table-searchbox";
+import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { assessmentTableData } from "@/utils/dummy-data";
@@ -16,7 +17,7 @@ const Page = () => {
   const controller = new AbortController();
   const [loading, setLoading] = useState<string | null>("page");
   const { data: session } = useSession();
-  const [pageData, setPageData] = useState(null);
+  const [pageData, setPageData] = useState<AssesmentApiResponse[] | null>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -78,7 +79,7 @@ const Page = () => {
           { value: "Course", colSpan: "col-span-3" },
           { value: "Due Date", colSpan: "col-span-3" },
           { value: "Sections", colSpan: "col-span-1" },
-          { value: "Questions", colSpan: "col-span-1" },
+          { value: "Qst", colSpan: "col-span-1" },
           { value: "Students", colSpan: "col-span-1" },
           { value: "Marks", colSpan: "col-span-1" },
           { value: "Status", colSpan: "col-span-1" },
@@ -129,6 +130,16 @@ const Page = () => {
         showSearch={false}
         showOptions={false}
       />
+
+      {/* Page Loading */}
+      {loading === "page" ? (
+        <div className="flex items-center gap-2 mt-2 text-theme-gray">
+          <Spinner />
+          <div className="text-sm">Fetching data</div>
+        </div>
+      ) : (
+        ""
+      )}
 
       <Spacer size="xl" />
     </div>
