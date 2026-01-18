@@ -14,6 +14,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 
@@ -40,6 +47,8 @@ const Page = () => {
         school: string;
       }[]
   >(null);
+  const [groups, setGroups] = useState<GroupType[] | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
   const { data: session } = useSession();
 
   const bulkUpload = async (e: React.SyntheticEvent) => {
@@ -47,10 +56,14 @@ const Page = () => {
 
     const target = e.target as typeof e.target & {
       bulkUpload: { files: File[] };
+      group: { value: string };
+      subGroup: { value: string };
     };
 
     var formdata = new FormData();
     formdata.append("file", target.bulkUpload.files[0], "students.csv");
+    formdata.append("group", target.group.value);
+    formdata.append("subGroup", target.subGroup.value);
 
     setLoading("bulkUpload");
     try {
@@ -78,12 +91,19 @@ const Page = () => {
     const getData = async () => {
       try {
         attachHeaders(session!.user.token);
+
+        // Get Students
         const res = await localAxios.get("/school/students", {
           signal: controller.signal,
         });
 
-        if (res.status === 201) {
-          console.log(res.data.data.data.students);
+        // Get Groups
+        const groupRes = await localAxios.get("/school/groups", {
+          signal: controller.signal,
+        });
+
+        if (res.status === 201 && groupRes.status === 201) {
+          setGroups(groupRes.data.data);
           setPageData(res.data.data.data.students);
         }
         setLoading(null);
@@ -107,7 +127,7 @@ const Page = () => {
       <PageNavigator
         navList={[
           { name: "Students", route: "/users" },
-          { name: "Staff", route: "/users/staff" },
+          { name: "Administrators", route: "/users/staff" },
         ]}
       />
       <Spacer size="lg" />
@@ -181,6 +201,7 @@ const Page = () => {
           </DialogHeader>
 
           <form className="pr-28" onSubmit={bulkUpload}>
+            {/* File Upload */}
             <Input
               id="bulkUpload"
               name="bulkUpload"
@@ -189,6 +210,67 @@ const Page = () => {
               required
             />
             <Spacer size="sm" />
+
+            {/* Faculty */}
+            <Select
+              name="group"
+              onValueChange={(val) => {
+                if (!groups) return;
+                const target = groups.find((grp) => grp._id == val);
+                target && setSelectedGroup(target);
+              }}
+              required
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={
+                    groups && groups?.length > 1
+                      ? "Choose Faculty"
+                      : "No faculty created"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {groups
+                  ? groups.map((grp, key) => {
+                      return (
+                        <SelectItem value={grp._id} key={key}>
+                          {grp.name}
+                        </SelectItem>
+                      );
+                    })
+                  : ""}
+              </SelectContent>
+            </Select>
+            <Spacer size="sm" />
+
+            {/* Department */}
+            <Select name="subGroup" required>
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={
+                    selectedGroup && selectedGroup?.subGroups?.length > 0
+                      ? "Choose Department"
+                      : "No deparment created"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {selectedGroup?.subGroups ? (
+                  <>
+                    {selectedGroup.subGroups.map((grp, key) => (
+                      <SelectItem value={grp._id} key={key}>
+                        {grp.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                ) : (
+                  ""
+                )}
+              </SelectContent>
+            </Select>
+            <Spacer size="sm" />
+
             <Button
               title={"Upload File"}
               loading={loading === "bulkUpload"}
@@ -208,7 +290,7 @@ const Page = () => {
   );
 };
 
-const Users = () => {
+const PageWrapper = () => {
   return (
     <SessionProvider>
       <Page />
@@ -216,4 +298,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default PageWrapper;

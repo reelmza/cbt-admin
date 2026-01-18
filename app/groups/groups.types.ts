@@ -3,7 +3,7 @@ type GroupType = {
   code: string;
   name: string;
   description: string;
-  subGroups: {}[];
+  subGroups: { _id: string; name: string }[];
   createdAt: string;
 };
 
