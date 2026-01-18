@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
-//@ts-expect-error Next Error
 import "./globals.css";
 import { ArrowRight, Info } from "lucide-react";
 import SideBar from "@/components/sections/side-bar";

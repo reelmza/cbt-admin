@@ -1,4 +1,4 @@
-type PageDataType = {
+export type PageDataType = {
   course: {
     code: string;
     title: string;
@@ -6,5 +6,7 @@ type PageDataType = {
   status: string;
   totalMarks: number;
   timeLimit: number;
+  authorizedToStart: boolean;
   sections: { questions: [] }[];
+  endReason: string;
 };

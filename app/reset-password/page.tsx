@@ -26,7 +26,12 @@ export default function Home() {
           </div>
 
           <form>
-            <Input placeholder="Enter your email" icon={<Mail size={16} />} />
+            <Input
+              name="email"
+              type="text"
+              placeholder="Enter your email"
+              icon={<Mail size={16} />}
+            />
             <Spacer size="sm" />
 
             <div className="flex items-center text-sm text-accent-dim">
@@ -37,6 +42,8 @@ export default function Home() {
             </div>
             <Spacer size="md" />
             <Button
+              type="submit"
+              loading={false}
               title="Request Password Reset"
               icon={<MoveRight size={20} strokeWidth={2} />}
               variant="fill"

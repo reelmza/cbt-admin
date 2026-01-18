@@ -38,6 +38,8 @@ export default function Home() {
 
           <form onSubmit={doLogin}>
             <Input
+              name="username"
+              type="text"
               placeholder="Enter your username"
               icon={<UserRound size={16} />}
             />
@@ -61,6 +63,8 @@ export default function Home() {
             </div>
             <Spacer size="md" />
             <Button
+              type="submit"
+              loading={false}
               title="Proceed to Exam"
               icon={<MoveRight size={20} strokeWidth={2} />}
               variant="fill"

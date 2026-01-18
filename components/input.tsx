@@ -3,28 +3,32 @@ type InputType = {
   name: string;
   type: string;
   value?: string;
+  defaultValue?: string;
   onChange?: (e: any) => void;
   placeholder: string;
   size?: "big" | "small";
   required?: boolean;
   icon?: JSX.Element;
+  extraClasses?: string;
 };
 
 const Input = ({
   name,
   type,
   value,
+  defaultValue,
   onChange,
   placeholder,
   size,
   required,
   icon,
+  extraClasses,
 }: InputType) => {
   return (
     <div
       className={`w-full ${
         !size || size == "small" ? "h-10" : "12"
-      } flex border border-accent-light rounded-md`}
+      } ${extraClasses} flex border border-accent-light rounded-md`}
     >
       {/* Input Icon */}
       {icon ? (
@@ -41,6 +45,7 @@ const Input = ({
         required={required || true}
         className="grow h-full text-sm outline-none px-3 text-accent-dim"
         value={value}
+        defaultValue={defaultValue}
         onChange={onChange}
       />
     </div>
