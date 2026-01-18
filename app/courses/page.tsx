@@ -46,7 +46,7 @@ const Page = () => {
 
     setLoading("addCourse");
     try {
-      const res = await localAxios.post("school/create-course", {
+      const res = await localAxios.post("/admin/create-course", {
         code: target.courseCode.value,
         title: target.courseTitle.value,
         description: target.courseDescription.value,
@@ -57,6 +57,13 @@ const Page = () => {
         setLoading(null);
         setOpenAddCourse(false);
         toast.success("Course has been added successfully.");
+        setPageData((prev) => {
+          if (!prev) {
+            return [res.data.data];
+          }
+
+          return [...prev, res.data.data];
+        });
       }
     } catch (error) {
       console.log(error);

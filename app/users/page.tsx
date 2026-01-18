@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
+import { prettyDate } from "@/lib/dateFormater";
 
 import { CloudUpload } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -42,8 +43,8 @@ const Page = () => {
         phoneNumber: string;
         password: string;
         regNumber: string;
-        gender: string;
-        assessments: [];
+        level: string;
+        createdAt: string;
         school: string;
       }[]
   >(null);
@@ -67,14 +68,11 @@ const Page = () => {
 
     setLoading("bulkUpload");
     try {
-      const res = await localAxios.post(
-        "/school/bulk-student-upload",
-        formdata
-      );
+      const res = await localAxios.post("/student/bulk-upload", formdata);
 
       console.log(res);
 
-      if (res.status === 201) {
+      if (res.status === 200) {
         setLoading(null);
         setOpenBulkUpload(false);
         toast.success(res.data.data);
@@ -93,7 +91,7 @@ const Page = () => {
         attachHeaders(session!.user.token);
 
         // Get Students
-        const res = await localAxios.get("/school/students", {
+        const res = await localAxios.get("/student/all", {
           signal: controller.signal,
         });
 
@@ -156,21 +154,20 @@ const Page = () => {
         tableHeading={[
           { value: "Student Name", colSpan: "col-span-4" },
           { value: "Registration Number", colSpan: "col-span-2" },
-          { value: "Gender", colSpan: "col-span-1" },
+          { value: "Level", colSpan: "col-span-1" },
           { value: "Phone Number", colSpan: "col-span-2" },
-          { value: "Assessments", colSpan: "col-span-2" },
-
+          { value: "Enrolled", colSpan: "col-span-2" },
           { value: "", colSpan: "col-span-1" },
         ]}
         tableData={
           pageData
             ? pageData.map((item, key) => [
-                { value: item.fullName, colSpan: "col-span-4" },
-                { value: item.regNumber, colSpan: "col-span-2" },
-                { value: item.gender, colSpan: "col-span-1" },
-                { value: item.phoneNumber, colSpan: "col-span-2" },
+                { value: item?.fullName, colSpan: "col-span-4" },
+                { value: item?.regNumber, colSpan: "col-span-2" },
+                { value: item?.level, colSpan: "col-span-1" },
+                { value: item?.phoneNumber, colSpan: "col-span-2" },
                 {
-                  value: item.assessments.length + " Taken",
+                  value: prettyDate(item?.createdAt.split("T")[0]) || "-",
                   colSpan: "col-span-2",
                 },
                 { value: item._id, colSpan: "col-span-1", type: "link" },
