@@ -45,6 +45,19 @@ export const sideBarPages: SideBarPageType[] = [
     //   },
     // ],
   },
+
+  {
+    name: "Groups",
+    route: "/groups",
+    icon: <UserRound size={18} />,
+    children: [
+      {
+        name: "Subgroups",
+        route: "/groups/subgroups",
+        icon: <UsersRound size={16} />,
+      },
+    ],
+  },
   {
     name: "Courses",
     route: "/courses",
