@@ -7,7 +7,7 @@ export const schooLogin: (
   try {
     // Get user from database
     const targetUser = await fetch(
-      "https://cbt-server-q5fr.onrender.com/api/v1/school/login",
+      "https://cbt-server-q5fr.onrender.com/api/v1/admin/login",
       {
         method: "POST",
         headers: {
@@ -27,7 +27,7 @@ export const schooLogin: (
 
     // Parse user response body
     const res = await targetUser.json();
-    user = { ...res.data.school, token: res.data.token };
+    user = { ...res.data.user };
 
     if (!user) {
       return null;

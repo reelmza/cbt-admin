@@ -19,9 +19,10 @@ declare module "next-auth" {
   interface User {
     _id: string;
     token: string;
-    name: string;
+    fullName: string;
     profilePhoto: string;
     userType: string;
+    role: string;
   }
 }
 
@@ -54,8 +55,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Extract data from database user returned from login endpoint
         token.id = user._id;
         token.token = user.token;
-        token.name = user.name;
         token.email = user.email;
+        token.fullName = user.fullName;
+        token.role = user.role;
+
         // token.profilePhoto = user.profilePhoto;
         // token.userType = user.userType;
       }
@@ -75,8 +78,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Extract data from token to final session
       session.user.id = token.id as string;
       session.user.token = token.token as string;
-      session.user.name = token.name as string;
       session.user.email = token.email as string;
+      session.user.fullName = token.fullName as string;
+      session.user.role = token.role as string;
 
       // session.user.profilePhoto = token.profilePhoto as string;
       // session.user.userType = token.userType as string;

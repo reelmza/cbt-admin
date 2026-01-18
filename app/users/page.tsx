@@ -102,9 +102,10 @@ const Page = () => {
           signal: controller.signal,
         });
 
-        if (res.status === 201 && groupRes.status === 201) {
+        if (res.status === 200 && groupRes.status === 201) {
+          console.log(res.data.data);
           setGroups(groupRes.data.data);
-          setPageData(res.data.data.data.students);
+          setPageData(res.data.data.data);
         }
         setLoading(null);
       } catch (error: any) {

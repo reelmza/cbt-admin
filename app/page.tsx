@@ -3,19 +3,59 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import SideBox from "@/components/sections/side-box";
 import Spacer from "@/components/spacer";
-import { Key, Lock, MoveRight, UserRound } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import { localAxios } from "@/lib/axios";
+import { AxiosError } from "axios";
+import { Key, Mail, MapPin, MoveRight, Phone, UserRound } from "lucide-react";
+import { SessionProvider, signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
-export default function Home() {
+export function Page() {
   const router = useRouter();
+  const { data: session } = useSession();
 
-  // User authentication logic
-  const doLogin = async (e: React.SyntheticEvent) => {
+  // States
+  const [loading, setLoading] = useState<string | null>(null);
+
+  // Login Logic
+  const login = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    router.push("/dashboard");
-    return;
+
+    const target = e.target as typeof e.target & {
+      email: { value: string };
+      password: { value: string };
+    };
+
+    setLoading("login");
+    const res = await signIn("credentials", {
+      email: target.email.value,
+      password: target.password.value,
+      loginClient: "school",
+      redirect: false,
+    });
+
+    if (!res!.error) {
+      toast.success("Login successfull.", {
+        position: "bottom-left",
+      });
+      router.push("/dashboard");
+      setLoading(null);
+    }
+
+    if (res!.error === "CredentialsSignin") {
+      toast.error("Incorrect details provided.", {
+        position: "bottom-left",
+      });
+      setLoading(null);
+    }
+
+    if (res!.error === "Configuration") {
+      toast.error("An error occured, try again.", {
+        position: "bottom-left",
+      });
+      setLoading(null);
+    }
   };
 
   return (
@@ -25,53 +65,57 @@ export default function Home() {
 
       {/* Form Box */}
       <div className="col-span-6 flex flex-col justify-center items-center">
-        <div className="w-5/10 rounded-lg">
-          {/* School Name */}
-          <div className="text-sm font-sans font-semibold bg-accent-light text-accent-dim w-fit  rounded-full px-3 mb-5 py-1 leading-none">
-            Adamawa State University, Mubi.
-          </div>
-
+        <div className="w-7/10 rounded-lg">
           {/* Form Heading */}
           <div className="text-2xl font-bold mb-5 text-accent-dim">
-            Login to your Exam.
+            Login to your dashboard
           </div>
 
-          <form onSubmit={doLogin}>
-            <Input
-              name="username"
-              type="text"
-              placeholder="Enter your username"
-              icon={<UserRound size={16} />}
-            />
-            <Spacer size="sm" />
-            <Input
-              name="password"
-              type="password"
-              placeholder="Enter your password"
-              icon={<Key size={16} />}
-            />
-            <Spacer size="md" />
-
-            <div className="flex items-center text-sm text-accent-dim">
-              Forgot password?
-              <Link
-                href="/reset-password"
-                className="ml-1 inline-block text-accent"
-              >
-                Reset Here.
-              </Link>
+          <form onSubmit={login} className="flex flex-wrap justify-between">
+            {/* School Email */}
+            <div className="w-[100%]">
+              <Input
+                name="email"
+                type="text"
+                placeholder="E-mail address"
+                icon={<Mail size={16} />}
+              />
+              <Spacer size="sm" />
             </div>
-            <Spacer size="md" />
-            <Button
-              type="submit"
-              loading={false}
-              title="Proceed to Exam"
-              icon={<MoveRight size={20} strokeWidth={2} />}
-              variant="fill"
-            />
+
+            {/* Password */}
+            <div className="w-[100%]">
+              <Input
+                name="password"
+                type="password"
+                placeholder="Enter password"
+                icon={<Key size={16} />}
+              />
+              <Spacer size="sm" />
+            </div>
+
+            {/* Submit Button */}
+            <div className="w-[100%]">
+              <Button
+                title="Sign In"
+                loading={loading === "login"}
+                icon={<MoveRight size={20} strokeWidth={2} />}
+                variant="fill"
+              />
+            </div>
           </form>
         </div>
       </div>
     </div>
   );
 }
+
+const PageWrapper = () => {
+  return (
+    <SessionProvider>
+      <Page />
+    </SessionProvider>
+  );
+};
+
+export default PageWrapper;
