@@ -32,10 +32,12 @@ import { ArrowRight, Plus, RefreshCcw, Trash2Icon, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { QuestionFormType, AssessmentType, SectionType } from "./create.types";
+import { useRouter } from "next/navigation";
 
 const Main = () => {
   const controller = new AbortController();
   const { data: session } = useSession();
+  const router = useRouter();
 
   // Modal States
   const [showDetailModal, setShowDetailModal] = useState(true);
@@ -84,7 +86,9 @@ const Main = () => {
 
     try {
       const res = await localAxios.post(`/school/create-assessment`, formData);
-      console.log(res);
+      if (res.status === 201) {
+        router.push("/assessment");
+      }
       setLoading(null);
     } catch (error) {
       console.log(error);
@@ -98,7 +102,7 @@ const Main = () => {
     const getData = async () => {
       try {
         attachHeaders(session!.user.token);
-        const res = await localAxios.get("/school/courses", {
+        const res = await localAxios.get("/admin/courses", {
           signal: controller.signal,
         });
 

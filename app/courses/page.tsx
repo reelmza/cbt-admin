@@ -77,7 +77,7 @@ const Page = () => {
     const getData = async () => {
       try {
         attachHeaders(session!.user.token);
-        const res = await localAxios.get("/school/courses", {
+        const res = await localAxios.get("/admin/courses", {
           signal: controller.signal,
         });
 

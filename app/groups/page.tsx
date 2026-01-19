@@ -38,7 +38,7 @@ const Page = () => {
 
     setLoading("addGroup");
     try {
-      const res = await localAxios.post("school/create-group", {
+      const res = await localAxios.post("admin/create-group", {
         code: target.groupCode.value,
         name: target.groupName.value,
         description: target.groupDescription.value,
@@ -65,7 +65,7 @@ const Page = () => {
     const getGroups = async () => {
       try {
         attachHeaders(session!.user.token);
-        const res = await localAxios.get("/school/groups", {
+        const res = await localAxios.get("/admin/groups", {
           signal: controller.signal,
         });
 

@@ -1,7 +1,7 @@
 "use client";
 import Spacer from "@/components/spacer";
 
-import { CloudUpload, Notebook, Plus, UsersRound } from "lucide-react";
+import { CloudUpload, Notebook, UsersRound } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 

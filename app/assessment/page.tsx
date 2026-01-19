@@ -25,7 +25,7 @@ const Page = () => {
     const getAssessments = async () => {
       try {
         attachHeaders(session!.user.token);
-        const res = await localAxios.get("/school/assessments", {
+        const res = await localAxios.get("/admin/assessments", {
           signal: controller.signal,
         });
 

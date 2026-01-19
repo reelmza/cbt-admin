@@ -8,6 +8,7 @@ export const schooLogin: (
     // Get user from database
     const targetUser = await fetch(
       "https://cbt-server-q5fr.onrender.com/api/v1/admin/login",
+
       {
         method: "POST",
         headers: {

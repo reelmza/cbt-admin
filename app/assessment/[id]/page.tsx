@@ -13,23 +13,27 @@ import { attachHeaders, localAxios } from "@/lib/axios";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useEffect, useState } from "react";
 import { PageDataType } from "./id.types";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const Page = ({ id }: { id: string }) => {
   const controller = new AbortController();
+  const router = useRouter();
   const { data: session } = useSession();
-  console.log(session);
 
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<PageDataType | null>(null);
+  const [groups, setGroups] = useState<GroupType[] | null>(null);
 
   // Update assessment status
   const updateStatus = async (val: string) => {
     if (!pageData) return;
 
+    setLoading("updateStatus");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.patch(
-        `/school/update-assessment/${id}`,
+        `/admin/update-assessment/${id}`,
         { status: val },
         {
           signal: controller.signal,
@@ -59,10 +63,11 @@ const Page = ({ id }: { id: string }) => {
       duration: { value: string };
     };
 
+    setLoading("updateDuration");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.patch(
-        `/school/update-assessment/${id}`,
+        `/admin/update-assessment/${id}`,
         { timeLimit: Number(target.duration.value) },
         {
           signal: controller.signal,
@@ -84,12 +89,49 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
-  const startAssessment = async () => {
-    if (!pageData) return;
+  // Update assessment due date
+  const updateDueDate = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
 
+    const target = e.target as typeof e.target & {
+      dueDate: { value: string };
+    };
+
+    setLoading("updateDueDate");
     try {
       attachHeaders(session!.user.token);
-      const res = await localAxios.patch(`/school/start-assessment/${id}`, {
+      const res = await localAxios.patch(
+        `/admin/update-assessment/${id}`,
+        { dueDate: new Date(target.dueDate.value).toISOString() },
+        {
+          signal: controller.signal,
+        }
+      );
+
+      if (res.status === 201) {
+        setPageData((prev) => {
+          return { ...res.data.data, course: prev?.course };
+        });
+        toast.success("Due date updated successfully");
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+    }
+  };
+
+  // Start assessment
+  const authorizeAss = async () => {
+    if (!pageData) return;
+
+    setLoading("authorizeAss");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(`/assessment/authorize/${id}`, {
         signal: controller.signal,
       });
 
@@ -109,12 +151,14 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
+  // End assessment
   const endAssessment = async () => {
     if (!pageData) return;
 
+    setLoading("endAssessment");
     try {
       attachHeaders(session!.user.token);
-      const res = await localAxios.patch(`/school/end-assessment/${id}`, {
+      const res = await localAxios.patch(`/assessment/end/${id}`, {
         signal: controller.signal,
       });
 
@@ -123,6 +167,106 @@ const Page = ({ id }: { id: string }) => {
         setPageData((prev) => {
           return { ...res.data.data, course: prev?.course };
         });
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+    }
+  };
+
+  // Delete assessment
+  const deleteAss = async () => {
+    if (!pageData) return;
+
+    setLoading("deleteAss");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.delete(`/assessment/delete/${id}`, {
+        signal: controller.signal,
+      });
+
+      if (res.status === 200) {
+        console.log(res);
+        router.push("/assessment");
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+    }
+  };
+
+  // Assign to faculty
+  const assignToFaculty = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      group: { value: string };
+    };
+
+    setLoading("assignToFaculty");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.post(
+        `/assessment/assign/${id}`,
+        { group: target.group.value },
+        {
+          signal: controller.signal,
+        }
+      );
+
+      if (res.status === 200) {
+        toast.success("Faculty added to assessment successfully");
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+    }
+  };
+
+  // Assign to student
+  const assignToStudent = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      regNumber: { value: string };
+    };
+
+    setLoading("assignToStudent");
+    try {
+      attachHeaders(session!.user.token);
+
+      const studentRes = await localAxios.get(`/student/all`, {
+        params: { searchByRegNumber: target.regNumber.value },
+      });
+
+      if (studentRes.status !== 200) throw new Error();
+      const targetStudent = studentRes.data.data.data.find(
+        (sd: any) => sd.regNumber === target.regNumber.value
+      );
+      if (!targetStudent) throw new Error();
+
+      const res = await localAxios.post(
+        `/assessment/assign/${id}`,
+        { students: [targetStudent._id] },
+        {
+          signal: controller.signal,
+        }
+      );
+
+      if (res.status === 200) {
+        toast.success("Student added to assessment successfully");
       }
 
       setLoading(null);
@@ -140,12 +284,17 @@ const Page = ({ id }: { id: string }) => {
     const getAssessments = async () => {
       try {
         attachHeaders(session!.user.token);
-        const res = await localAxios.get(`/school/assessment/${id}`, {
+        const res = await localAxios.get(`/admin/assessment/${id}`, {
           signal: controller.signal,
         });
 
-        if (res.status === 201) {
-          console.log(res.data.data);
+        // Get Groups
+        const groupRes = await localAxios.get("/admin/groups", {
+          signal: controller.signal,
+        });
+
+        if (res.status === 201 && groupRes.status === 201) {
+          setGroups(groupRes.data.data);
           setPageData(res.data.data);
         }
 
@@ -230,7 +379,7 @@ const Page = ({ id }: { id: string }) => {
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-6 shadow border rounded-md p-5">
               {/* Test Vissibility */}
-              <div className="text-sm text-theme-gray">Test Status</div>
+              <div className="text-sm text-theme-gray">Test Vissibility</div>
               <Spacer size="sm" />
 
               <div className="flex items-center gap-4">
@@ -277,7 +426,7 @@ const Page = ({ id }: { id: string }) => {
 
               {/* Test Status */}
               <div className="text-sm text-theme-gray">Test Status</div>
-              <Spacer size="sm" />
+              <Spacer size="md" />
 
               <div className="flex items-center gap-2">
                 <div className="grow">
@@ -299,14 +448,17 @@ const Page = ({ id }: { id: string }) => {
                 </div>
 
                 {/* Exam not started */}
-                {!pageData.authorizedToStart && (
+
+                {!pageData.endReason && (
                   <div className="shrink-0 w-38">
                     <Button
-                      title="Start Test"
+                      title={
+                        pageData.authorizedToStart ? "Unauthorize" : "Authorize"
+                      }
                       type="button"
                       variant="fill"
-                      loading={false}
-                      onClick={startAssessment}
+                      loading={loading === "authorizeAss"}
+                      onClick={authorizeAss}
                     />
                   </div>
                 )}
@@ -324,32 +476,105 @@ const Page = ({ id }: { id: string }) => {
                   </div>
                 )}
               </div>
+              <Spacer size="md" />
+
+              {/* Due Date */}
+              <div className="text-sm text-theme-gray">Due Date</div>
+              <Spacer size="sm" />
+              <form
+                className="flex items-center gap-4"
+                onSubmit={updateDueDate}
+              >
+                <Input
+                  defaultValue={pageData.dueDate.split("T")[0] || ""}
+                  name="dueDate"
+                  type="date"
+                  placeholder=""
+                />
+
+                <div className="w-38 shrink-0">
+                  <Button
+                    type="submit"
+                    title="Save"
+                    loading={loading === "updateDueDate"}
+                    variant="outline"
+                  />
+                </div>
+              </form>
+              <Spacer size="xl" />
+
+              {/* Delete assessment */}
+              <div className="w-48">
+                <Button
+                  title={"Delete Assessment"}
+                  loading={loading === "deleteAss"}
+                  variant={"fillError"}
+                  onClick={deleteAss}
+                />
+              </div>
             </div>
 
+            {/* Assessement Assignment */}
             <div className="col-span-6 shadow border rounded-md p-5">
               {/* Assign to group */}
-              <div className="text-sm text-theme-gray">Assign to group</div>
+              <div className="text-sm text-theme-gray">Assign to faculty</div>
               <Spacer size="sm" />
 
-              <form className="flex items-center gap-4">
-                <Select>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Group" />
+              <form
+                className="flex items-center gap-4"
+                onSubmit={assignToFaculty}
+              >
+                <Select
+                  name="group"
+                  onValueChange={(val) => {
+                    if (!groups) return;
+                    const target = groups.find((grp) => grp._id == val);
+                    // target && setSelectedGroup(target);
+                  }}
+                  required
+                >
+                  <SelectTrigger className="w-full grow">
+                    <SelectValue
+                      placeholder={
+                        groups && groups?.length < 1
+                          ? "No faculty created"
+                          : "Choose faculty"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="physc">Physics</SelectItem>
-                    <SelectItem value="architecture">Archi</SelectItem>
+                    {groups
+                      ? groups.map((grp, key) => {
+                          return (
+                            <SelectItem value={grp._id} key={key}>
+                              {grp.name}
+                            </SelectItem>
+                          );
+                        })
+                      : ""}
                   </SelectContent>
                 </Select>
+
+                <div className="w-38 shrink-0">
+                  <Button
+                    type="submit"
+                    title="Assign"
+                    loading={loading === "assignToFaculty"}
+                    variant="outline"
+                  />
+                </div>
               </form>
               <Spacer size="md" />
 
               {/* Assign to students */}
               {/* Test Duration */}
-              <div className="text-sm text-theme-gray">Asign to student</div>
+              <div className="text-sm text-theme-gray">Assign to student</div>
               <Spacer size="sm" />
 
-              <form className="flex items-center gap-4">
+              <form
+                className="flex items-center gap-4"
+                onSubmit={assignToStudent}
+              >
                 <Input
                   name="regNumber"
                   type="text"
@@ -358,9 +583,9 @@ const Page = ({ id }: { id: string }) => {
 
                 <div className="w-38 shrink-0">
                   <Button
-                    type="button"
-                    title="Asign"
-                    loading={false}
+                    type="submit"
+                    loading={loading === "assignToStudent"}
+                    title="Assign"
                     variant="outline"
                   />
                 </div>

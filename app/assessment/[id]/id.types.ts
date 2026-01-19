@@ -9,4 +9,5 @@ export type PageDataType = {
   authorizedToStart: boolean;
   sections: { questions: [] }[];
   endReason: string;
+  dueDate: string;
 };

@@ -27,11 +27,13 @@ import { prettyDate } from "@/lib/dateFormater";
 
 import { CloudUpload } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const Page = () => {
   const controller = new AbortController();
+  const router = useRouter();
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<
@@ -75,7 +77,8 @@ const Page = () => {
       if (res.status === 200) {
         setLoading(null);
         setOpenBulkUpload(false);
-        toast.success(res.data.data);
+        toast.success(res.data.message);
+        router.refresh();
       }
     } catch (error) {
       console.log(error);
