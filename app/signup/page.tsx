@@ -5,7 +5,16 @@ import SideBox from "@/components/sections/side-box";
 import Spacer from "@/components/spacer";
 import { localAxios } from "@/lib/axios";
 import { AxiosError } from "axios";
-import { Key, Mail, MapPin, MoveRight, Phone, UserRound } from "lucide-react";
+import {
+  Book,
+  GraduationCap,
+  Key,
+  Mail,
+  MapPin,
+  MoveRight,
+  Phone,
+  UserRound,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,18 +22,18 @@ import { toast } from "sonner";
 export default function Home() {
   const router = useRouter();
 
-  //   States
+  // States
   const [loading, setLoading] = useState<string | null>(null);
 
   // Signup Logic
-  const createSchool = async (e: React.SyntheticEvent) => {
+  const createAdmin = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     const target = e.target as typeof e.target & {
       name: { value: string };
       email: { value: string };
-      phoneNumber: { value: string };
-      address: { value: string };
+      faculty: { value: string };
+      department: { value: string };
       password: { value: string };
       confirmPassword: { value: string };
     };
@@ -35,18 +44,18 @@ export default function Home() {
       return;
     }
 
-    setLoading("createSchool");
+    setLoading("createAdmin");
     try {
-      const res = await localAxios.post("/school/signup", {
-        name: target.name.value,
+      const res = await localAxios.post("/admin/create", {
+        fullName: target.name.value,
         email: target.email.value,
-        phoneNumber: target.phoneNumber.value,
         password: target.password.value,
-        address: target.address.value,
+        school: "lorem ipsum",
       });
 
       if (res.status == 201) {
         toast.success("School created successfully, please login.");
+        router.push("/login");
       }
 
       setLoading(null);
@@ -86,49 +95,53 @@ export default function Home() {
           </div>
 
           <form
-            onSubmit={createSchool}
+            onSubmit={createAdmin}
             className="flex flex-wrap justify-between"
           >
-            {/* School Name */}
+            {/* Admin Full Name */}
             <div className="w-[100%]">
               <Input
                 name="name"
                 type="text"
-                placeholder="Enter school name"
+                placeholder="Full Name"
                 icon={<UserRound size={16} />}
+                required
               />
               <Spacer size="sm" />
             </div>
 
-            {/* School Email */}
+            {/* Admin Email */}
             <div className="w-[100%]">
               <Input
                 name="email"
                 type="text"
                 placeholder="E-mail address"
                 icon={<Mail size={16} />}
+                required
               />
               <Spacer size="sm" />
             </div>
 
-            {/* School Address */}
+            {/* Admin Faculty */}
             <div className="w-[100%]">
               <Input
-                name="address"
+                name="faculty"
                 type="text"
-                placeholder="Brief school address"
-                icon={<MapPin size={16} />}
+                placeholder="Faculty"
+                icon={<GraduationCap size={16} />}
+                required={false}
               />
               <Spacer size="sm" />
             </div>
 
-            {/* School Phone Number */}
+            {/* Admin Department */}
             <div className="w-[100%]">
               <Input
-                name="phoneNumber"
+                name="department"
                 type="text"
-                placeholder="Phone number"
-                icon={<Phone size={16} />}
+                placeholder="Department"
+                icon={<Book size={16} />}
+                required={false}
               />
               <Spacer size="sm" />
             </div>
@@ -158,8 +171,8 @@ export default function Home() {
             {/* Submit Button */}
             <div className="w-[100%]">
               <Button
-                title="Create school account"
-                loading={loading === "createSchool"}
+                title="Create admin account"
+                loading={loading === "createAdmin"}
                 icon={<MoveRight size={20} strokeWidth={2} />}
                 variant="fill"
               />
