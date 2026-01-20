@@ -66,8 +66,13 @@ export function Page() {
       {/* Form Box */}
       <div className="col-span-6 flex flex-col justify-center items-center">
         <div className="w-7/10 rounded-lg">
+          {/* School Name */}
+          <div className="text-sm font-sans font-semibold bg-accent-light text-accent-dim w-fit  rounded-full px-3 mb-5 py-1 leading-none">
+            EBSU, Ebonyi.
+          </div>
+
           {/* Form Heading */}
-          <div className="text-3xl text-center mb-5 text-accent-dim">
+          <div className="text-2xl font-bold mb-5 text-accent-dim">
             Login to your Account
           </div>
 

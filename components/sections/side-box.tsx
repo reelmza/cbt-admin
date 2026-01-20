@@ -9,7 +9,7 @@ const SideBox = () => {
       <Spacer size="lg" />
 
       <div className="w-8/10 text-accent-dim text-center">
-        <div className="text-4xl font-extrabold leading-tight text-accent-dim">
+        <div className="text-3xl font-extrabold leading-tight text-accent-dim">
           Ebonyi State <br />
           University, Abakaliki.
         </div>
