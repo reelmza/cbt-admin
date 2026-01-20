@@ -316,7 +316,7 @@ const Main = () => {
             {/* Submit Assessment */}
             {sections && sections?.length > 0 && (
               <button
-                className="w-full rounded-md h-8 px-5 text-sm border border-emerald-600 mt-10 flex items-center justify-center text-emerald-600 cursor-pointer"
+                className="w-full rounded-md h-8 px-5 text-sm border border-emerald-600 mt-10 flex items-center justify-center text-emerald-600 cursor-pointer gap-2"
                 type="button"
                 onClick={submitAss}
               >
