@@ -109,7 +109,7 @@ const Page = () => {
                   ),
                   colSpan: "col-span-1",
                 },
-                { value: item.students.length, colSpan: "col-span-1" },
+                { value: item?.students?.length, colSpan: "col-span-1" },
                 { value: item.totalMarks || "-", colSpan: "col-span-1" },
                 {
                   value: item.status,
