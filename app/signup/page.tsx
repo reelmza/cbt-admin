@@ -3,16 +3,23 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import SideBox from "@/components/sections/side-box";
 import Spacer from "@/components/spacer";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { localAxios } from "@/lib/axios";
-import { AxiosError } from "axios";
+
 import {
   Book,
   GraduationCap,
   Key,
   Mail,
-  MapPin,
   MoveRight,
-  Phone,
   UserRound,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -34,13 +41,20 @@ export default function Home() {
       email: { value: string };
       faculty: { value: string };
       department: { value: string };
+      role: { value: string };
       password: { value: string };
       confirmPassword: { value: string };
     };
 
-    // Manage unmatching password
+    // Unmatching password
     if (target.password.value !== target.confirmPassword.value) {
       toast.error("Passwords do not match.");
+      return;
+    }
+
+    // Password too short
+    if (target.password.value.length < 6) {
+      toast.error("Passwords too short.");
       return;
     }
 
@@ -50,12 +64,12 @@ export default function Home() {
         fullName: target.name.value,
         email: target.email.value,
         password: target.password.value,
-        school: "lorem ipsum",
+        role: target.role.value,
       });
 
-      if (res.status == 201) {
+      if (res.status == 200) {
         toast.success("School created successfully, please login.");
-        router.push("/login");
+        router.push("/");
       }
 
       setLoading(null);
@@ -63,8 +77,8 @@ export default function Home() {
       console.log(error);
 
       // Email already exist
-      if (error.status === 409) {
-        toast.error("School or Email already exists.");
+      if (error.status == 400) {
+        toast.error(error.response.data.message);
       }
 
       // Validation error from server
@@ -143,6 +157,23 @@ export default function Home() {
                 icon={<Book size={16} />}
                 required={false}
               />
+              <Spacer size="sm" />
+            </div>
+
+            {/* Admin Role */}
+            <div className="w-[100%]">
+              <Select name="role">
+                <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Admin Role</SelectLabel>
+                    <SelectItem value="superadmin">Super Admin</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <Spacer size="sm" />
             </div>
 
