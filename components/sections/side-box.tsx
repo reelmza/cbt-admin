@@ -1,11 +1,17 @@
 import Spacer from "../spacer";
 import Image from "next/image";
 
-import boxImage from "@/public/images/school-logo-auth.png";
+import boxImage from "@/public/images/school-logo-auth.webp";
 const SideBox = () => {
   return (
     <div className="col-span-6 bg-accent-light flex flex-col items-center justify-center">
-      <Image src={boxImage} width={271} height={271} alt="School logo" />
+      <Image
+        src={boxImage}
+        width={271}
+        height={271}
+        alt="School logo"
+        priority
+      />
       <Spacer size="lg" />
 
       <div className="w-8/10 text-accent-dim text-center">
