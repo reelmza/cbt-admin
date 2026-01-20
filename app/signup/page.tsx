@@ -68,7 +68,7 @@ export default function Home() {
       });
 
       if (res.status == 200) {
-        toast.success("School created successfully, please login.");
+        toast.success("Admin created successfully, please login.");
         router.push("/");
       }
 
@@ -105,7 +105,7 @@ export default function Home() {
         <div className="w-7/10 rounded-lg">
           {/* Form Heading */}
           <div className="text-2xl font-bold mb-5 text-accent-dim">
-            Create a school account.
+            Create a admin account.
           </div>
 
           <form
