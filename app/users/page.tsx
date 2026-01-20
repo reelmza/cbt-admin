@@ -74,11 +74,11 @@ const Page = () => {
 
       console.log(res);
 
-      if (res.status === 200) {
+      if (res.status == 200) {
         setLoading(null);
         setOpenBulkUpload(false);
         toast.success(res.data.message);
-        router.refresh();
+        window.location.reload();
       }
     } catch (error) {
       console.log(error);

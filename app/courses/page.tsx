@@ -50,7 +50,6 @@ const Page = () => {
         code: target.courseCode.value,
         title: target.courseTitle.value,
         description: target.courseDescription.value,
-        school: session?.user.id,
       });
 
       if (res.status === 201) {
