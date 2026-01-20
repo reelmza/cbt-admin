@@ -4,20 +4,17 @@ import Image from "next/image";
 import boxImage from "@/public/images/school-logo-auth.png";
 const SideBox = () => {
   return (
-    <div className="col-span-6 bg-blue-50 flex flex-col items-center justify-center">
+    <div className="col-span-6 bg-accent-light flex flex-col items-center justify-center">
       <Image src={boxImage} width={271} height={271} alt="School logo" />
-      <Spacer size="md" />
+      <Spacer size="lg" />
 
       <div className="w-8/10 text-accent-dim text-center">
-        <div className="text-3xl font-bold leading-tight">
+        <div className="text-4xl font-extrabold leading-tight text-accent-dim">
           Ebonyi State <br />
-          University, Ababkaliki
+          University, Abakaliki.
         </div>
         <Spacer size="sm" />
-        <p className="text-xs hidden leading-normal">
-          Register confidently with a platform designed specifically for
-          education institutions.
-        </p>
+        <p className="text-lg">Examination Portal</p>
       </div>
     </div>
   );

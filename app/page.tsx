@@ -67,8 +67,8 @@ export function Page() {
       <div className="col-span-6 flex flex-col justify-center items-center">
         <div className="w-7/10 rounded-lg">
           {/* Form Heading */}
-          <div className="text-2xl font-bold mb-5 text-accent-dim">
-            Login to your dashboard
+          <div className="text-3xl text-center mb-5 text-accent-dim">
+            Login to your Account
           </div>
 
           <form onSubmit={login} className="flex flex-wrap justify-between">
