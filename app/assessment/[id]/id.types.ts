@@ -10,4 +10,5 @@ export type PageDataType = {
   sections: { questions: [] }[];
   endReason: string;
   dueDate: string;
+  startDate: string;
 };

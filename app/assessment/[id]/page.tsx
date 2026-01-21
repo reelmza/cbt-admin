@@ -89,6 +89,41 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
+  // Update assessment start date
+  const updateStartDate = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      startDate: { value: string };
+    };
+
+    setLoading("updateStartDate");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(
+        `/admin/update-assessment/${id}`,
+        { startDate: new Date(target.startDate.value).toISOString() },
+        {
+          signal: controller.signal,
+        }
+      );
+
+      if (res.status === 201) {
+        setPageData((prev) => {
+          return { ...res.data.data, course: prev?.course };
+        });
+        toast.success("Start date updated successfully");
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+    }
+  };
+
   // Update assessment due date
   const updateDueDate = async (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -103,6 +138,7 @@ const Page = ({ id }: { id: string }) => {
       const res = await localAxios.patch(
         `/admin/update-assessment/${id}`,
         { dueDate: new Date(target.dueDate.value).toISOString() },
+
         {
           signal: controller.signal,
         }
@@ -278,6 +314,42 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
+  // Update assessment duration
+  const generateAssEntries = async () => {
+    setLoading("generateAssEntries");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.get(
+        `/assessment/export-submission/${id}`,
+
+        {
+          responseType: "blob",
+          signal: controller.signal,
+        }
+      );
+
+      if (res.status === 200) {
+        const blob = res.data;
+        const url = URL.createObjectURL(blob);
+
+        // Download file
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${pageData?.course.code} - Entries`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+    }
+  };
+
   useEffect(() => {
     if (!session) return;
 
@@ -377,6 +449,7 @@ const Page = ({ id }: { id: string }) => {
 
           {/* Controls */}
           <div className="grid grid-cols-12 gap-4">
+            {/* Assessment Settings */}
             <div className="col-span-6 shadow border rounded-md p-5">
               {/* Test Vissibility */}
               <div className="text-sm text-theme-gray">Test Vissibility</div>
@@ -478,6 +551,31 @@ const Page = ({ id }: { id: string }) => {
               </div>
               <Spacer size="md" />
 
+              {/* Start Date */}
+              <div className="text-sm text-theme-gray">Start Date</div>
+              <Spacer size="sm" />
+              <form
+                className="flex items-center gap-4"
+                onSubmit={updateStartDate}
+              >
+                <Input
+                  defaultValue={pageData.startDate.split("T")[0] || ""}
+                  name="startDate"
+                  type="date"
+                  placeholder=""
+                />
+
+                <div className="w-38 shrink-0">
+                  <Button
+                    type="submit"
+                    title="Save"
+                    loading={loading === "updateStartDate"}
+                    variant="outline"
+                  />
+                </div>
+              </form>
+              <Spacer size="md" />
+
               {/* Due Date */}
               <div className="text-sm text-theme-gray">Due Date</div>
               <Spacer size="sm" />
@@ -501,6 +599,7 @@ const Page = ({ id }: { id: string }) => {
                   />
                 </div>
               </form>
+
               <Spacer size="xl" />
 
               {/* Delete assessment */}
@@ -591,6 +690,24 @@ const Page = ({ id }: { id: string }) => {
                 </div>
               </form>
               <Spacer size="md" />
+
+              {/* Generate entries */}
+              <div className="text-sm text-theme-gray">
+                Generate Attempts List
+              </div>
+              <Spacer size="sm" />
+
+              <div className="w-42">
+                <Button
+                  type="button"
+                  title={"Generate Entries"}
+                  loading={loading == "generateAssEntries"}
+                  variant={"fill"}
+                  onClick={() => generateAssEntries()}
+                />
+              </div>
+
+              <Spacer size="sm" />
             </div>
           </div>
         </div>
