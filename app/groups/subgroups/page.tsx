@@ -21,6 +21,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
+import { toastConfig } from "@/utils/toastConfig";
 import { Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { Group } from "next/dist/shared/lib/router/utils/route-regex";
@@ -63,7 +64,7 @@ const Page = () => {
           if (!prev) return prev;
           return [...prev, res.data.data];
         });
-        toast.success("Group has been added successfully.");
+        toast.success("Group has been added successfully.", toastConfig);
       }
     } catch (error) {
       console.log(error);
