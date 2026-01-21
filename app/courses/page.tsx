@@ -19,6 +19,7 @@ import { Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { toastConfig } from "@/utils/toastConfig";
 
 const Page = () => {
   const controller = new AbortController();
@@ -55,7 +56,7 @@ const Page = () => {
       if (res.status === 201) {
         setLoading(null);
         setOpenAddCourse(false);
-        toast.success("Course has been added successfully.");
+        toast.success("Course has been added successfully.", toastConfig);
         setPageData((prev) => {
           if (!prev) {
             return [res.data.data];

@@ -15,6 +15,7 @@ import { use, useEffect, useState } from "react";
 import { PageDataType } from "./id.types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { toastConfig } from "@/utils/toastConfig";
 
 const Page = ({ id }: { id: string }) => {
   const controller = new AbortController();
@@ -78,6 +79,10 @@ const Page = ({ id }: { id: string }) => {
         setPageData((prev) => {
           return { ...res.data.data, course: prev?.course };
         });
+        toast.success(
+          `Successfully assigned ${target.duration.value} mintues to test`,
+          toastConfig
+        );
       }
 
       setLoading(null);
@@ -259,7 +264,7 @@ const Page = ({ id }: { id: string }) => {
       );
 
       if (res.status === 200) {
-        toast.success("Faculty added to assessment successfully");
+        toast.success("Faculty added to assessment successfully", toastConfig);
       }
 
       setLoading(null);
@@ -291,7 +296,10 @@ const Page = ({ id }: { id: string }) => {
       const targetStudent = studentRes.data.data.data.find(
         (sd: any) => sd.regNumber === target.regNumber.value
       );
-      if (!targetStudent) throw new Error();
+      if (!targetStudent) {
+        toast.error("Student does not exist", toastConfig);
+        throw new Error("Student does not exist");
+      }
 
       const res = await localAxios.post(
         `/assessment/assign/${id}`,
@@ -301,8 +309,11 @@ const Page = ({ id }: { id: string }) => {
         }
       );
 
-      if (res.status === 200) {
-        toast.success("Student added to assessment successfully");
+      if (res.status == 200) {
+        toast.success(
+          `${targetStudent.fullName} added to assessment successfully`,
+          toastConfig
+        );
       }
 
       setLoading(null);
@@ -490,7 +501,7 @@ const Page = ({ id }: { id: string }) => {
                   <Button
                     type="submit"
                     title="Save"
-                    loading={false}
+                    loading={loading == `updateDuration`}
                     variant="outline"
                   />
                 </div>
@@ -521,12 +532,11 @@ const Page = ({ id }: { id: string }) => {
                 </div>
 
                 {/* Exam not started */}
-
                 {!pageData.endReason && (
                   <div className="shrink-0 w-38">
                     <Button
                       title={
-                        pageData.authorizedToStart ? "Unauthorize" : "Authorize"
+                        pageData.authorizedToStart ? "Pause Exam" : "Start Exam"
                       }
                       type="button"
                       variant="fill"

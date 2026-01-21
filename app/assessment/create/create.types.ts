@@ -55,3 +55,12 @@ export type QuestionFormType = {
     setActiveSection: Dispatch<SetStateAction<[string, number] | null>>;
   };
 };
+
+// CSV
+export type CsvRow = {
+  question: string;
+  type: string;
+  score: string;
+  correctAnswer: string;
+  options: string;
+};

@@ -64,7 +64,7 @@ const Page = () => {
           if (!prev) return prev;
           return [...prev, res.data.data];
         });
-        toast.success("Group has been added successfully.", toastConfig);
+        toast.success("Subgroup has been added successfully.", toastConfig);
       }
     } catch (error) {
       console.log(error);

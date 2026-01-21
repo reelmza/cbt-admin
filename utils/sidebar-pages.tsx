@@ -8,6 +8,7 @@ import {
   Library,
   Monitor,
   NotebookPen,
+  NotepadText,
   Shield,
   UserRound,
   UsersRound,
@@ -80,6 +81,11 @@ export const sideBarPages: SideBarPageType[] = [
     //     icon: <Check size={16} />,
     //   },
     // ],
+  },
+  {
+    name: "Results",
+    route: "/results",
+    icon: <NotepadText size={18} />,
   },
   {
     name: "Notifications",

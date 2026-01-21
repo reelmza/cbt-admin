@@ -31,8 +31,16 @@ import { attachHeaders, localAxios } from "@/lib/axios";
 import { ArrowRight, Plus, RefreshCcw, Trash2Icon, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { QuestionFormType, AssessmentType, SectionType } from "./create.types";
+import {
+  QuestionFormType,
+  AssessmentType,
+  SectionType,
+  CsvRow,
+} from "./create.types";
 import { useRouter } from "next/navigation";
+import Papa from "papaparse";
+import { toastConfig } from "@/utils/toastConfig";
+import { toast } from "sonner";
 
 const Main = () => {
   const controller = new AbortController();
@@ -96,6 +104,77 @@ const Main = () => {
     }
   };
 
+  function formatCsvRowToQuestion(row: CsvRow): any {
+    const OPTION_LABELS = ["A", "B", "C", "D"];
+    const optionsArray = row.options
+      .split(",")
+      .map((opt) => opt.trim())
+      .filter(Boolean);
+
+    return {
+      question: row.question.trim(),
+      type: row.type.trim(),
+      score: Number(row.score),
+      correctAnswer: row.correctAnswer.trim(),
+      options: optionsArray.map((text, index) => ({
+        label: OPTION_LABELS[index],
+        text,
+      })),
+    };
+  }
+
+  // Handle CSV upload event
+  function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse<CsvRow>(file, {
+      header: true, // column headers in CSV
+      skipEmptyLines: true,
+      complete: (results) => {
+        // Refference element, use the first in the list
+        const ref = results.data[0];
+
+        // Incorrect schema throw file error
+        if (
+          !ref.type ||
+          !ref.question ||
+          !ref.correctAnswer ||
+          !ref.options ||
+          !ref.score
+        ) {
+          console.log(ref);
+          toast.error("Invalid file or check entries", toastConfig);
+          return;
+        }
+
+        setSections((prev) => {
+          if (!prev) return prev;
+          const newArr = [...prev]; // Spread new array
+
+          newArr.map((sct) => {
+            if (sct.type === results.data[0].type) {
+              sct.questions = results.data.map((rw) =>
+                formatCsvRowToQuestion(rw)
+              );
+            }
+          });
+
+          return newArr;
+        });
+
+        setActiveSection([results.data[0].type, 0]);
+        setQuestion(results.data[0].question);
+        setOptions(results.data[0].options.split(","));
+        toast.success("Questions uploaded successfully", toastConfig);
+      },
+      error: (err) => {
+        console.error("CSV Parse Error:", err);
+        toast.error("An error occured", toastConfig);
+      },
+    });
+  }
+
   useEffect(() => {
     if (!session) return;
 
@@ -134,34 +213,57 @@ const Main = () => {
         <>
           {/* Main Content */}
           <div className="w-7/10 pr-5">
-            {/* Assessment Details */}
-            <div className="w-fit">
-              {/* Assesment title */}
-              <div className="text-xl font-bold text-accent">
-                {courses?.find((item) => item._id == assDetails?.course)?.code +
-                  " - " +
-                  courses?.find((item) => item._id == assDetails?.course)
-                    ?.title}
+            {/* Assessment Details & Upload*/}
+            <div className="flex items-center justify-between">
+              {/* Assesment Details */}
+              <div className="w-fit">
+                {/* Assesment title */}
+                <div className="text-xl font-bold text-accent">
+                  {courses?.find((item) => item._id == assDetails?.course)
+                    ?.code +
+                    " - " +
+                    courses?.find((item) => item._id == assDetails?.course)
+                      ?.title}
+                </div>
+
+                {/* Other Details */}
+                <div className="flex gap-2">
+                  <div className="text-sm flex">
+                    <div className="font-semibold mr-1">Session:</div>
+                    <div>{assDetails?.session}</div>
+                  </div>
+
+                  <div className="text-sm flex">
+                    <div className="font-semibold mr-1">Due Date:</div>
+                    <div>{assDetails?.dueDate.split("T")[0]}</div>
+                  </div>
+
+                  <div className="text-sm flex">
+                    <div className="font-semibold mr-1">Total Marks:</div>
+                    <div>{assDetails?.totalMarks}</div>
+                  </div>
+                </div>
               </div>
 
-              {/* Other Details */}
-              <div className="flex gap-2">
-                <div className="text-sm flex">
-                  <div className="font-semibold mr-1">Session:</div>
-                  <div>{assDetails?.session}</div>
+              {/* Bulk Upload */}
+              {activeSection && activeSection[0] == "multiple_choice" && (
+                <div className="relative w-38 overflow-hidden">
+                  <input
+                    type="file"
+                    className="absolute opacity-0 h-full w-full cursor-pointer"
+                    name={"bulkFile"}
+                    accept=".csv"
+                    onChange={handleCsvUpload}
+                  />
+                  <Button
+                    title={"Bulk Upload"}
+                    loading={false}
+                    variant={"fill"}
+                  />
                 </div>
-
-                <div className="text-sm flex">
-                  <div className="font-semibold mr-1">Due Date:</div>
-                  <div>{assDetails?.dueDate.split("T")[0]}</div>
-                </div>
-
-                <div className="text-sm flex">
-                  <div className="font-semibold mr-1">Total Marks:</div>
-                  <div>{assDetails?.totalMarks}</div>
-                </div>
-              </div>
+              )}
             </div>
+
             <Spacer size="md" />
 
             {/* Section Indicator for debug */}
@@ -708,8 +810,6 @@ const QuestionForm = ({
 
     // If question exist, then update it
     if (needsUpdate) {
-      console.log("No active section, logic error.");
-
       setSections((prev) =>
         prev
           ? prev.map((sect) => {
@@ -721,12 +821,13 @@ const QuestionForm = ({
             })
           : prev
       );
-
+      toast.success("Question updated", toastConfig);
       return;
     }
 
     // Check if questions are upto 60 before adding
     if (targetSection && targetSection?.questions.length > 59) {
+      toast.error("Your questions are upto 60", toastConfig);
       return;
     }
     // Else - Question is new so push to end of questions array

@@ -24,6 +24,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
+import { toastConfig } from "@/utils/toastConfig";
 
 import { CloudUpload } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -80,8 +81,15 @@ const Page = () => {
         toast.success(res.data.message);
         window.location.reload();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+
+      if (error?.status == 400) {
+        toast.error(
+          "Error, Please check your user entries for duplicates",
+          toastConfig
+        );
+      }
       setLoading(null);
     }
   };
