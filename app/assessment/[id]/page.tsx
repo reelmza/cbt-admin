@@ -325,7 +325,7 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
-  // Update assessment duration
+  // Generate assessement entries
   const generateAssEntries = async () => {
     setLoading("generateAssEntries");
     try {
@@ -350,6 +350,49 @@ const Page = ({ id }: { id: string }) => {
         a.click();
 
         URL.revokeObjectURL(url);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+    }
+  };
+
+  // Update assessment duration
+  const generateAssResults = async () => {
+    setLoading("generateAssResults");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.get(
+        `/assessment/export-result/${id}`,
+
+        {
+          responseType: "blob",
+          signal: controller.signal,
+        }
+      );
+
+      if (res.status === 200) {
+        const blob = res.data;
+        const url = URL.createObjectURL(blob);
+
+        // Download file
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${pageData?.course.code} - Results`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+      }
+
+      if (res.status === 400) {
+        toast.error(
+          "No results prepared for this assessment yet.",
+          toastConfig
+        );
       }
 
       setLoading(null);
@@ -707,14 +750,28 @@ const Page = ({ id }: { id: string }) => {
               </div>
               <Spacer size="sm" />
 
-              <div className="w-42">
-                <Button
-                  type="button"
-                  title={"Generate Entries"}
-                  loading={loading == "generateAssEntries"}
-                  variant={"fill"}
-                  onClick={() => generateAssEntries()}
-                />
+              <div className="flex items-center-safe gap-4">
+                {/* Generate Entries */}
+                <div className="w-42">
+                  <Button
+                    type="button"
+                    title={"Generate Entries"}
+                    loading={loading == "generateAssEntries"}
+                    variant={"fill"}
+                    onClick={() => generateAssEntries()}
+                  />
+                </div>
+
+                {/* Generate Result */}
+                <div className="w-42">
+                  <Button
+                    type="button"
+                    title={"Generate Results"}
+                    loading={loading == "generateAssResults"}
+                    variant={"fill"}
+                    onClick={() => generateAssResults()}
+                  />
+                </div>
               </div>
 
               <Spacer size="sm" />
