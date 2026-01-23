@@ -64,7 +64,7 @@ const Page = () => {
           if (!prev) return prev;
           return [...prev, res.data.data];
         });
-        toast.success("Subgroup has been added successfully.", toastConfig);
+        toast.success("Department has been added successfully.", toastConfig);
       }
     } catch (error) {
       console.log(error);
@@ -116,7 +116,7 @@ const Page = () => {
 
         <div className="block w-52">
           <Button
-            title={"Create an Group"}
+            title={"Create Department"}
             loading={false}
             variant={"fill"}
             icon={<Plus size={16} />}
@@ -128,10 +128,10 @@ const Page = () => {
       <Table
         tableHeading={[
           { value: "Code", colSpan: "col-span-2" },
-          { value: "Subgroup Name", colSpan: "col-span-3" },
+          { value: "Department Name", colSpan: "col-span-3" },
           { value: "Description", colSpan: "col-span-2" },
 
-          { value: "Parent Group", colSpan: "col-span-3" },
+          { value: "Faculty", colSpan: "col-span-3" },
           { value: "Created", colSpan: "col-span-2" },
         ]}
         tableData={
@@ -177,7 +177,7 @@ const Page = () => {
       <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add a sub group</DialogTitle>
+            <DialogTitle>Add a department</DialogTitle>
             <DialogDescription className="pr-28">
               Add a new sub group
             </DialogDescription>
@@ -188,7 +188,7 @@ const Page = () => {
             <Input
               name="groupCode"
               type="text"
-              placeholder={"Enter group code"}
+              placeholder={"Department code"}
               required
             />
             <Spacer size="sm" />
@@ -197,7 +197,7 @@ const Page = () => {
             <Input
               name="groupName"
               type="text"
-              placeholder={"Enter group title"}
+              placeholder={"Department name"}
               required
             />
             <Spacer size="sm" />
@@ -206,7 +206,7 @@ const Page = () => {
             <Input
               name="groupDescription"
               type="text"
-              placeholder={"Enter brief description"}
+              placeholder={"Brief description or identifier"}
               required
             />
             <Spacer size="sm" />

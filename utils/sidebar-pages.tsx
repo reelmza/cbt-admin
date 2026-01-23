@@ -1,5 +1,7 @@
 import {
   BellDot,
+  Building,
+  Building2,
   Check,
   CircleQuestionMark,
   Cog,
@@ -48,14 +50,14 @@ export const sideBarPages: SideBarPageType[] = [
   },
 
   {
-    name: "Groups",
-    route: "/groups",
-    icon: <UserRound size={18} />,
+    name: "Faculties",
+    route: "/faculties",
+    icon: <Building2 size={18} />,
     children: [
       {
-        name: "Subgroups",
-        route: "/groups/subgroups",
-        icon: <UsersRound size={16} />,
+        name: "Departments",
+        route: "/faculties/departments",
+        icon: <Building size={16} />,
       },
     ],
   },

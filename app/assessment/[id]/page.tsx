@@ -526,7 +526,9 @@ const Page = ({ id }: { id: string }) => {
               <Spacer size="md" />
 
               {/* Test Duration */}
-              <div className="text-sm text-theme-gray">Test Duration</div>
+              <div className="text-sm text-theme-gray">
+                Test Duration (in minutes e.g 40 or 120)
+              </div>
               <Spacer size="sm" />
 
               <form
