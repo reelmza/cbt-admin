@@ -214,7 +214,7 @@ const Page = () => {
             {/* Group Select */}
             <Select name="group" required>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose Group" />
+                <SelectValue placeholder="Choose Faculty" />
               </SelectTrigger>
               <SelectContent>
                 {rawData &&
@@ -230,7 +230,7 @@ const Page = () => {
             <Spacer size="md" />
 
             <Button
-              title={"Add group"}
+              title={"Add Department"}
               loading={loading === "addGroup"}
               variant={"fill"}
               icon={<Plus size={20} />}

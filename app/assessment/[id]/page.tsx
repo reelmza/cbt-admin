@@ -25,6 +25,7 @@ const Page = ({ id }: { id: string }) => {
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<PageDataType | null>(null);
   const [groups, setGroups] = useState<GroupType[] | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
 
   // Update assessment status
   const updateStatus = async (val: string) => {
@@ -244,12 +245,13 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
-  // Assign to faculty
+  // Assign to faculty/department
   const assignToFaculty = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     const target = e.target as typeof e.target & {
       group: { value: string };
+      subgroup: { value: string };
     };
 
     setLoading("assignToFaculty");
@@ -257,14 +259,17 @@ const Page = ({ id }: { id: string }) => {
       attachHeaders(session!.user.token);
       const res = await localAxios.post(
         `/assessment/assign/${id}`,
-        { group: target.group.value },
+        {
+          ...(target.group.value && { group: target.group.value }),
+          ...(target.subgroup.value && { subgroup: target.subgroup.value }),
+        },
         {
           signal: controller.signal,
         }
       );
 
       if (res.status === 200) {
-        toast.success("Faculty added to assessment successfully", toastConfig);
+        toast.success("Assessment assigned successfully", toastConfig);
       }
 
       setLoading(null);
@@ -451,7 +456,7 @@ const Page = ({ id }: { id: string }) => {
           </div>
           <Spacer size="md" />
 
-          {/* Cards */}
+          {/* Top Cards*/}
           <div className="grid grid-cols-12 gap-4">
             {[
               { title: "Vissibility", value: pageData.status },
@@ -501,10 +506,10 @@ const Page = ({ id }: { id: string }) => {
           </div>
           <Spacer size="lg" />
 
-          {/* Controls */}
+          {/* Control Cards*/}
           <div className="grid grid-cols-12 gap-4">
-            {/* Assessment Settings */}
-            <div className="col-span-6 shadow border rounded-md p-5">
+            {/* Left Cards */}
+            <div className="col-span-5 shadow border rounded-md p-5">
               {/* Test Vissibility */}
               <div className="text-sm text-theme-gray">Test Vissibility</div>
               <Spacer size="sm" />
@@ -542,7 +547,7 @@ const Page = ({ id }: { id: string }) => {
                   placeholder="Enter duration in minutes"
                 />
 
-                <div className="w-38 shrink-0">
+                <div className="w-32 shrink-0">
                   <Button
                     type="submit"
                     title="Save"
@@ -557,7 +562,7 @@ const Page = ({ id }: { id: string }) => {
               <div className="text-sm text-theme-gray">Test Status</div>
               <Spacer size="md" />
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="grow">
                   <div className="h-10 w-full border rounded-md p-3 flex items-center text-sm">
                     {/* Ended by admin */}
@@ -595,9 +600,9 @@ const Page = ({ id }: { id: string }) => {
                 {pageData.authorizedToStart && !pageData.endReason && (
                   <div className="shrink-0 w-38">
                     <Button
-                      title="End Test"
+                      title="End Exam"
                       type="button"
-                      variant="fillError"
+                      variant="fillErrorOutline"
                       loading={false}
                       onClick={endAssessment}
                     />
@@ -620,7 +625,7 @@ const Page = ({ id }: { id: string }) => {
                   placeholder=""
                 />
 
-                <div className="w-38 shrink-0">
+                <div className="w-32 shrink-0">
                   <Button
                     type="submit"
                     title="Save"
@@ -645,7 +650,7 @@ const Page = ({ id }: { id: string }) => {
                   placeholder=""
                 />
 
-                <div className="w-38 shrink-0">
+                <div className="w-32 shrink-0">
                   <Button
                     type="submit"
                     title="Save"
@@ -662,43 +667,77 @@ const Page = ({ id }: { id: string }) => {
                 <Button
                   title={"Delete Assessment"}
                   loading={loading === "deleteAss"}
-                  variant={"fillError"}
+                  variant={"fillErrorOutline"}
                   onClick={deleteAss}
                 />
               </div>
             </div>
 
-            {/* Assessement Assignment */}
-            <div className="col-span-6 shadow border rounded-md p-5">
-              {/* Assign to group */}
-              <div className="text-sm text-theme-gray">Assign to faculty</div>
+            {/* Right Cards */}
+            <div className="col-span-7 shadow border rounded-md p-5">
+              {/* Assign students */}
+              <div className="text-sm text-theme-gray">
+                Assign to faculty and or department
+              </div>
               <Spacer size="sm" />
 
               <form
                 className="flex items-center gap-4"
                 onSubmit={assignToFaculty}
               >
+                {/* Faculty */}
                 <Select
                   name="group"
                   onValueChange={(val) => {
                     if (!groups) return;
                     const target = groups.find((grp) => grp._id == val);
-                    // target && setSelectedGroup(target);
+                    target && setSelectedGroup(target);
                   }}
                   required
                 >
-                  <SelectTrigger className="w-full grow">
+                  <SelectTrigger className="w-full max-w-42">
                     <SelectValue
                       placeholder={
                         groups && groups?.length < 1
-                          ? "No faculty created"
-                          : "Choose faculty"
+                          ? "No faculties"
+                          : "Faculty"
                       }
                     />
                   </SelectTrigger>
                   <SelectContent>
                     {groups
                       ? groups.map((grp, key) => {
+                          return (
+                            <SelectItem value={grp._id} key={key}>
+                              {grp.name}
+                            </SelectItem>
+                          );
+                        })
+                      : ""}
+                  </SelectContent>
+                </Select>
+
+                {/* Department */}
+                <Select
+                  name="subgroup"
+                  onValueChange={(val) => {
+                    if (!groups) return;
+                    const target = groups.find((grp) => grp._id == val);
+                    // target && setSelectedGroup(target);
+                  }}
+                >
+                  <SelectTrigger className="max-w-42 min-w-42">
+                    <SelectValue
+                      placeholder={
+                        selectedGroup && selectedGroup.subGroups?.length < 1
+                          ? "No department"
+                          : "Department"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedGroup
+                      ? selectedGroup.subGroups.map((grp, key) => {
                           return (
                             <SelectItem value={grp._id} key={key}>
                               {grp.name}
@@ -720,8 +759,7 @@ const Page = ({ id }: { id: string }) => {
               </form>
               <Spacer size="md" />
 
-              {/* Assign to students */}
-              {/* Test Duration */}
+              {/* Assign to regNumber */}
               <div className="text-sm text-theme-gray">Assign to student</div>
               <Spacer size="sm" />
 
@@ -781,6 +819,7 @@ const Page = ({ id }: { id: string }) => {
           </div>
         </div>
       )}
+      <Spacer size="xl" />
     </div>
   );
 };

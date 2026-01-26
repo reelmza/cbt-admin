@@ -4,7 +4,7 @@ import { Spinner } from "./ui/spinner";
 type ButtonType = {
   title: string;
   loading: boolean;
-  variant: "fill" | "outline" | "fillError";
+  variant: "fill" | "outline" | "fillError" | "fillErrorOutline";
   icon?: JSX.Element;
   type?: "submit" | "button";
   onClick?: () => void;
@@ -24,6 +24,10 @@ const Button = ({
     }`,
 
     fillError: `flex items-center justify-center h-10 w-full font-medium rounded-md leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-theme-error hover:bg-theme-error/80 text-white shadow shadow-theme-error-light/20 ${
+      loading ? "opacity-75 pointer-events-none" : ""
+    }`,
+
+    fillErrorOutline: `flex items-center justify-center h-10 w-full font-medium rounded-md leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm border-theme-error/50 border text-theme-error ${
       loading ? "opacity-75 pointer-events-none" : ""
     }`,
 
