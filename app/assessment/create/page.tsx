@@ -28,9 +28,16 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
-import { ArrowRight, Plus, RefreshCcw, Trash2Icon, X } from "lucide-react";
+import {
+  ArrowRight,
+  Plus,
+  RefreshCcw,
+  Trash2Icon,
+  UploadCloud,
+  X,
+} from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   QuestionFormType,
   AssessmentType,
@@ -41,6 +48,8 @@ import { useRouter } from "next/navigation";
 import Papa from "papaparse";
 import { toastConfig } from "@/utils/toastConfig";
 import { toast } from "sonner";
+import { File } from "buffer";
+import Image from "next/image";
 
 const Main = () => {
   const controller = new AbortController();
@@ -67,6 +76,7 @@ const Main = () => {
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>("A");
+  const [qstImage, setQstImage] = useState<string | null>(null);
 
   // Delete a section
   const deleteSection = (type: String) => {
@@ -267,7 +277,7 @@ const Main = () => {
             <Spacer size="md" />
 
             {/* Section Indicator for debug */}
-            <div className="hisdden text-xs text-emerald-600 font-semibsold">
+            <div className="hidden text-xs text-emerald-600 font-semibsold">
               {activeSection || "No Active Section"}
             </div>
 
@@ -280,6 +290,7 @@ const Main = () => {
                 optionsParams={{ options, setOptions }}
                 correctAnswerParams={{ correctAnswer, setCorrectAnswer }}
                 activeSectionParams={{ activeSection, setActiveSection }}
+                qstImageParams={{ qstImage, setQstImage }}
               />
             )}
 
@@ -292,6 +303,7 @@ const Main = () => {
                 optionsParams={{ options, setOptions }}
                 correctAnswerParams={{ correctAnswer, setCorrectAnswer }}
                 activeSectionParams={{ activeSection, setActiveSection }}
+                qstImageParams={{ qstImage, setQstImage }}
               />
             )}
 
@@ -304,6 +316,7 @@ const Main = () => {
                 optionsParams={{ options, setOptions }}
                 correctAnswerParams={{ correctAnswer, setCorrectAnswer }}
                 activeSectionParams={{ activeSection, setActiveSection }}
+                qstImageParams={{ qstImage, setQstImage }}
               />
             )}
           </div>
@@ -360,6 +373,7 @@ const Main = () => {
                                     setOptions([qst.expectedAnswer]);
                                   }
 
+                                  setQstImage(qst.image);
                                   setQuestion(qst.question);
                                   setActiveSection([section.type, qstkey]);
                                 }}
@@ -379,6 +393,7 @@ const Main = () => {
                                   setCorrectAnswer("A"); // Works for obj only
                                   setQuestion("");
                                   setOptions([]);
+                                  setQstImage(null);
                                   setActiveSection([
                                     section.type,
                                     section.questions.length + 1,
@@ -748,12 +763,25 @@ const QuestionForm = ({
   optionsParams,
   correctAnswerParams,
   activeSectionParams,
+  qstImageParams,
 }: QuestionFormType) => {
   const { sections, setSections } = sectionParams;
   const { question, setQuestion } = questionParams;
   const { options, setOptions } = optionsParams;
   const { correctAnswer, setCorrectAnswer } = correctAnswerParams;
   const { activeSection, setActiveSection } = activeSectionParams;
+  const { qstImage, setQstImage } = qstImageParams;
+
+  const [showImagePreview, setShowImagePreview] = useState(false);
+
+  const imageToDataUri = (file: Blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
 
   const addQuestion = (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -779,6 +807,7 @@ const QuestionForm = ({
           return { label: opt[`${key}`], text: item };
         }),
         correctAnswer: correctAnswer as string,
+        image: qstImage || null,
       };
 
     // Arrange formdata for subjective
@@ -790,6 +819,7 @@ const QuestionForm = ({
         answerSlots: options.map((item, key) => {
           return { slotNumber: key + 1, possibleAnswers: item.split(",") };
         }),
+        image: qstImage || null,
       };
 
     // Arrange formdata for subjective
@@ -800,6 +830,7 @@ const QuestionForm = ({
         score: targetSection?.defaultQuestionScore || 1,
         expectedAnswer: options[0],
         requiresManualMarking: true,
+        image: qstImage || null,
       };
 
     // Check if update is the correct action to execute
@@ -830,6 +861,7 @@ const QuestionForm = ({
       toast.error("Your questions are upto 60", toastConfig);
       return;
     }
+
     // Else - Question is new so push to end of questions array
     setSections((prev) =>
       prev
@@ -919,7 +951,7 @@ const QuestionForm = ({
             <>
               {/* Add button */}
               <button
-                className="text-sm text-accent cursor-pointer leading-none border-r pr-2"
+                className="text-sm text-accent cursor-pointer leading-none border-rs pr-2"
                 type="button"
                 onClick={() =>
                   setOptions((prev) => {
@@ -933,22 +965,61 @@ const QuestionForm = ({
               </button>
 
               {/* Clear all button */}
-              <button
+              {/* <button
                 className="text-sm text-theme-error cursor-pointer leading-none"
                 type="button"
                 onClick={() => setOptions([])}
               >
                 Clear All Options
-              </button>
+              </button> */}
             </>
           )}
         </div>
 
-        {formType === "multiple_choice" && options.length > 0 && (
+        {/* Image Upload/ */}
+        <div className="relative overflow-hidden flex items-center gap-2 cursor-pointer text-accent bg-accent-light h-7 rounded-md">
+          {qstImage ? (
+            <div className="flex items-center gap-2 pl-2 h-full">
+              <button
+                className="text-sm"
+                onClick={() => setShowImagePreview(true)}
+                type="button"
+              >
+                View Image
+              </button>
+
+              <button
+                className="w-5 flex items-center justify-center h-full bg-accent text-accent-light cursor-pointer"
+                onClick={() => setQstImage(null)}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-2">
+              <UploadCloud size={16} />
+              <div className="text-accent text-sm">Upload Image</div>
+              <input
+                name="questionImage"
+                type="file"
+                className="absolute -left-30 opacity-0 cursor-pointer"
+                accept=".jpeg,.png,.jpg"
+                onChange={async (e) => {
+                  if (!e.target.files) return;
+                  const URI = await imageToDataUri(e.target.files[0]);
+                  setQstImage(URI as string);
+                }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Correct Answer Indicator */}
+        {/* {formType === "multiple_choice" && options.length > 0 && (
           <div className="text-sm text-theme-success">
             Corect Answer: {correctAnswer || "Nill"}
           </div>
-        )}
+        )} */}
       </div>
       <Spacer size="sm" />
 
@@ -1060,7 +1131,7 @@ const QuestionForm = ({
       <Spacer size="sm" />
 
       {/* Submit & Delete Button */}
-      <div className="flex gap-2">
+      <div className="flex justify-between gap-2">
         {/* Submit Question */}
         <div className="w-42">
           <Button
@@ -1086,12 +1157,34 @@ const QuestionForm = ({
               <Button
                 title={"Delete Question"}
                 loading={false}
-                variant={"fillError"}
+                variant={"fillErrorGhost"}
                 onClick={deleteQuestion}
+                icon={<Trash2Icon size={14} />}
               />
             </div>
           )}
       </div>
+
+      {/* Dialog - Preview Uploaded Image */}
+      <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Preview Image</DialogTitle>
+            <DialogDescription>
+              This is the image that will be displayed to the student
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="w-full flex items-center justify-center">
+            <Image
+              src={qstImage ? qstImage : ""}
+              height={320}
+              width={320}
+              alt="Question image"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };

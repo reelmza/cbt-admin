@@ -13,6 +13,7 @@ export type SectionType = {
     answerSlots: { slotNumber: number; possibleAnswers: string[] }[];
     expectedAnswer: string;
     correctAnswer: string;
+    image: string | null;
   }[];
 }[];
 
@@ -48,6 +49,11 @@ export type QuestionFormType = {
   correctAnswerParams: {
     correctAnswer: string | null;
     setCorrectAnswer: Dispatch<SetStateAction<string | null>>;
+  };
+
+  qstImageParams: {
+    qstImage: string | null;
+    setQstImage: Dispatch<SetStateAction<string | null>>;
   };
 
   activeSectionParams: {
