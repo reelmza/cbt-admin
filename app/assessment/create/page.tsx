@@ -114,6 +114,7 @@ const Main = () => {
     }
   };
 
+  // Helper function
   function formatCsvRowToQuestion(row: CsvRow): any {
     const OPTION_LABELS = ["A", "B", "C", "D"];
     const optionsArray = row.options
