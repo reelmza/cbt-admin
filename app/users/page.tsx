@@ -26,7 +26,7 @@ import { attachHeaders, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
 
-import { CloudUpload } from "lucide-react";
+import { CloudUpload, User2 } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -36,6 +36,8 @@ const Page = () => {
   const controller = new AbortController();
   const router = useRouter();
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
+  const [openPassUpload, setOpenPassUpload] = useState(false);
+
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<
     | null
@@ -94,6 +96,36 @@ const Page = () => {
     }
   };
 
+  const passUpload = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      passports: { files: File[] };
+    };
+
+    var formdata = new FormData();
+    formdata.append("file", target.passports.files[0], "passport.zip");
+
+    setLoading("passUpload");
+    try {
+      const res = await localAxios.post("/student/bulk-passport", formdata);
+      console.log(res);
+      if (res.status == 200) {
+        setLoading(null);
+        setOpenBulkUpload(false);
+        toast.success(res.data.message);
+        window.location.reload();
+      }
+    } catch (error: any) {
+      console.log(error);
+
+      if (error?.status == 400) {
+        toast.error("Error occured, Please check your file", toastConfig);
+      }
+      setLoading(null);
+    }
+  };
+
   useEffect(() => {
     if (!session) return;
 
@@ -141,13 +173,15 @@ const Page = () => {
         ]}
       />
       <Spacer size="lg" />
+
       {/* Table Options */}
       <div className="flex items-center justify-between">
         {/* Search bar */}
         <TableSearchBox placeholder="Search for a student" />
 
         {/* Buttons */}
-        <div>
+        <div className="flex items-center gap-4">
+          {/* Bulk Upload Students */}
           <div className="w-52">
             <Button
               title="Bulk Upload Students"
@@ -155,6 +189,17 @@ const Page = () => {
               variant="fill"
               loading={false}
               onClick={() => setOpenBulkUpload((prev) => !prev)}
+            />
+          </div>
+
+          {/* Bulk Upload Passports */}
+          <div className="w-52">
+            <Button
+              title="Bulk Upload Passports"
+              icon={<User2 size={16} strokeWidth={2.5} />}
+              variant="fill"
+              loading={false}
+              onClick={() => setOpenPassUpload((prev) => !prev)}
             />
           </div>
         </div>
@@ -199,6 +244,7 @@ const Page = () => {
         ""
       )}
 
+      {/* Dialogs - Student Bulk Upload */}
       <Dialog open={openBulkUpload} onOpenChange={setOpenBulkUpload}>
         <DialogContent>
           <DialogHeader>
@@ -291,6 +337,44 @@ const Page = () => {
             <div className="text-sm text-theme-gray">
               Use the template provided, if there is an error, no student will
               be uploaded.
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialogs - Student Passport Upload */}
+      <Dialog open={openPassUpload} onOpenChange={setOpenPassUpload}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Passports</DialogTitle>
+            <DialogDescription className="pr-28">
+              Upload passport zipped file
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="pr-28" onSubmit={passUpload}>
+            {/* File Upload */}
+            <Input
+              id="passports"
+              name="passports"
+              type="file"
+              className="cursor-pointer"
+              required
+            />
+            <Spacer size="md" />
+
+            {/* Submit Button */}
+            <Button
+              title={"Upload File"}
+              loading={loading === "passUpload"}
+              variant={"fill"}
+              icon={<CloudUpload size={20} />}
+            />
+            <Spacer size="md" />
+
+            <div className="text-sm text-theme-gray">
+              All passports will be matched to corresponding registration
+              numbers.
             </div>
           </form>
         </DialogContent>
