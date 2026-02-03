@@ -114,7 +114,6 @@ const Page = () => {
         setLoading(null);
         setOpenBulkUpload(false);
         toast.success(res.data.message);
-        window.location.reload();
       }
     } catch (error: any) {
       console.log(error);

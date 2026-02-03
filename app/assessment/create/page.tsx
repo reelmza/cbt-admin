@@ -32,6 +32,7 @@ import {
   ArrowRight,
   Plus,
   RefreshCcw,
+  RollerCoaster,
   Trash2Icon,
   UploadCloud,
   X,
@@ -775,13 +776,19 @@ const QuestionForm = ({
 
   const [showImagePreview, setShowImagePreview] = useState(false);
 
-  const imageToDataUri = (file: Blob) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
+  const imageToDataUri = async (file: Blob) => {
+    const formData = new FormData();
+    formData.append("file", file, "passport.zip");
+
+    try {
+      const res = await localAxios.post("/utility/file-upload", formData);
+      if (res.status == 200 || res.status == 201) {
+        console.log(res.data.data.url);
+        return res.data.data.url;
+      }
+    } catch (error: any) {
+      return null;
+    }
   };
 
   const addQuestion = (e: React.SyntheticEvent) => {
@@ -1008,7 +1015,16 @@ const QuestionForm = ({
                 onChange={async (e) => {
                   if (!e.target.files) return;
                   const URI = await imageToDataUri(e.target.files[0]);
-                  setQstImage(URI as string);
+
+                  if (!URI) {
+                    toast.error(
+                      "Unable to complete image upload, retry",
+                      toastConfig
+                    );
+                    return;
+                  }
+
+                  setQstImage(URI);
                 }}
               />
             </div>

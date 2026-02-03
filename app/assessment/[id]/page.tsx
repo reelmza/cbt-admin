@@ -16,6 +16,8 @@ import { PageDataType } from "./id.types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { toastConfig } from "@/utils/toastConfig";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const Page = ({ id }: { id: string }) => {
   const controller = new AbortController();
@@ -26,6 +28,7 @@ const Page = ({ id }: { id: string }) => {
   const [pageData, setPageData] = useState<PageDataType | null>(null);
   const [groups, setGroups] = useState<GroupType[] | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
+  const [departmentOnly, setDepartmentOnly] = useState(false);
 
   // Update assessment status
   const updateStatus = async (val: string) => {
@@ -250,9 +253,16 @@ const Page = ({ id }: { id: string }) => {
     e.preventDefault();
 
     const target = e.target as typeof e.target & {
+      level: { value: string };
       group: { value: string };
       subgroup: { value: string };
     };
+
+    // If no level selected
+    if (!target.level.value) {
+      toast.error("Please select a level", toastConfig);
+      return;
+    }
 
     setLoading("assignToFaculty");
     try {
@@ -260,7 +270,11 @@ const Page = ({ id }: { id: string }) => {
       const res = await localAxios.post(
         `/assessment/assign/${id}`,
         {
-          ...(target.group.value && { group: target.group.value }),
+          level: target.level.value,
+          ...(target.group.value &&
+            !departmentOnly && {
+              group: target.group.value,
+            }),
           ...(target.subgroup.value && { subgroup: target.subgroup.value }),
         },
         {
@@ -676,91 +690,118 @@ const Page = ({ id }: { id: string }) => {
             {/* Right Cards */}
             <div className="col-span-7 shadow border rounded-md p-5">
               {/* Assign students */}
-              <div className="text-sm text-theme-gray">
-                Assign to faculty and or department
+              <div className="text-sm">
+                Assign to level, faculty and/or department
               </div>
               <Spacer size="sm" />
 
-              <form
-                className="flex items-center gap-4"
-                onSubmit={assignToFaculty}
-              >
-                {/* Faculty */}
-                <Select
-                  name="group"
-                  onValueChange={(val) => {
-                    if (!groups) return;
-                    const target = groups.find((grp) => grp._id == val);
-                    target && setSelectedGroup(target);
-                  }}
-                  required
-                >
-                  <SelectTrigger className="w-full max-w-42">
-                    <SelectValue
-                      placeholder={
-                        groups && groups?.length < 1
-                          ? "No faculties"
-                          : "Faculty"
-                      }
-                    />
+              <form onSubmit={assignToFaculty}>
+                {/* Level */}
+                <Select name="level">
+                  <SelectTrigger className="w-full max-w-48">
+                    <SelectValue placeholder={"Select Level"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {groups
-                      ? groups.map((grp, key) => {
-                          return (
-                            <SelectItem value={grp._id} key={key}>
-                              {grp.name}
-                            </SelectItem>
-                          );
-                        })
-                      : ""}
+                    <SelectItem value={"100"}>100</SelectItem>
+                    <SelectItem value={"200"}>200</SelectItem>
+                    <SelectItem value={"300"}>300</SelectItem>
+                    <SelectItem value={"400"}>400</SelectItem>
+                    <SelectItem value={"500"}>500</SelectItem>
                   </SelectContent>
                 </Select>
+                <Spacer size="sm" />
 
-                {/* Department */}
-                <Select
-                  name="subgroup"
-                  onValueChange={(val) => {
-                    if (!groups) return;
-                    const target = groups.find((grp) => grp._id == val);
-                    // target && setSelectedGroup(target);
-                  }}
-                >
-                  <SelectTrigger className="max-w-42 min-w-42">
-                    <SelectValue
-                      placeholder={
-                        selectedGroup && selectedGroup.subGroups?.length < 1
-                          ? "No department"
-                          : "Department"
-                      }
+                {/* Faculty/department and button */}
+                <div className="w-full flex items-center justify-between">
+                  {/* Faculty */}
+                  <Select
+                    name="group"
+                    onValueChange={(val) => {
+                      if (!groups) return;
+                      const target = groups.find((grp) => grp._id == val);
+                      target && setSelectedGroup(target);
+                    }}
+                    disabled={departmentOnly}
+                  >
+                    <SelectTrigger className="w-full max-w-48">
+                      <SelectValue
+                        placeholder={
+                          groups && groups?.length < 1
+                            ? "No faculties"
+                            : "Select Faculty"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {groups
+                        ? groups.map((grp, key) => {
+                            return (
+                              <SelectItem value={grp._id} key={key}>
+                                {grp.name}
+                              </SelectItem>
+                            );
+                          })
+                        : ""}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Department */}
+                  <Select name="subgroup">
+                    <SelectTrigger className="max-w-42 min-w-42">
+                      <SelectValue
+                        placeholder={
+                          selectedGroup && selectedGroup.subGroups?.length < 1
+                            ? "No department"
+                            : "Select Department"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedGroup
+                        ? selectedGroup.subGroups.map((grp, key) => {
+                            return (
+                              <SelectItem value={grp._id} key={key}>
+                                {grp.name}
+                              </SelectItem>
+                            );
+                          })
+                        : ""}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Submit Button */}
+                  <div className="w-38 shrink-0">
+                    <Button
+                      type="submit"
+                      title="Assign"
+                      loading={loading === "assignToFaculty"}
+                      variant="outline"
                     />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedGroup
-                      ? selectedGroup.subGroups.map((grp, key) => {
-                          return (
-                            <SelectItem value={grp._id} key={key}>
-                              {grp.name}
-                            </SelectItem>
-                          );
-                        })
-                      : ""}
-                  </SelectContent>
-                </Select>
+                  </div>
+                </div>
+                <Spacer size="md" />
 
-                <div className="w-38 shrink-0">
-                  <Button
-                    type="submit"
-                    title="Assign"
-                    loading={loading === "assignToFaculty"}
-                    variant="outline"
+                {/* Assign to department only switch */}
+                <div className="w-full flex items-center space-x-2">
+                  <Switch
+                    id="assign-switch"
+                    name="departmentOnly"
+                    className="cursor-pointer"
+                    checked={departmentOnly}
+                    onCheckedChange={setDepartmentOnly}
                   />
+                  <Label
+                    htmlFor="assign-switch"
+                    className="cursor-pointer font-normal text-theme-gray"
+                  >
+                    Assign to department only?
+                  </Label>
                 </div>
               </form>
-              <Spacer size="md" />
+              <Spacer size="lg" />
 
               {/* Assign to regNumber */}
-              <div className="text-sm text-theme-gray">Assign to student</div>
+              <div className="text-sm">Assign to student</div>
               <Spacer size="sm" />
 
               <form
@@ -782,12 +823,10 @@ const Page = ({ id }: { id: string }) => {
                   />
                 </div>
               </form>
-              <Spacer size="md" />
+              <Spacer size="lg" />
 
               {/* Generate entries */}
-              <div className="text-sm text-theme-gray">
-                Generate Attempts List
-              </div>
+              <div className="text-sm">Generate Attempts List</div>
               <Spacer size="sm" />
 
               <div className="flex items-center-safe gap-4">
