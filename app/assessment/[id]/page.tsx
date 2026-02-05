@@ -275,7 +275,7 @@ const Page = ({ id }: { id: string }) => {
             !departmentOnly && {
               group: target.group.value,
             }),
-          ...(target.subgroup.value && { subgroup: target.subgroup.value }),
+          ...(target.subgroup.value && { subGroup: target.subgroup.value }),
         },
         {
           signal: controller.signal,
