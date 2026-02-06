@@ -118,20 +118,30 @@ const Main = () => {
   // Helper function
   function formatCsvRowToQuestion(row: CsvRow): any {
     const OPTION_LABELS = ["A", "B", "C", "D"];
-    const optionsArray = row.options
-      .split(",")
-      .map((opt) => opt.trim())
-      .filter(Boolean);
 
     return {
       question: row.question.trim(),
-      type: row.type.trim(),
+      type: "multiple_choice",
       score: Number(row.score),
-      correctAnswer: row.correctAnswer.trim(),
-      options: optionsArray.map((text, index) => ({
-        label: OPTION_LABELS[index],
-        text,
-      })),
+      correctAnswer: row.correct_answer.trim(),
+      options: [
+        {
+          label: "A",
+          text: row.option_a,
+        },
+        {
+          label: "B",
+          text: row.option_b,
+        },
+        {
+          label: "C",
+          text: row.option_c,
+        },
+        {
+          label: "D",
+          text: row.option_d,
+        },
+      ],
     };
   }
 
@@ -144,40 +154,54 @@ const Main = () => {
       header: true, // column headers in CSV
       skipEmptyLines: true,
       complete: (results) => {
-        // Refference element, use the first in the list
-        const ref = results.data[0];
+        // Use first row as headers row
+        const headers = results.data[0];
 
         // Incorrect schema throw file error
         if (
-          !ref.type ||
-          !ref.question ||
-          !ref.correctAnswer ||
-          !ref.options ||
-          !ref.score
+          !headers.question ||
+          !headers.option_a ||
+          !headers.option_b ||
+          !headers.option_c ||
+          !headers.option_d ||
+          !headers.correct_answer ||
+          !headers.score
         ) {
-          console.log(ref);
-          toast.error("Invalid file or check entries", toastConfig);
+          console.log(headers);
+          toast.error("Invalid file or check columns and entries", toastConfig);
           return;
         }
 
         setSections((prev) => {
+          // There should aways be a prev,
+          // because a section needs to be initialized for bulk upload button to be vissible
           if (!prev) return prev;
-          const newArr = [...prev]; // Spread new array
+
+          // Spread new array
+          const newArr = [...prev];
 
           newArr.map((sct) => {
-            if (sct.type === results.data[0].type) {
+            // Bulk upload logic if current section being itterated is multiple_choice
+            if (sct.type === "multiple_choice") {
               sct.questions = results.data.map((rw) =>
                 formatCsvRowToQuestion(rw)
               );
             }
           });
 
+          console.log(newArr);
+
           return newArr;
         });
 
-        setActiveSection([results.data[0].type, 0]);
+        setActiveSection(["multiple_choice", 0]);
         setQuestion(results.data[0].question);
-        setOptions(results.data[0].options.split(","));
+        setOptions([
+          results.data[0].option_a,
+          results.data[0].option_b,
+          results.data[0].option_c,
+          results.data[0].option_d,
+        ]);
         toast.success("Questions uploaded successfully", toastConfig);
       },
       error: (err) => {
@@ -324,7 +348,7 @@ const Main = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="w-3/10 border rounded-md shadow-xl shadow-theme-gray-light/30 px-5 py-3">
+          <div className="w-3/10 border rounded-md shadow-xl shadow-theme-gray-light/30 px-5 py-3 overflow-hidden">
             {/* Sidebar Heading */}
             <div className="font-semibold text-xl">Sections & Questions</div>
 
@@ -888,7 +912,7 @@ const QuestionForm = ({
     );
 
     // Reset form only when questions are less than 60
-    if (targetSection && targetSection.questions.length < 60) {
+    if (targetSection && targetSection.questions.length < 100) {
       setCorrectAnswer("A");
       setQuestion("");
       setOptions([]);

@@ -3,7 +3,7 @@ import axios from "axios";
 // Axios Instance
 export const localAxios = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASEURL,
-  timeout: 15_000,
+  timeout: 30_000,
   // withCredentials: true,
 });
 
