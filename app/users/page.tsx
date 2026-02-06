@@ -225,7 +225,11 @@ const Page = () => {
                   value: prettyDate(item?.createdAt.split("T")[0]) || "-",
                   colSpan: "col-span-2",
                 },
-                { value: item._id, colSpan: "col-span-1", type: "link" },
+                {
+                  value: `users/${item.regNumber.split("/").join("%2F")}`,
+                  colSpan: "col-span-1",
+                  type: "link",
+                },
               ])
             : []
         }
