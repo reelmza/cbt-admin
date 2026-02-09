@@ -839,7 +839,7 @@ const QuestionForm = ({
           return { label: opt[`${key}`], text: item };
         }),
         correctAnswer: correctAnswer as string,
-        image: qstImage || null,
+        ...(qstImage && { image: qstImage }),
       };
 
     // Arrange formdata for subjective

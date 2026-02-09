@@ -4,7 +4,6 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-
   --accent-light: #f1f1ff;
   --accent-mid: #d6d3e2;
   --accent: #2c187b;
