@@ -57,7 +57,7 @@ const Page = () => {
         school: session?.user.id,
       });
 
-      if (res.status === 201) {
+      if (res.status === 200) {
         setLoading(null);
         setShowCreateGroup(false);
         setPageData((prev) => {
