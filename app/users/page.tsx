@@ -137,13 +137,13 @@ const Page = () => {
           signal: controller.signal,
         });
 
-        // Get Groups
+        // Get Groups (Faculties)
         const groupRes = await localAxios.get("/school/groups", {
           signal: controller.signal,
         });
 
-        if (res.status === 200 && groupRes.status === 201) {
-          console.log(res.data.data);
+        if (res.status === 200 && groupRes.status === 200) {
+          console.log(res);
           setGroups(groupRes.data.data);
           setPageData(res.data.data.data);
         }
@@ -166,7 +166,7 @@ const Page = () => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      {!loading && (
+      {!loading && pageData && (
         <>
           <PageNavigator
             navList={[
@@ -229,7 +229,7 @@ const Page = () => {
                       colSpan: "col-span-2",
                     },
                     {
-                      value: `users/${item.regNumber.split("/").join("%2F")}`,
+                      value: `users/${item._id}`,
                       colSpan: "col-span-1",
                       type: "link",
                     },
