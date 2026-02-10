@@ -57,7 +57,7 @@ const Page = () => {
         school: session?.user.id,
       });
 
-      if (res.status === 200) {
+      if (res.status === 201) {
         setLoading(null);
         setShowCreateGroup(false);
         setPageData((prev) => {
@@ -82,7 +82,7 @@ const Page = () => {
           signal: controller.signal,
         });
 
-        if (res.status === 201) {
+        if (res.status === 200) {
           const data: any = [];
 
           res.data.data.forEach((grp: any) => {

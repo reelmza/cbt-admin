@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { toastConfig } from "@/utils/toastConfig";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 
 const Page = ({ id }: { id: string }) => {
   const controller = new AbortController();
@@ -439,7 +440,7 @@ const Page = ({ id }: { id: string }) => {
           signal: controller.signal,
         });
 
-        if (res.status === 201 && groupRes.status === 201) {
+        if (res.status === 201 && groupRes.status === 200) {
           setGroups(groupRes.data.data);
           setPageData(res.data.data);
         }
@@ -463,403 +464,422 @@ const Page = ({ id }: { id: string }) => {
   return (
     <div className="w-full h-full p-10 font-sans">
       {pageData && (
-        <div className="w-full min-h-full">
-          {/* Title */}
-          <div>
-            <div className="text-2xl font-semibold">{pageData.course.code}</div>
-            <div className="text-theme-gray">{pageData.course.title}</div>
-          </div>
-          <Spacer size="md" />
-
-          {/* Top Cards*/}
-          <div className="grid grid-cols-12 gap-4">
-            {[
-              { title: "Vissibility", value: pageData.status },
-
-              {
-                title: "Questions",
-                value: pageData.sections.reduce((acc, sct) => {
-                  if (!sct.questions || sct.questions.length < 1) {
-                    return acc;
-                  }
-
-                  return acc + sct.questions.length;
-                }, 0),
-              },
-              { title: "Total Marks", value: pageData.totalMarks },
-              { title: "Time Allocated", value: pageData.timeLimit + " min" },
-            ].map((card, key) => {
-              return (
-                <div
-                  key={key}
-                  className="col-span-3 p-5 shadow rounded-lg border flex flex-col gap-5"
-                >
-                  <div className="text-theme-gray text-sm">{card.title}</div>
-
-                  <div className="flex flex-col justify-end h-10">
-                    {/* Badge Values */}
-                    {card.title === "Vissibility" && (
-                      <div
-                        className={`w-fit text-xs px-2 py-0.5 rounded-sm mb-1 ${
-                          card.value == "published"
-                            ? "text-emerald-600 bg-emerald-100"
-                            : ""
-                        }`}
-                      >
-                        {card.value}
-                      </div>
-                    )}
-
-                    {/* Normal Values */}
-                    {card.title !== "Vissibility" && (
-                      <div className={`text-2xl font-bold`}>{card.value}</div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <Spacer size="lg" />
-
-          {/* Control Cards*/}
-          <div className="grid grid-cols-12 gap-4">
-            {/* Left Cards */}
-            <div className="col-span-5 shadow border rounded-md p-5">
-              {/* Test Vissibility */}
-              <div className="text-sm text-theme-gray">Test Vissibility</div>
-              <Spacer size="sm" />
-
-              <div className="flex items-center gap-4">
-                <Select
-                  defaultValue={pageData.status}
-                  onValueChange={updateStatus}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Change Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                  </SelectContent>
-                </Select>
+        <>
+          <div className="w-full min-h-full">
+            {/* Title */}
+            <div>
+              <div className="text-2xl font-semibold">
+                {pageData.course.code}
               </div>
-              <Spacer size="md" />
-
-              {/* Test Duration */}
-              <div className="text-sm text-theme-gray">
-                Test Duration (in minutes e.g 40 or 120)
-              </div>
-              <Spacer size="sm" />
-
-              <form
-                className="flex items-center gap-4"
-                onSubmit={updateDuration}
-              >
-                <Input
-                  defaultValue={pageData.timeLimit.toString() || ""}
-                  name="duration"
-                  type="number"
-                  placeholder="Enter duration in minutes"
-                />
-
-                <div className="w-32 shrink-0">
-                  <Button
-                    type="submit"
-                    title="Save"
-                    loading={loading == `updateDuration`}
-                    variant="outline"
-                  />
-                </div>
-              </form>
-              <Spacer size="md" />
-
-              {/* Test Status */}
-              <div className="text-sm text-theme-gray">Test Status</div>
-              <Spacer size="md" />
-
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="grow">
-                  <div className="h-10 w-full border rounded-md p-3 flex items-center text-sm">
-                    {/* Ended by admin */}
-                    {pageData?.authorizedToStart && pageData.endReason
-                      ? pageData.endReason
-                      : ""}
-
-                    {pageData?.authorizedToStart && !pageData.endReason
-                      ? "Ongoing"
-                      : ""}
-
-                    {/* Not started */}
-                    {!pageData.authorizedToStart && !pageData.endReason
-                      ? "Not cleared to start"
-                      : ""}
-                  </div>
-                </div>
-
-                {/* Exam not started */}
-                {!pageData.endReason && (
-                  <div className="shrink-0 w-38">
-                    <Button
-                      title={
-                        pageData.authorizedToStart ? "Pause Exam" : "Start Exam"
-                      }
-                      type="button"
-                      variant="fill"
-                      loading={loading === "authorizeAss"}
-                      onClick={authorizeAss}
-                    />
-                  </div>
-                )}
-
-                {/* Exam ongoing, not ended */}
-                {pageData.authorizedToStart && !pageData.endReason && (
-                  <div className="shrink-0 w-38">
-                    <Button
-                      title="End Exam"
-                      type="button"
-                      variant="fillErrorOutline"
-                      loading={false}
-                      onClick={endAssessment}
-                    />
-                  </div>
-                )}
-              </div>
-              <Spacer size="md" />
-
-              {/* Start Date */}
-              <div className="text-sm text-theme-gray">Start Date</div>
-              <Spacer size="sm" />
-              <form
-                className="flex items-center gap-4"
-                onSubmit={updateStartDate}
-              >
-                <Input
-                  defaultValue={pageData.startDate.split("T")[0] || ""}
-                  name="startDate"
-                  type="date"
-                  placeholder=""
-                />
-
-                <div className="w-32 shrink-0">
-                  <Button
-                    type="submit"
-                    title="Save"
-                    loading={loading === "updateStartDate"}
-                    variant="outline"
-                  />
-                </div>
-              </form>
-              <Spacer size="md" />
-
-              {/* Due Date */}
-              <div className="text-sm text-theme-gray">Due Date</div>
-              <Spacer size="sm" />
-              <form
-                className="flex items-center gap-4"
-                onSubmit={updateDueDate}
-              >
-                <Input
-                  defaultValue={pageData.dueDate.split("T")[0] || ""}
-                  name="dueDate"
-                  type="date"
-                  placeholder=""
-                />
-
-                <div className="w-32 shrink-0">
-                  <Button
-                    type="submit"
-                    title="Save"
-                    loading={loading === "updateDueDate"}
-                    variant="outline"
-                  />
-                </div>
-              </form>
-
-              <Spacer size="xl" />
-
-              {/* Delete assessment */}
-              <div className="w-48">
-                <Button
-                  title={"Delete Assessment"}
-                  loading={loading === "deleteAss"}
-                  variant={"fillErrorOutline"}
-                  onClick={deleteAss}
-                />
-              </div>
+              <div className="text-theme-gray">{pageData.course.title}</div>
             </div>
+            <Spacer size="md" />
 
-            {/* Right Cards */}
-            <div className="col-span-7 shadow border rounded-md p-5">
-              {/* Assign students */}
-              <div className="text-sm">
-                Assign to level, faculty and/or department
-              </div>
-              <Spacer size="sm" />
+            {/* Top Cards*/}
+            <div className="grid grid-cols-12 gap-4">
+              {[
+                { title: "Vissibility", value: pageData.status },
 
-              <form onSubmit={assignToFaculty}>
-                {/* Level */}
-                <Select name="level">
-                  <SelectTrigger className="w-full max-w-48">
-                    <SelectValue placeholder={"Select Level"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={"100"}>100</SelectItem>
-                    <SelectItem value={"200"}>200</SelectItem>
-                    <SelectItem value={"300"}>300</SelectItem>
-                    <SelectItem value={"400"}>400</SelectItem>
-                    <SelectItem value={"500"}>500</SelectItem>
-                  </SelectContent>
-                </Select>
+                {
+                  title: "Questions",
+                  value: pageData.sections.reduce((acc, sct) => {
+                    if (!sct.questions || sct.questions.length < 1) {
+                      return acc;
+                    }
+
+                    return acc + sct.questions.length;
+                  }, 0),
+                },
+                { title: "Total Marks", value: pageData.totalMarks },
+                { title: "Time Allocated", value: pageData.timeLimit + " min" },
+              ].map((card, key) => {
+                return (
+                  <div
+                    key={key}
+                    className="col-span-3 p-5 shadow rounded-lg border flex flex-col gap-5"
+                  >
+                    <div className="text-theme-gray text-sm">{card.title}</div>
+
+                    <div className="flex flex-col justify-end h-10">
+                      {/* Badge Values */}
+                      {card.title === "Vissibility" && (
+                        <div
+                          className={`w-fit text-xs px-2 py-0.5 rounded-sm mb-1 ${
+                            card.value == "published"
+                              ? "text-emerald-600 bg-emerald-100"
+                              : ""
+                          }`}
+                        >
+                          {card.value}
+                        </div>
+                      )}
+
+                      {/* Normal Values */}
+                      {card.title !== "Vissibility" && (
+                        <div className={`text-2xl font-bold`}>{card.value}</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <Spacer size="lg" />
+
+            {/* Control Cards*/}
+            <div className="grid grid-cols-12 gap-4">
+              {/* Left Cards */}
+              <div className="col-span-5 shadow border rounded-md p-5">
+                {/* Test Vissibility */}
+                <div className="text-sm text-theme-gray">Test Vissibility</div>
                 <Spacer size="sm" />
 
-                {/* Faculty/department and button */}
-                <div className="w-full flex items-center justify-between">
-                  {/* Faculty */}
+                <div className="flex items-center gap-4">
                   <Select
-                    name="group"
-                    onValueChange={(val) => {
-                      if (!groups) return;
-                      const target = groups.find((grp) => grp._id == val);
-                      target && setSelectedGroup(target);
-                    }}
-                    disabled={departmentOnly}
+                    defaultValue={pageData.status}
+                    onValueChange={updateStatus}
                   >
-                    <SelectTrigger className="w-full max-w-48">
-                      <SelectValue
-                        placeholder={
-                          groups && groups?.length < 1
-                            ? "No faculties"
-                            : "Select Faculty"
-                        }
-                      />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Change Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {groups
-                        ? groups.map((grp, key) => {
-                            return (
-                              <SelectItem value={grp._id} key={key}>
-                                {grp.name}
-                              </SelectItem>
-                            );
-                          })
-                        : ""}
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
                     </SelectContent>
                   </Select>
-
-                  {/* Department */}
-                  <Select name="subgroup">
-                    <SelectTrigger className="max-w-42 min-w-42">
-                      <SelectValue
-                        placeholder={
-                          selectedGroup && selectedGroup.subGroups?.length < 1
-                            ? "No department"
-                            : "Select Department"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedGroup
-                        ? selectedGroup.subGroups.map((grp, key) => {
-                            return (
-                              <SelectItem value={grp._id} key={key}>
-                                {grp.name}
-                              </SelectItem>
-                            );
-                          })
-                        : ""}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Submit Button */}
-                  <div className="w-38 shrink-0">
-                    <Button
-                      type="submit"
-                      title="Assign"
-                      loading={loading === "assignToFaculty"}
-                      variant="outline"
-                    />
-                  </div>
                 </div>
                 <Spacer size="md" />
 
-                {/* Assign to department only switch */}
-                <div className="w-full flex items-center space-x-2">
-                  <Switch
-                    id="assign-switch"
-                    name="departmentOnly"
-                    className="cursor-pointer"
-                    checked={departmentOnly}
-                    onCheckedChange={setDepartmentOnly}
-                  />
-                  <Label
-                    htmlFor="assign-switch"
-                    className="cursor-pointer font-normal text-theme-gray"
-                  >
-                    Assign to department only?
-                  </Label>
+                {/* Test Duration */}
+                <div className="text-sm text-theme-gray">
+                  Test Duration (in minutes e.g 40 or 120)
                 </div>
-              </form>
-              <Spacer size="lg" />
+                <Spacer size="sm" />
 
-              {/* Assign to regNumber */}
-              <div className="text-sm">Assign to student</div>
-              <Spacer size="sm" />
-
-              <form
-                className="flex items-center gap-4"
-                onSubmit={assignToStudent}
-              >
-                <Input
-                  name="regNumber"
-                  type="text"
-                  placeholder="Enter registration number"
-                />
-
-                <div className="w-38 shrink-0">
-                  <Button
-                    type="submit"
-                    loading={loading === "assignToStudent"}
-                    title="Assign"
-                    variant="outline"
+                <form
+                  className="flex items-center gap-4"
+                  onSubmit={updateDuration}
+                >
+                  <Input
+                    defaultValue={pageData.timeLimit.toString() || ""}
+                    name="duration"
+                    type="number"
+                    placeholder="Enter duration in minutes"
                   />
+
+                  <div className="w-32 shrink-0">
+                    <Button
+                      type="submit"
+                      title="Save"
+                      loading={loading == `updateDuration`}
+                      variant="outline"
+                    />
+                  </div>
+                </form>
+                <Spacer size="md" />
+
+                {/* Test Status */}
+                <div className="text-sm text-theme-gray">Test Status</div>
+                <Spacer size="md" />
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="grow">
+                    <div className="h-10 w-full border rounded-md p-3 flex items-center text-sm">
+                      {/* Ended by admin */}
+                      {pageData?.authorizedToStart && pageData.endReason
+                        ? pageData.endReason
+                        : ""}
+
+                      {pageData?.authorizedToStart && !pageData.endReason
+                        ? "Ongoing"
+                        : ""}
+
+                      {/* Not started */}
+                      {!pageData.authorizedToStart && !pageData.endReason
+                        ? "Not cleared to start"
+                        : ""}
+                    </div>
+                  </div>
+
+                  {/* Exam not started */}
+                  {!pageData.endReason && (
+                    <div className="shrink-0 w-38">
+                      <Button
+                        title={
+                          pageData.authorizedToStart
+                            ? "Pause Exam"
+                            : "Start Exam"
+                        }
+                        type="button"
+                        variant="fill"
+                        loading={loading === "authorizeAss"}
+                        onClick={authorizeAss}
+                      />
+                    </div>
+                  )}
+
+                  {/* Exam ongoing, not ended */}
+                  {pageData.authorizedToStart && !pageData.endReason && (
+                    <div className="shrink-0 w-38">
+                      <Button
+                        title="End Exam"
+                        type="button"
+                        variant="fillErrorOutline"
+                        loading={false}
+                        onClick={endAssessment}
+                      />
+                    </div>
+                  )}
                 </div>
-              </form>
-              <Spacer size="lg" />
+                <Spacer size="md" />
 
-              {/* Generate entries */}
-              <div className="text-sm">Generate Attempts List</div>
-              <Spacer size="sm" />
-
-              <div className="flex items-center-safe gap-4">
-                {/* Generate Entries */}
-                <div className="w-42">
-                  <Button
-                    type="button"
-                    title={"Generate Entries"}
-                    loading={loading == "generateAssEntries"}
-                    variant={"fill"}
-                    onClick={() => generateAssEntries()}
+                {/* Start Date */}
+                <div className="text-sm text-theme-gray">Start Date</div>
+                <Spacer size="sm" />
+                <form
+                  className="flex items-center gap-4"
+                  onSubmit={updateStartDate}
+                >
+                  <Input
+                    defaultValue={pageData.startDate.split("T")[0] || ""}
+                    name="startDate"
+                    type="date"
+                    placeholder=""
                   />
-                </div>
 
-                {/* Generate Result */}
-                <div className="w-42">
+                  <div className="w-32 shrink-0">
+                    <Button
+                      type="submit"
+                      title="Save"
+                      loading={loading === "updateStartDate"}
+                      variant="outline"
+                    />
+                  </div>
+                </form>
+                <Spacer size="md" />
+
+                {/* Due Date */}
+                <div className="text-sm text-theme-gray">Due Date</div>
+                <Spacer size="sm" />
+                <form
+                  className="flex items-center gap-4"
+                  onSubmit={updateDueDate}
+                >
+                  <Input
+                    defaultValue={pageData.dueDate.split("T")[0] || ""}
+                    name="dueDate"
+                    type="date"
+                    placeholder=""
+                  />
+
+                  <div className="w-32 shrink-0">
+                    <Button
+                      type="submit"
+                      title="Save"
+                      loading={loading === "updateDueDate"}
+                      variant="outline"
+                    />
+                  </div>
+                </form>
+
+                <Spacer size="xl" />
+
+                {/* Delete assessment */}
+                <div className="w-48">
                   <Button
-                    type="button"
-                    title={"Generate Results"}
-                    loading={loading == "generateAssResults"}
-                    variant={"fill"}
-                    onClick={() => generateAssResults()}
+                    title={"Delete Assessment"}
+                    loading={loading === "deleteAss"}
+                    variant={"fillErrorOutline"}
+                    onClick={deleteAss}
                   />
                 </div>
               </div>
 
-              <Spacer size="sm" />
+              {/* Right Cards */}
+              <div className="col-span-7 shadow border rounded-md p-5">
+                {/* Assign students */}
+                <div className="text-sm">
+                  Assign to level, faculty and/or department
+                </div>
+                <Spacer size="sm" />
+
+                <form onSubmit={assignToFaculty}>
+                  {/* Level */}
+                  <Select name="level">
+                    <SelectTrigger className="w-full max-w-48">
+                      <SelectValue placeholder={"Select Level"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={"100"}>100</SelectItem>
+                      <SelectItem value={"200"}>200</SelectItem>
+                      <SelectItem value={"300"}>300</SelectItem>
+                      <SelectItem value={"400"}>400</SelectItem>
+                      <SelectItem value={"500"}>500</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Spacer size="sm" />
+
+                  {/* Faculty/department and button */}
+                  <div className="w-full flex items-center justify-between">
+                    {/* Faculty */}
+                    <Select
+                      name="group"
+                      onValueChange={(val) => {
+                        if (!groups) return;
+                        const target = groups.find((grp) => grp._id == val);
+                        target && setSelectedGroup(target);
+                      }}
+                      disabled={departmentOnly}
+                    >
+                      <SelectTrigger className="w-full max-w-48">
+                        <SelectValue
+                          placeholder={
+                            groups && groups?.length < 1
+                              ? "No faculties"
+                              : "Select Faculty"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {groups
+                          ? groups.map((grp, key) => {
+                              return (
+                                <SelectItem value={grp._id} key={key}>
+                                  {grp.name}
+                                </SelectItem>
+                              );
+                            })
+                          : ""}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Department */}
+                    <Select name="subgroup">
+                      <SelectTrigger className="max-w-42 min-w-42">
+                        <SelectValue
+                          placeholder={
+                            selectedGroup && selectedGroup.subGroups?.length < 1
+                              ? "No department"
+                              : "Select Department"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedGroup
+                          ? selectedGroup.subGroups.map((grp, key) => {
+                              return (
+                                <SelectItem value={grp._id} key={key}>
+                                  {grp.name}
+                                </SelectItem>
+                              );
+                            })
+                          : ""}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Submit Button */}
+                    <div className="w-38 shrink-0">
+                      <Button
+                        type="submit"
+                        title="Assign"
+                        loading={loading === "assignToFaculty"}
+                        variant="outline"
+                      />
+                    </div>
+                  </div>
+                  <Spacer size="md" />
+
+                  {/* Assign to department only switch */}
+                  <div className="w-full flex items-center space-x-2">
+                    <Switch
+                      id="assign-switch"
+                      name="departmentOnly"
+                      className="cursor-pointer"
+                      checked={departmentOnly}
+                      onCheckedChange={setDepartmentOnly}
+                    />
+                    <Label
+                      htmlFor="assign-switch"
+                      className="cursor-pointer font-normal text-theme-gray"
+                    >
+                      Assign to department only?
+                    </Label>
+                  </div>
+                </form>
+                <Spacer size="lg" />
+
+                {/* Assign to regNumber */}
+                <div className="text-sm">Assign to student</div>
+                <Spacer size="sm" />
+
+                <form
+                  className="flex items-center gap-4"
+                  onSubmit={assignToStudent}
+                >
+                  <Input
+                    name="regNumber"
+                    type="text"
+                    placeholder="Enter registration number"
+                  />
+
+                  <div className="w-38 shrink-0">
+                    <Button
+                      type="submit"
+                      loading={loading === "assignToStudent"}
+                      title="Assign"
+                      variant="outline"
+                    />
+                  </div>
+                </form>
+                <Spacer size="lg" />
+
+                {/* Generate entries */}
+                <div className="text-sm">Generate Attempts List</div>
+                <Spacer size="sm" />
+
+                <div className="flex items-center-safe gap-4">
+                  {/* Generate Entries */}
+                  <div className="w-42">
+                    <Button
+                      type="button"
+                      title={"Generate Entries"}
+                      loading={loading == "generateAssEntries"}
+                      variant={"fill"}
+                      onClick={() => generateAssEntries()}
+                    />
+                  </div>
+
+                  {/* Generate Result */}
+                  <div className="w-42">
+                    <Button
+                      type="button"
+                      title={"Generate Results"}
+                      loading={loading == "generateAssResults"}
+                      variant={"fill"}
+                      onClick={() => generateAssResults()}
+                    />
+                  </div>
+                </div>
+
+                <Spacer size="sm" />
+              </div>
             </div>
           </div>
-        </div>
+
+          {/* Spacer */}
+          <Spacer size="xl" />
+          <Spacer size="xl" />
+        </>
       )}
-      <Spacer size="xl" />
+
+      {/* Page Loading */}
+      {loading === "page" ? (
+        <div className="flex items-center gap-2 mt-2 text-theme-gray">
+          <Spinner />
+          <div className="text-sm">Fetching data</div>
+        </div>
+      ) : (
+        ""
+      )}
     </div>
   );
 };
