@@ -71,7 +71,7 @@ const Page = () => {
           signal: controller.signal,
         });
 
-        if (res.status === 201) {
+        if (res.status === 200) {
           setPageData(res.data.data);
         }
 
