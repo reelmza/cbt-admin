@@ -14,21 +14,21 @@ const Page = () => {
     {
       name: "Bulk Upload Students",
       description: "Bulk upload students from a template file.",
-      icon: <CloudUpload size={40} className="text-accent-dim" />,
+      icon: <CloudUpload size={38} className="text-accent-dim" />,
       route: "/users",
     },
 
     {
       name: "Create an Assessment",
       description: "Create an instant assesment or schedule for a future date.",
-      icon: <Notebook size={40} className="text-accent-dim" />,
+      icon: <Notebook size={38} className="text-accent-dim" />,
       route: "/assessment",
     },
 
     {
-      name: "Create a Group",
-      description: "Create a group or a subgroup for a particular assessment.",
-      icon: <UsersRound size={40} className="text-accent-dim" />,
+      name: "Create a Faulty",
+      description: "Create a faculty or a department for a particular.",
+      icon: <UsersRound size={38} className="text-accent-dim" />,
       route: "/groups",
     },
   ];

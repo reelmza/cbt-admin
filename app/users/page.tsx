@@ -133,7 +133,7 @@ const Page = () => {
         attachHeaders(session!.user.token);
 
         // Get Students
-        const res = await localAxios.get("/student/all", {
+        const res = await localAxios.get("/student/all?pageNumber=1", {
           signal: controller.signal,
         });
 
@@ -147,6 +147,7 @@ const Page = () => {
           setGroups(groupRes.data.data);
           setPageData(res.data.data.data);
         }
+
         setLoading(null);
       } catch (error: any) {
         if (error.name !== "CanceledError") {
@@ -165,77 +166,85 @@ const Page = () => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      <PageNavigator
-        navList={[
-          { name: "Students", route: "/users" },
-          { name: "Administrators", route: "/users/staff" },
-        ]}
-      />
-      <Spacer size="lg" />
+      {!loading && (
+        <>
+          <PageNavigator
+            navList={[
+              { name: "Students", route: "/users" },
+              { name: "Administrators", route: "/users/staff" },
+            ]}
+          />
+          <Spacer size="lg" />
 
-      {/* Table Options */}
-      <div className="flex items-center justify-between">
-        {/* Search bar */}
-        <TableSearchBox placeholder="Search for a student" />
+          {/* Table Options */}
+          <div className="flex items-center justify-between">
+            {/* Search bar */}
+            <TableSearchBox placeholder="Search for a student" />
 
-        {/* Buttons */}
-        <div className="flex items-center gap-4">
-          {/* Bulk Upload Students */}
-          <div className="w-52">
-            <Button
-              title="Bulk Upload Students"
-              icon={<CloudUpload size={16} strokeWidth={2.5} />}
-              variant="fill"
-              loading={false}
-              onClick={() => setOpenBulkUpload((prev) => !prev)}
-            />
+            {/* Buttons */}
+            <div className="flex items-center gap-4">
+              {/* Bulk Upload Students */}
+              <div className="w-52">
+                <Button
+                  title="Bulk Upload Students"
+                  icon={<CloudUpload size={16} strokeWidth={2.5} />}
+                  variant="fill"
+                  loading={false}
+                  onClick={() => setOpenBulkUpload((prev) => !prev)}
+                />
+              </div>
+
+              {/* Bulk Upload Passports */}
+              <div className="w-52">
+                <Button
+                  title="Bulk Upload Passports"
+                  icon={<User2 size={16} strokeWidth={2.5} />}
+                  variant="fill"
+                  loading={false}
+                  onClick={() => setOpenPassUpload((prev) => !prev)}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Bulk Upload Passports */}
-          <div className="w-52">
-            <Button
-              title="Bulk Upload Passports"
-              icon={<User2 size={16} strokeWidth={2.5} />}
-              variant="fill"
-              loading={false}
-              onClick={() => setOpenPassUpload((prev) => !prev)}
-            />
-          </div>
-        </div>
-      </div>
+          {/* Table */}
+          <Table
+            tableHeading={[
+              { value: "Student Name", colSpan: "col-span-4" },
+              { value: "Registration Number", colSpan: "col-span-2" },
+              { value: "Level", colSpan: "col-span-1" },
+              { value: "Phone Number", colSpan: "col-span-2" },
+              { value: "Enrolled", colSpan: "col-span-2" },
+              { value: "", colSpan: "col-span-1" },
+            ]}
+            tableData={
+              pageData
+                ? pageData.map((item, key) => [
+                    { value: item?.fullName, colSpan: "col-span-4" },
+                    { value: item?.regNumber, colSpan: "col-span-2" },
+                    { value: item?.level, colSpan: "col-span-1" },
+                    { value: item?.phoneNumber, colSpan: "col-span-2" },
+                    {
+                      value: prettyDate(item?.createdAt.split("T")[0]) || "-",
+                      colSpan: "col-span-2",
+                    },
+                    {
+                      value: `users/${item.regNumber.split("/").join("%2F")}`,
+                      colSpan: "col-span-1",
+                      type: "link",
+                    },
+                  ])
+                : []
+            }
+            showSearch={false}
+            showOptions={false}
+          />
 
-      {/* Table */}
-      <Table
-        tableHeading={[
-          { value: "Student Name", colSpan: "col-span-4" },
-          { value: "Registration Number", colSpan: "col-span-2" },
-          { value: "Level", colSpan: "col-span-1" },
-          { value: "Phone Number", colSpan: "col-span-2" },
-          { value: "Enrolled", colSpan: "col-span-2" },
-          { value: "", colSpan: "col-span-1" },
-        ]}
-        tableData={
-          pageData
-            ? pageData.map((item, key) => [
-                { value: item?.fullName, colSpan: "col-span-4" },
-                { value: item?.regNumber, colSpan: "col-span-2" },
-                { value: item?.level, colSpan: "col-span-1" },
-                { value: item?.phoneNumber, colSpan: "col-span-2" },
-                {
-                  value: prettyDate(item?.createdAt.split("T")[0]) || "-",
-                  colSpan: "col-span-2",
-                },
-                {
-                  value: `users/${item.regNumber.split("/").join("%2F")}`,
-                  colSpan: "col-span-1",
-                  type: "link",
-                },
-              ])
-            : []
-        }
-        showSearch={false}
-        showOptions={false}
-      />
+          {/* Spacing */}
+          <Spacer size="xl" />
+          <Spacer size="xl" />
+        </>
+      )}
 
       {/* Page Loading */}
       {loading === "page" ? (
