@@ -36,6 +36,7 @@ const Page = () => {
 
         setLoading(null);
       } catch (error: any) {
+        console.log(error);
         if (error.name !== "CanceledError") {
           setLoading("pageError");
           console.log(error);

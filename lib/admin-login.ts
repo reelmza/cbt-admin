@@ -7,8 +7,7 @@ export const schooLogin: (
   try {
     // Get user from database
     const targetUser = await fetch(
-      // "https://cbt-be-production.up.railway.app/api/v1/admin/login",
-      "http://172.0.0.3:4000/api/v1/admin/login",
+      `${process.env.SERVER_BASEURL}/admin/login`,
 
       {
         method: "POST",

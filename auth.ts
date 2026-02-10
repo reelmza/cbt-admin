@@ -1,6 +1,6 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { schooLogin } from "./lib/school-login";
+import { schooLogin } from "./lib/admin-login";
 
 declare module "next-auth" {
   interface Session {

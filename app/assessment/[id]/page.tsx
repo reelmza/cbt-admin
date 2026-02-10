@@ -53,6 +53,7 @@ const Page = ({ id }: { id: string }) => {
 
       setLoading(null);
     } catch (error: any) {
+      console.log(error);
       if (error.name !== "CanceledError") {
         setLoading("pageError");
         console.log(error);
