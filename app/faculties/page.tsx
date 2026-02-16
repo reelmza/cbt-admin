@@ -94,7 +94,8 @@ const Page = () => {
   return (
     <div className="w-full h-full p-10 font-sans">
       <div className="flex items-center justify-between">
-        <TableSearchBox placeholder="Search for a group" />
+        {/* <TableSearchBox placeholder="Search for a group" /> */}
+        <div className="w-10"></div>
 
         <div className="block w-52">
           <Button
