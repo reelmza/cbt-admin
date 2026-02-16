@@ -140,7 +140,7 @@ const Page = () => {
       />
       <Spacer size="lg" />
 
-      {/* Tbqale Headers */}
+      {/* Table Headers */}
       <div className="flex items-center justify-between">
         <TableSearchBox
           placeholder="Search an assessment"

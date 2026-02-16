@@ -17,23 +17,19 @@ import { attachHeaders, localAxios } from "@/lib/axios";
 
 import { Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { toastConfig } from "@/utils/toastConfig";
+import { Course } from "./courses.types";
 
 const Page = () => {
   const controller = new AbortController();
   const [openAddCourse, setOpenAddCourse] = useState(false);
   const [loading, setLoading] = useState<string | null>("page");
-  const [pageData, setPageData] = useState<
-    | null
-    | {
-        _id: number;
-        code: string;
-        title: string;
-        description: string;
-      }[]
-  >(null);
+  const [pageData, setPageData] = useState<Course[] | null>(null);
+  const [filteredPageData, setFilteredPageData] = useState<Course[] | null>(
+    null
+  );
   const { data: session } = useSession();
 
   const addCourse = async (e: React.SyntheticEvent) => {
@@ -71,6 +67,27 @@ const Page = () => {
     }
   };
 
+  const searchCourse = async (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+
+    const val = e.target.value.toUpperCase();
+
+    if (val === "") {
+      setFilteredPageData(pageData);
+      return;
+    }
+
+    const newData = filteredPageData?.filter((dt) => dt.code.includes(val));
+
+    setFilteredPageData((prev) => {
+      if (newData) {
+        return newData;
+      }
+
+      return prev;
+    });
+  };
+
   useEffect(() => {
     if (!session) return;
 
@@ -84,6 +101,7 @@ const Page = () => {
         if (res.status === 201) {
           console.log(res.data.data.courses);
           setPageData(res.data.data.courses);
+          setFilteredPageData(res.data.data.courses);
         }
         setLoading(null);
       } catch (error: any) {
@@ -106,7 +124,10 @@ const Page = () => {
       {/* Table Options */}
       <div className="flex items-center justify-between">
         {/* Search bar */}
-        <TableSearchBox placeholder="Search for a course" />
+        <TableSearchBox
+          placeholder="Search an course"
+          onChange={searchCourse}
+        />
 
         {/* Buttons */}
         <div>
@@ -132,8 +153,8 @@ const Page = () => {
           { value: "", colSpan: "col-span-1" },
         ]}
         tableData={
-          pageData
-            ? pageData.map((item, key) => [
+          filteredPageData
+            ? filteredPageData.map((item, key) => [
                 { value: item.code, colSpan: "col-span-2" },
                 { value: item.title, colSpan: "col-span-3" },
                 { value: item.description, colSpan: "col-span-6" },
