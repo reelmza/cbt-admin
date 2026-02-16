@@ -89,16 +89,16 @@ export const sideBarPages: SideBarPageType[] = [
     route: "/results",
     icon: <NotepadText size={18} />,
   },
-  {
-    name: "Notifications",
-    route: "/notifications",
-    icon: <BellDot size={18} />,
-  },
-  {
-    name: "Security",
-    route: "/security",
-    icon: <Shield size={18} />,
-  },
+  // {
+  //   name: "Notifications",
+  //   route: "/notifications",
+  //   icon: <BellDot size={18} />,
+  // },
+  // {
+  //   name: "Security",
+  //   route: "/security",
+  //   icon: <Shield size={18} />,
+  // },
   {
     name: "Settings",
     route: "/settings",

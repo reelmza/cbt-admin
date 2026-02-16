@@ -105,7 +105,7 @@ const Main = () => {
 
     try {
       const res = await localAxios.post(`/school/create-assessment`, formData);
-      if (res.status === 201) {
+      if (res.status === 200 || res.status === 201) {
         router.push("/assessment");
       }
       setLoading(null);
