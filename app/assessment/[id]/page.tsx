@@ -81,7 +81,7 @@ const Page = ({ id }: { id: string }) => {
         }
       );
 
-      if (res.status === 201) {
+      if (res.status === 201 || res.status === 200) {
         setPageData((prev) => {
           return { ...res.data.data, course: prev?.course };
         });

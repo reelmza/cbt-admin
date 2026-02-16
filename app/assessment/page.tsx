@@ -11,7 +11,7 @@ import { assessmentTableData } from "@/utils/dummy-data";
 import { Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 const Page = () => {
   const controller = new AbortController();
@@ -21,6 +21,27 @@ const Page = () => {
   const [filteredPageData, setFilteredPageData] = useState<
     AssesmentApiResponse[] | null
   >(null);
+
+  const searchAss = async (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+
+    const val = e.target.value.toUpperCase();
+
+    if (val === "") {
+      setFilteredPageData(pageData);
+      return;
+    }
+
+    const newData = filteredPageData?.filter((dt) => dt.title.includes(val));
+
+    setFilteredPageData((prev) => {
+      if (newData) {
+        return newData;
+      }
+
+      return prev;
+    });
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -35,6 +56,7 @@ const Page = () => {
         if (res.status === 201) {
           console.log(res.data.data.assessments);
           setPageData(res.data.data.assessments);
+          setFilteredPageData(res.data.data.assessments);
         }
 
         setLoading(null);
@@ -120,7 +142,10 @@ const Page = () => {
 
       {/* Tbqale Headers */}
       <div className="flex items-center justify-between">
-        <TableSearchBox placeholder="Search an assessment" />
+        <TableSearchBox
+          placeholder="Search an assessment"
+          onChange={searchAss}
+        />
 
         <Link href="/assessment/create" className="block w-52">
           <Button
@@ -146,49 +171,6 @@ const Page = () => {
         tableData={
           filteredPageData
             ? filteredPageData.map((item, key: number) => [
-                {
-                  value: `${item.title}`,
-                  colSpan: "col-span-3",
-                },
-                {
-                  value: prettyDate(item.dueDate.split("T")[0]),
-                  colSpan: "col-span-3",
-                },
-                { value: item.sections.length, colSpan: "col-span-1" },
-                {
-                  value: item.sections.reduce(
-                    (acc: number, sct: { questions: [] }) => {
-                      if (sct.questions?.length) {
-                        return sct.questions?.length + acc;
-                      }
-                      return 0;
-                    },
-                    0
-                  ),
-                  colSpan: "col-span-1",
-                },
-                { value: item?.students?.length, colSpan: "col-span-1" },
-                { value: item.totalMarks || "-", colSpan: "col-span-1" },
-                {
-                  value: item.status,
-                  colSpan: "col-span-1",
-                  type: "badge",
-                  color: `${
-                    item.status === "closed"
-                      ? "warning"
-                      : item.status === "ongoing"
-                      ? "info"
-                      : "success"
-                  }`,
-                },
-                {
-                  value: `assessment/${item._id}`,
-                  colSpan: "col-span-1",
-                  type: "link",
-                },
-              ])
-            : pageData
-            ? pageData.map((item, key: number) => [
                 {
                   value: `${item.title}`,
                   colSpan: "col-span-3",
