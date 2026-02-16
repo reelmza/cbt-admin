@@ -29,8 +29,9 @@ import { toastConfig } from "@/utils/toastConfig";
 import { CloudUpload, User2 } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { User } from "./users.types";
 
 const Page = () => {
   const controller = new AbortController();
@@ -39,20 +40,10 @@ const Page = () => {
   const [openPassUpload, setOpenPassUpload] = useState(false);
 
   const [loading, setLoading] = useState<string | null>("page");
-  const [pageData, setPageData] = useState<
-    | null
-    | {
-        _id: number;
-        fullName: string;
-        email: string;
-        phoneNumber: string;
-        password: string;
-        regNumber: string;
-        level: string;
-        createdAt: string;
-        school: string;
-      }[]
-  >(null);
+  const [pageData, setPageData] = useState<User[] | null>(null);
+  const [filteredPageData, setFilteredPageData] = useState<User[] | null>(null);
+  const [pageMetaData, setPageMetaData] = useState();
+
   const [groups, setGroups] = useState<GroupType[] | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
   const { data: session } = useSession();
@@ -77,7 +68,7 @@ const Page = () => {
 
       console.log(res);
 
-      if (res.status == 200) {
+      if (res.status == 200 || res.status == 201) {
         setLoading(null);
         setOpenBulkUpload(false);
         toast.success(res.data.message);
@@ -125,6 +116,27 @@ const Page = () => {
     }
   };
 
+  const searchStudent = async (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+
+    const val = e.target.value.toUpperCase();
+
+    if (val === "") {
+      setFilteredPageData(pageData);
+      return;
+    }
+
+    const newData = filteredPageData?.filter((dt) => dt.fullName.includes(val));
+
+    setFilteredPageData((prev) => {
+      if (newData) {
+        return newData;
+      }
+
+      return prev;
+    });
+  };
+
   useEffect(() => {
     if (!session) return;
 
@@ -146,6 +158,11 @@ const Page = () => {
           console.log(res);
           setGroups(groupRes.data.data);
           setPageData(res.data.data.data);
+          setFilteredPageData(res.data.data.data);
+          setPageMetaData((prev) => {
+            const { dataToKeep, data } = res.data.data;
+            return dataToKeep;
+          });
         }
 
         setLoading(null);
@@ -179,7 +196,10 @@ const Page = () => {
           {/* Table Options */}
           <div className="flex items-center justify-between">
             {/* Search bar */}
-            <TableSearchBox placeholder="Search for a student" />
+            <TableSearchBox
+              placeholder="Search an student"
+              onChange={searchStudent}
+            />
 
             {/* Buttons */}
             <div className="flex items-center gap-4">
@@ -218,8 +238,8 @@ const Page = () => {
               { value: "", colSpan: "col-span-1" },
             ]}
             tableData={
-              pageData
-                ? pageData.map((item, key) => [
+              filteredPageData
+                ? filteredPageData.map((item, key) => [
                     { value: item?.fullName, colSpan: "col-span-4" },
                     { value: item?.regNumber, colSpan: "col-span-2" },
                     { value: item?.level, colSpan: "col-span-1" },
