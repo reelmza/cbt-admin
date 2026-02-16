@@ -18,6 +18,9 @@ const Page = () => {
   const [loading, setLoading] = useState<string | null>("page");
   const { data: session } = useSession();
   const [pageData, setPageData] = useState<AssesmentApiResponse[] | null>(null);
+  const [filteredPageData, setFilteredPageData] = useState<
+    AssesmentApiResponse[] | null
+  >(null);
 
   useEffect(() => {
     if (!session) return;
@@ -53,15 +56,69 @@ const Page = () => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
+      {/* Page Navigator */}
       <PageNavigator
         navList={[
-          { name: "All Assessment", route: "/assessment" },
-          { name: "Completed", route: "/assessment/complete" },
-          { name: "Pending", route: "/assessment/pending" },
+          {
+            name: "All Assessment",
+            fx: () => {
+              if (!pageData) return;
+              setFilteredPageData(pageData);
+            },
+          },
+          {
+            name: "Not Started",
+            fx: () => {
+              setFilteredPageData((prev) => {
+                if (!pageData) return prev;
+
+                const newData = pageData?.filter(
+                  (dt) => dt.authorizedToStart == false
+                );
+                if (newData) {
+                  return newData;
+                }
+
+                return prev;
+              });
+            },
+          },
+          {
+            name: "Completed",
+            fx: () => {
+              setFilteredPageData((prev) => {
+                if (!pageData) return prev;
+
+                const newData = pageData?.filter((dt) => dt.endReason !== null);
+                if (newData) {
+                  return newData;
+                }
+
+                return prev;
+              });
+            },
+          },
+          {
+            name: "Ongoing",
+            fx: () => {
+              setFilteredPageData((prev) => {
+                if (!pageData) return prev;
+                const newData = pageData?.filter(
+                  (dt) => dt.authorizedToStart === true && dt.endReason === null
+                );
+                if (newData) {
+                  return newData;
+                }
+
+                return prev;
+              });
+            },
+          },
         ]}
       />
       <Spacer size="lg" />
 
+      {/* Tbqale Headers */}
       <div className="flex items-center justify-between">
         <TableSearchBox placeholder="Search an assessment" />
 
@@ -87,7 +144,50 @@ const Page = () => {
           { value: "Actions", colSpan: "col-span-1" },
         ]}
         tableData={
-          pageData
+          filteredPageData
+            ? filteredPageData.map((item, key: number) => [
+                {
+                  value: `${item.title}`,
+                  colSpan: "col-span-3",
+                },
+                {
+                  value: prettyDate(item.dueDate.split("T")[0]),
+                  colSpan: "col-span-3",
+                },
+                { value: item.sections.length, colSpan: "col-span-1" },
+                {
+                  value: item.sections.reduce(
+                    (acc: number, sct: { questions: [] }) => {
+                      if (sct.questions?.length) {
+                        return sct.questions?.length + acc;
+                      }
+                      return 0;
+                    },
+                    0
+                  ),
+                  colSpan: "col-span-1",
+                },
+                { value: item?.students?.length, colSpan: "col-span-1" },
+                { value: item.totalMarks || "-", colSpan: "col-span-1" },
+                {
+                  value: item.status,
+                  colSpan: "col-span-1",
+                  type: "badge",
+                  color: `${
+                    item.status === "closed"
+                      ? "warning"
+                      : item.status === "ongoing"
+                      ? "info"
+                      : "success"
+                  }`,
+                },
+                {
+                  value: `assessment/${item._id}`,
+                  colSpan: "col-span-1",
+                  type: "link",
+                },
+              ])
+            : pageData
             ? pageData.map((item, key: number) => [
                 {
                   value: `${item.title}`,

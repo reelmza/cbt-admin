@@ -11,4 +11,6 @@ type AssesmentApiResponse = {
   status: string;
   students: [];
   sections: [{ questions: [] }];
+  endReason: string | null;
+  authorizedToStart: boolean;
 };

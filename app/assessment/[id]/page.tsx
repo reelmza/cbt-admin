@@ -182,7 +182,7 @@ const Page = ({ id }: { id: string }) => {
         signal: controller.signal,
       });
 
-      if (res.status === 201) {
+      if (res.status === 201 || res.status === 200) {
         console.log(res);
         setPageData((prev) => {
           return { ...res.data.data, course: prev?.course };
@@ -209,7 +209,7 @@ const Page = ({ id }: { id: string }) => {
         signal: controller.signal,
       });
 
-      if (res.status === 201) {
+      if (res.status === 200 || res.status === 200) {
         console.log(res);
         setPageData((prev) => {
           return { ...res.data.data, course: prev?.course };
@@ -382,7 +382,7 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
-  // Update assessment duration
+  // Generate assessment results
   const generateAssResults = async () => {
     setLoading("generateAssResults");
     try {
@@ -624,7 +624,7 @@ const Page = ({ id }: { id: string }) => {
                         title="End Exam"
                         type="button"
                         variant="fillErrorOutline"
-                        loading={false}
+                        loading={loading === "endAssessment"}
                         onClick={endAssessment}
                       />
                     </div>
