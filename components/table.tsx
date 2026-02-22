@@ -32,7 +32,7 @@ const Table = ({
       {/* Options Row */}
       <div className="flex items-center justify-between">
         {/* Search Box */}
-        {showSearch ? <TableSearchBox placeholder="Search" /> : ""}
+        {/* {showSearch ? <TableSearchBox placeholder="Search" /> : ""} */}
 
         {/* Options Buttons */}
         {showOptions ? (
