@@ -178,7 +178,7 @@ const Page = () => {
           {/* Table Options */}
           <div className="flex items-center justify-between">
             {/* Search bar */}
-            <TableSearchBox placeholder="Search for a student" />
+            {/* <TableSearchBox placeholder="Search for a student" /> */}
 
             {/* Buttons */}
             <div className="flex items-center gap-4">
