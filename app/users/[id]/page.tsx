@@ -4,7 +4,7 @@ import Spacer from "@/components/spacer";
 
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { SessionProvider, useSession } from "next-auth/react";
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CircleQuestionMark, Trash2, User2, X } from "lucide-react";
 import { StudentProfile } from "./id.types";
@@ -28,6 +28,37 @@ const Page = ({ id }: { id: string }) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState<string | boolean>(
     false
   );
+
+  const removeAss = async (assId: string) => {
+    setLoading("removeAss");
+    try {
+      attachHeaders(session!.user.token);
+
+      // Get students assessments
+      const res = await localAxios.patch(
+        `/admin/remove-students-assessment/${assId}`,
+        { students: [id] },
+        {
+          signal: controller.signal,
+        }
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        // setProfile(studentRes.data.data);
+        // setPageData(assRes.data.data);
+        console.log("success");
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+
+      setLoading(null);
+    }
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -69,7 +100,7 @@ const Page = ({ id }: { id: string }) => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      {!loading && pageData && (
+      {loading !== "page" && pageData && (
         <>
           <div className="w-full flex gap-10 min-h-full">
             {/* Pofile Picture */}
@@ -112,7 +143,7 @@ const Page = ({ id }: { id: string }) => {
                         </div>
                         <button
                           className="flex items-center justify-center cursor-pointer  hover:text-red-600"
-                          onClick={() => setShowConfirmDialog("ass")}
+                          onClick={() => setShowConfirmDialog(`ass-${ex._id}`)}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -142,7 +173,7 @@ const Page = ({ id }: { id: string }) => {
                       </div>
                       <button
                         className="h-10 w-10 flex items-center justify-center cursor-pointer  hover:text-red-600"
-                        onClick={() => setShowConfirmDialog("sub")}
+                        onClick={() => setShowConfirmDialog(`sub-${ex._id}`)}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -155,9 +186,12 @@ const Page = ({ id }: { id: string }) => {
 
           <Spacer size="xl" />
 
-          {/* Dialog - End Exam */}
+          {/* Dialog - Remove Assessment */}
           <Dialog
-            open={showConfirmDialog == "ass" || showConfirmDialog == "sub"}
+            open={
+              showConfirmDialog.toString().includes("ass") ||
+              showConfirmDialog.toString().includes("sub")
+            }
             onOpenChange={setShowConfirmDialog}
           >
             <DialogContent>
@@ -182,7 +216,7 @@ const Page = ({ id }: { id: string }) => {
                   <div className="w-38">
                     <Button
                       title={"No, Go back"}
-                      loading={loading === "submitAss"}
+                      loading={false}
                       variant={"outline"}
                       onClick={() => setShowConfirmDialog(false)}
                     />
@@ -191,10 +225,16 @@ const Page = ({ id }: { id: string }) => {
                   <div className="w-38">
                     <Button
                       title={"Yes, Delete"}
-                      loading={loading == "submitTest"}
+                      loading={loading == "removeAss"}
                       variant={"fillError"}
                       icon={<ArrowRight size={14} />}
-                      // onClick={submitTest}
+                      onClick={() => {
+                        if (
+                          showConfirmDialog.toString().split("-")[0] == "ass"
+                        ) {
+                          removeAss(showConfirmDialog.toString().split("-")[1]);
+                        }
+                      }}
                     />
                   </div>
                 </div>

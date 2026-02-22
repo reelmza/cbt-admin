@@ -32,7 +32,7 @@ const Page = () => {
       return;
     }
 
-    const newData = filteredPageData?.filter((dt) => dt.title.includes(val));
+    const newData = pageData?.filter((dt) => dt.title.includes(val));
 
     setFilteredPageData((prev) => {
       if (newData) {

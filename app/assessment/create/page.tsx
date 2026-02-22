@@ -372,7 +372,7 @@ const Main = () => {
                           <div className="text-sm">{section.title}</div>
                         </AccordionTrigger>
                         <AccordionContent>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 overflow-y-scroll max-h-[50vh]">
                             {section.questions.map((qst, qstkey) => (
                               <button
                                 key={qstkey}

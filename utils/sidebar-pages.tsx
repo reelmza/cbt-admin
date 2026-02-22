@@ -84,11 +84,11 @@ export const sideBarPages: SideBarPageType[] = [
     //   },
     // ],
   },
-  {
-    name: "Results",
-    route: "/results",
-    icon: <NotepadText size={18} />,
-  },
+  // {
+  //   name: "Results",
+  //   route: "/results",
+  //   icon: <NotepadText size={18} />,
+  // },
   // {
   //   name: "Notifications",
   //   route: "/notifications",

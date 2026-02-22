@@ -77,7 +77,7 @@ const Page = () => {
       return;
     }
 
-    const newData = filteredPageData?.filter((dt) => dt.code.includes(val));
+    const newData = pageData?.filter((dt) => dt.code.includes(val));
 
     setFilteredPageData((prev) => {
       if (newData) {

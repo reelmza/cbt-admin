@@ -31,7 +31,7 @@ import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { User } from "./users.types";
+import { PageMetaData, User } from "./users.types";
 
 const Page = () => {
   const controller = new AbortController();
@@ -42,7 +42,7 @@ const Page = () => {
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<User[] | null>(null);
   const [filteredPageData, setFilteredPageData] = useState<User[] | null>(null);
-  const [pageMetaData, setPageMetaData] = useState();
+  const [pageMetaData, setPageMetaData] = useState<PageMetaData | null>(null);
 
   const [groups, setGroups] = useState<GroupType[] | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
@@ -126,7 +126,7 @@ const Page = () => {
       return;
     }
 
-    const newData = filteredPageData?.filter((dt) => dt.fullName.includes(val));
+    const newData = pageData?.filter((dt) => dt.fullName.includes(val));
 
     setFilteredPageData((prev) => {
       if (newData) {
@@ -135,6 +135,49 @@ const Page = () => {
 
       return prev;
     });
+  };
+
+  const getPage = async (val: string) => {
+    try {
+      attachHeaders(session!.user.token);
+      let targetPage;
+
+      if (val === "next") {
+        if (!pageMetaData?.page) return;
+        setLoading("nextPage");
+        targetPage = pageMetaData?.page + 1;
+      } else {
+        if (!pageMetaData?.page) return;
+        targetPage = pageMetaData?.page - 1;
+        setLoading("prevPage");
+      }
+
+      // Get Students
+      const res = await localAxios.get(
+        `/student/all?pageNumber=${targetPage}`,
+        {
+          signal: controller.signal,
+        }
+      );
+
+      if (res.status === 200) {
+        console.log(res);
+
+        setPageData(res.data.data.data);
+        setFilteredPageData(res.data.data.data);
+        setPageMetaData((prev) => {
+          const { data, ...dataToKeep } = res.data.data;
+          return dataToKeep;
+        });
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+    }
   };
 
   useEffect(() => {
@@ -160,7 +203,7 @@ const Page = () => {
           setPageData(res.data.data.data);
           setFilteredPageData(res.data.data.data);
           setPageMetaData((prev) => {
-            const { dataToKeep, data } = res.data.data;
+            const { data, ...dataToKeep } = res.data.data;
             return dataToKeep;
           });
         }
@@ -183,7 +226,7 @@ const Page = () => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      {!loading && pageData && (
+      {loading !== "page" && pageData && (
         <>
           <PageNavigator
             navList={[
@@ -225,6 +268,29 @@ const Page = () => {
                 />
               </div>
             </div>
+          </div>
+          <Spacer size="md" />
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between w-4/10">
+            <button
+              className="flex items-center justify-center gap-2 h-8 w-28 rounded-md border text-theme-gray cursor-pointer text-sm"
+              onClick={() => getPage("prev")}
+            >
+              <span>Previous</span>
+              {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
+            </button>
+            <div className="text-sm">
+              Page {pageMetaData?.page} of {pageMetaData?.pages}{" "}
+              {`(${pageMetaData?.totalItems})`}
+            </div>
+            <button
+              className="flex items-center justify-center gap-2 h-8 w-28 rounded-md border text-theme-gray cursor-pointer text-sm"
+              onClick={() => getPage("next")}
+            >
+              <span>Next</span>
+              {loading === "nextPage" ? <Spinner className="size-4" /> : ""}
+            </button>
           </div>
 
           {/* Table */}
