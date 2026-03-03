@@ -35,22 +35,69 @@ const Page = ({ id }: { id: string }) => {
       attachHeaders(session!.user.token);
 
       // Get students assessments
-      const res = await localAxios.patch(
-        `/admin/remove-students-assessment/${assId}`,
-        { students: [id] },
+      const res = await localAxios.post(`/assessment/unassign/${assId}`, {
+        signal: controller.signal,
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        setPageData((prev) => {
+          const newData = prev?.filter((ex) => ex._id !== assId);
+
+          if (newData && newData?.length > 0) {
+            return [...newData];
+          }
+
+          return [];
+        });
+
+        setShowConfirmDialog(false);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      console.log(error);
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+
+      setLoading(null);
+    }
+  };
+
+  const removeSub = async (assId: string) => {
+    setLoading("removeSub");
+    try {
+      attachHeaders(session!.user.token);
+
+      // Get students assessments
+      const res = await localAxios.post(
+        `/assessment/remove-submission/${assId}`,
         {
           signal: controller.signal,
         }
       );
 
       if (res.status === 200 || res.status === 201) {
-        // setProfile(studentRes.data.data);
-        // setPageData(assRes.data.data);
-        console.log("success");
+        setPageData((prev) => {
+          if (!prev) return prev;
+
+          let newData = [...prev];
+          let target = newData.find((item) => item._id == assId);
+
+          if (target) {
+            target.status = "pending";
+          }
+
+          return [...newData];
+        });
+
+        setShowConfirmDialog(false);
       }
 
       setLoading(null);
     } catch (error: any) {
+      console.log(error);
       if (error.name !== "CanceledError") {
         setLoading("pageError");
         console.log(error);
@@ -127,7 +174,7 @@ const Page = ({ id }: { id: string }) => {
               </div>
               <Spacer size="xl" />
 
-              {/* Courses Offered */}
+              {/* Assigned Exams */}
               <div className="w-6/10">
                 <div className="font-semibold">Assigned Exams</div>
                 <Spacer size="sm" />
@@ -135,52 +182,54 @@ const Page = ({ id }: { id: string }) => {
                   return (
                     <div
                       key={key}
-                      className="w-full border rounded-md overflow-hidden"
+                      className="w-full border rounded-md overflow-hidden mb-2 p-2"
                     >
-                      <div className="w-full pt-2 flex items-center px-2 rounded justify-between">
-                        <div>
-                          {ex.course.code} : {ex.course.title}
-                        </div>
-                        <button
-                          className="flex items-center justify-center cursor-pointer  hover:text-red-600"
-                          onClick={() => setShowConfirmDialog(`ass-${ex._id}`)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                      {/* Title */}
+                      <div className="w-full rounded justify-between">
+                        {ex.course.code} : {ex.course.title}
                       </div>
 
-                      <div className="px-2 text-sm mb-2 text-theme-gray">
+                      {/* Due Date */}
+                      <div className="text-sm mb-2 text-theme-gray">
                         Due: {ex.dueDate.split("T")[0]}
+                      </div>
+
+                      {/* Buttons */}
+                      <div className="flex gap-x-4">
+                        {ex.status === "submitted" && (
+                          <button
+                            className="flex items-center justify-center cursor-pointer hover:text-red-600 text-sm gap-1"
+                            onClick={() =>
+                              setShowConfirmDialog(`sub-${ex._id}`)
+                            }
+                          >
+                            {loading !== ex._id &&
+                            ex._id.split("-")[0] !== "sub" ? (
+                              <Trash2 size={14} />
+                            ) : (
+                              <Spinner className="h-4" />
+                            )}
+                            Delete Submission
+                          </button>
+                        )}
+
+                        <button
+                          className="flex items-center justify-center cursor-pointer hover:text-red-600 text-sm gap-1"
+                          onClick={() => setShowConfirmDialog(`ass-${ex._id}`)}
+                        >
+                          {loading !== ex._id ? (
+                            <Trash2 size={14} />
+                          ) : (
+                            <Spinner className="h-4" />
+                          )}
+                          Delete Assessment
+                        </button>
                       </div>
                     </div>
                   );
                 })}
               </div>
               <Spacer size="md" />
-
-              {/* Submissions */}
-              <div className="w-6/10">
-                <div className="font-semibold">Submissions</div>
-                <Spacer size="sm" />
-                {pageData.map((ex, key: number) => {
-                  return (
-                    <div
-                      key={key}
-                      className="border w-full h-10 flex items-center pl-2 rounded justify-between overflow-hidden"
-                    >
-                      <div>
-                        {ex.course.code} : {ex.course.title}
-                      </div>
-                      <button
-                        className="h-10 w-10 flex items-center justify-center cursor-pointer  hover:text-red-600"
-                        onClick={() => setShowConfirmDialog(`sub-${ex._id}`)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           </div>
 
@@ -188,10 +237,7 @@ const Page = ({ id }: { id: string }) => {
 
           {/* Dialog - Remove Assessment */}
           <Dialog
-            open={
-              showConfirmDialog.toString().includes("ass") ||
-              showConfirmDialog.toString().includes("sub")
-            }
+            open={typeof showConfirmDialog === "string"}
             onOpenChange={setShowConfirmDialog}
           >
             <DialogContent>
@@ -225,14 +271,19 @@ const Page = ({ id }: { id: string }) => {
                   <div className="w-38">
                     <Button
                       title={"Yes, Delete"}
-                      loading={loading == "removeAss"}
+                      loading={loading == "removeAss" || loading == "removeSub"}
                       variant={"fillError"}
                       icon={<ArrowRight size={14} />}
                       onClick={() => {
-                        if (
-                          showConfirmDialog.toString().split("-")[0] == "ass"
-                        ) {
-                          removeAss(showConfirmDialog.toString().split("-")[1]);
+                        if (typeof showConfirmDialog !== "string") return;
+                        let action = showConfirmDialog.split("-")[0];
+
+                        if (action === "ass") {
+                          removeAss(showConfirmDialog.split("-")[1]);
+                        }
+
+                        if (action === "sub") {
+                          removeSub(showConfirmDialog.split("-")[1]);
                         }
                       }}
                     />

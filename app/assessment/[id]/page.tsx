@@ -225,6 +225,37 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
+  // Restart assessment
+  const restartAss = async () => {
+    if (!pageData) return;
+
+    setLoading("restartAss");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(`/assessment/reset-status/${id}`, {
+        signal: controller.signal,
+      });
+
+      if (res.status === 200 || res.status === 200) {
+        console.log(res);
+        setPageData((prev) => {
+          if (prev) {
+            return { ...prev, endReason: false, course: prev?.course };
+          }
+
+          return prev;
+        });
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+        console.log(error);
+      }
+    }
+  };
+
   // Delete assessment
   const deleteAss = async () => {
     if (!pageData) return;
@@ -255,6 +286,7 @@ const Page = ({ id }: { id: string }) => {
     e.preventDefault();
 
     const target = e.target as typeof e.target & {
+      action: { value: string };
       level: { value: string };
       group: { value: string };
       subgroup: { value: string };
@@ -266,11 +298,17 @@ const Page = ({ id }: { id: string }) => {
       return;
     }
 
+    // If no action
+    if (!target.action.value) {
+      toast.error("Please select action", toastConfig);
+      return;
+    }
+
     setLoading("assignToFaculty");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.post(
-        `/assessment/assign/${id}`,
+        `/assessment/${target.action.value}/${id}`,
         {
           level: target.level.value,
           ...(target.group.value &&
@@ -285,7 +323,12 @@ const Page = ({ id }: { id: string }) => {
       );
 
       if (res.status === 200) {
-        toast.success("Assessment assigned successfully", toastConfig);
+        toast.success(
+          `Assessment ${
+            target.action.value === "assign" ? "Assigned" : "Unassigned"
+          } successfully`,
+          toastConfig
+        );
       }
 
       setLoading(null);
@@ -310,10 +353,12 @@ const Page = ({ id }: { id: string }) => {
       attachHeaders(session!.user.token);
 
       const studentRes = await localAxios.get(`/student/all`, {
-        params: { searchByRegNumber: target.regNumber.value },
+        params: { searchByKeyword: target.regNumber.value },
       });
 
-      if (studentRes.status !== 200) throw new Error();
+      if (studentRes.status !== 200 && studentRes.status !== 201)
+        throw new Error();
+
       const targetStudent = studentRes.data.data.data.find(
         (sd: any) => sd.regNumber === target.regNumber.value
       );
@@ -383,14 +428,17 @@ const Page = ({ id }: { id: string }) => {
   };
 
   // Generate assessment results
-  const generateAssResults = async () => {
-    setLoading("generateAssResults");
+  const generateAssResults = async (output: String) => {
+    setLoading(`generateResults-${output}`);
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.get(
         `/assessment/export-result/${id}`,
 
         {
+          params: {
+            fileType: output,
+          },
           responseType: "blob",
           signal: controller.signal,
         }
@@ -601,14 +649,10 @@ const Page = ({ id }: { id: string }) => {
                   </div>
 
                   {/* Exam not started */}
-                  {!pageData.endReason && (
+                  {!pageData.authorizedToStart && (
                     <div className="shrink-0 w-38">
                       <Button
-                        title={
-                          pageData.authorizedToStart
-                            ? "Pause Exam"
-                            : "Start Exam"
-                        }
+                        title={"Start Exam"}
                         type="button"
                         variant="fill"
                         loading={loading === "authorizeAss"}
@@ -617,7 +661,7 @@ const Page = ({ id }: { id: string }) => {
                     </div>
                   )}
 
-                  {/* Exam ongoing, not ended */}
+                  {/* Exam ongoing, not ended - End button*/}
                   {pageData.authorizedToStart && !pageData.endReason && (
                     <div className="shrink-0 w-38">
                       <Button
@@ -626,6 +670,19 @@ const Page = ({ id }: { id: string }) => {
                         variant="fillErrorOutline"
                         loading={loading === "endAssessment"}
                         onClick={endAssessment}
+                      />
+                    </div>
+                  )}
+
+                  {/* Exam ended,  Restart button*/}
+                  {pageData.endReason && (
+                    <div className="shrink-0 w-38">
+                      <Button
+                        title="Restart Exam"
+                        type="button"
+                        variant="fill"
+                        loading={loading === "restartAss"}
+                        onClick={restartAss}
                       />
                     </div>
                   )}
@@ -684,7 +741,7 @@ const Page = ({ id }: { id: string }) => {
                 <Spacer size="xl" />
 
                 {/* Delete assessment */}
-                <div className="w-48">
+                <div className="w-48 hidden">
                   <Button
                     title={"Delete Assessment"}
                     loading={loading === "deleteAss"}
@@ -703,6 +760,18 @@ const Page = ({ id }: { id: string }) => {
                 <Spacer size="sm" />
 
                 <form onSubmit={assignToFaculty}>
+                  {/* Action */}
+                  <Select name="action">
+                    <SelectTrigger className="w-full max-w-48">
+                      <SelectValue placeholder={"Select Action"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={"assign"}>Assign</SelectItem>
+                      <SelectItem value={"unassign-bulk"}>Unassign</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Spacer size="sm" />
+
                   {/* Level */}
                   <Select name="level">
                     <SelectTrigger className="w-full max-w-48">
@@ -719,7 +788,7 @@ const Page = ({ id }: { id: string }) => {
                   <Spacer size="sm" />
 
                   {/* Faculty/department and button */}
-                  <div className="w-full flex items-center justify-between">
+                  <div className="w-full flex items-center gap-4">
                     {/* Faculty */}
                     <Select
                       name="group"
@@ -776,38 +845,20 @@ const Page = ({ id }: { id: string }) => {
                       </SelectContent>
                     </Select>
 
-                    {/* Submit Button */}
                     <div className="w-38 shrink-0">
                       <Button
                         type="submit"
-                        title="Assign"
+                        title="Proceed"
                         loading={loading === "assignToFaculty"}
                         variant="outline"
                       />
                     </div>
                   </div>
-                  <Spacer size="md" />
-
-                  {/* Assign to department only switch */}
-                  <div className="w-full flex items-center space-x-2">
-                    <Switch
-                      id="assign-switch"
-                      name="departmentOnly"
-                      className="cursor-pointer"
-                      checked={departmentOnly}
-                      onCheckedChange={setDepartmentOnly}
-                    />
-                    <Label
-                      htmlFor="assign-switch"
-                      className="cursor-pointer font-normal text-theme-gray"
-                    >
-                      Assign to department only?
-                    </Label>
-                  </div>
                 </form>
+
                 <Spacer size="lg" />
 
-                {/* Assign to regNumber */}
+                {/* Assign to regNumber (STUDENT)*/}
                 <div className="text-sm">Assign to student</div>
                 <Spacer size="sm" />
 
@@ -833,7 +884,7 @@ const Page = ({ id }: { id: string }) => {
                 <Spacer size="lg" />
 
                 {/* Generate entries */}
-                <div className="text-sm">Generate Attempts List</div>
+                <div className="text-sm">Results and Entries</div>
                 <Spacer size="sm" />
 
                 <div className="flex items-center-safe gap-4">
@@ -849,14 +900,34 @@ const Page = ({ id }: { id: string }) => {
                   </div>
 
                   {/* Generate Result */}
-                  <div className="w-42">
-                    <Button
-                      type="button"
-                      title={"Generate Results"}
-                      loading={loading == "generateAssResults"}
-                      variant={"fill"}
-                      onClick={() => generateAssResults()}
-                    />
+                  <div className="bg-accent rounded-md flex items-center pl-4 h-10 overflow-hidden">
+                    <span className="text-white text-sm pr-4">
+                      Generate Results
+                    </span>
+
+                    <button
+                      type="submit"
+                      className="cursor-pointer text-sm text-white h-full w-12 hover:bg-accent-dim font-semibold flex items-center justify-center gap-2 border-x border-accent-light/20"
+                      onClick={() => generateAssResults("pdf")}
+                    >
+                      {loading == "generateResults-pdf" ? (
+                        <Spinner className="size-4" />
+                      ) : (
+                        "PDF"
+                      )}
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="cursor-pointer text-sm text-white h-full w-12 hover:bg-accent-dim font-semibold flex items-center justify-center gap-2"
+                      onClick={() => generateAssResults("csv")}
+                    >
+                      {loading == "generateResults-csv" ? (
+                        <Spinner className="size-4" />
+                      ) : (
+                        "CSV"
+                      )}
+                    </button>
                   </div>
                 </div>
 

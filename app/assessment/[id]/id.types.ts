@@ -8,7 +8,7 @@ export type PageDataType = {
   timeLimit: number;
   authorizedToStart: boolean;
   sections: { questions: [] }[];
-  endReason: string;
+  endReason: string | boolean;
   dueDate: string;
   startDate: string;
 };
