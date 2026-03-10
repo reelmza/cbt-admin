@@ -2,7 +2,7 @@ name: Build & Push Deployment Image (cbt-admin)
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
   workflow_dispatch:
 
 permissions:
@@ -12,6 +12,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: oaystech/cbt-admin
+  # IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   deployment-package:
