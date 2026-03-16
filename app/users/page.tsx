@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
 
@@ -184,6 +184,7 @@ const Page = () => {
     if (!session) return;
 
     const getData = async () => {
+      if (!localAxios) return;
       try {
         attachHeaders(session!.user.token);
 

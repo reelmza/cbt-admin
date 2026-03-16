@@ -25,7 +25,7 @@ export default auth((req) => {
     req.auth
   ) {
     const newUrl = new URL("/dashboard", req.nextUrl.origin);
-    console.log(newUrl);
+    console.log(newUrl, "from proxy");
     return Response.redirect(newUrl);
   }
 });

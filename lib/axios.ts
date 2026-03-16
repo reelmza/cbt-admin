@@ -1,26 +1,29 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 
-// Axios Instance
-export const localAxios = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BASEURL,
-  timeout: 60_000,
-  // withCredentials: true,
-});
+export let localAxios: AxiosInstance;
 
-export const attachHeaders = (token: string | null, contentType?: string) => {
-  // Set default headers
-  //   localAxios.defaults.headers.common["x-app-version"] = "0.0.1";
-  //   localAxios.defaults.headers.common["x-device-id"] =
-  //     "6f0fce80-13ee-42d7-96bf-59a42ee6e39e";
-  //   localAxios.defaults.headers.common["x-platform"] = "ios";
-  //   localAxios.defaults.headers.common["x-app-id"] = "com.sbareads";
+export const getAxios = async (): Promise<void> => {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  if (origin) {
+    console.log(origin);
+    const res = await fetch(`${origin}/api/config`);
+    const data = await res.json();
 
-  // Set token if available
-  if (token)
-    localAxios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-  // Set content type if available
-  if (contentType) {
-    localAxios.defaults.headers.common["Content-Type"] = contentType;
+    localAxios = axios.create({
+      baseURL: data.baseUrl,
+      timeout: 60000,
+    });
+  } else {
+    console.log("App was unable to get current origin address");
   }
+};
+
+getAxios();
+
+// Helper to attach headers dynamically
+export const attachHeaders = (token?: string, contentType?: string) => {
+  if (token && localAxios)
+    localAxios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  if (contentType && localAxios)
+    localAxios.defaults.headers.common["Content-Type"] = contentType;
 };
