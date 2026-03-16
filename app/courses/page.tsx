@@ -52,7 +52,7 @@ const Page = () => {
       if (res.status === 201) {
         setLoading(null);
         setOpenAddCourse(false);
-        toast.success("Course has been added successfully.", toastConfig);
+
         setPageData((prev) => {
           if (!prev) {
             return [res.data.data];
@@ -60,6 +60,8 @@ const Page = () => {
 
           return [...prev, res.data.data];
         });
+
+        toast.success("Course has been added successfully.", toastConfig);
       }
     } catch (error) {
       console.log(error);

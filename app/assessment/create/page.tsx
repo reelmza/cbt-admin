@@ -94,7 +94,10 @@ const Main = () => {
   // Submit assessment
   const submitAss = async () => {
     setLoading("submitAss");
-    let formData = { ...assDetails };
+    let formData = {
+      ...assDetails,
+      timeLimit: 5, //deault 5 min
+    };
     if (!sections) return;
 
     // @ts-expect-error Remove defaultQuestionScore property that is not in the database schema and causes error upon upload.
@@ -1009,7 +1012,7 @@ const QuestionForm = ({
         </div>
 
         {/* Image Upload/ */}
-        <div className="relative overflow-hidden flex items-center gap-2 cursor-pointer text-accent bg-accent-light h-7 rounded-md">
+        <div className="hidden relative overflow-hidden flexs items-center gap-2 cursor-pointer text-accent bg-accent-light h-7 rounded-md">
           {qstImage ? (
             <div className="flex items-center gap-2 pl-2 h-full">
               <button
