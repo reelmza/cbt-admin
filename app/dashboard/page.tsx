@@ -29,7 +29,7 @@ const Page = () => {
       name: "Create a Faulty",
       description: "Create a faculty or a department for a particular.",
       icon: <UsersRound size={38} className="text-accent-dim" />,
-      route: "/groups",
+      route: "/faculties",
     },
   ];
 

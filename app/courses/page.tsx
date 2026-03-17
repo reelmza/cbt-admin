@@ -150,17 +150,20 @@ const Page = () => {
         tableHeading={[
           { value: "Course Code", colSpan: "col-span-2" },
           { value: "Course Title", colSpan: "col-span-3" },
-          { value: "Description", colSpan: "col-span-6" },
+          { value: "Description", colSpan: "col-span-5" },
 
-          { value: "", colSpan: "col-span-1" },
+          { value: "Created", colSpan: "col-span-2" },
         ]}
         tableData={
           filteredPageData
             ? filteredPageData.map((item, key) => [
                 { value: item.code, colSpan: "col-span-2" },
                 { value: item.title, colSpan: "col-span-3" },
-                { value: item.description, colSpan: "col-span-6" },
-                { value: item._id, colSpan: "col-span-1", type: "link" },
+                { value: item.description, colSpan: "col-span-5" },
+                {
+                  value: item.createdAt.split("T")[0],
+                  colSpan: "col-span-2",
+                },
               ])
             : []
         }
