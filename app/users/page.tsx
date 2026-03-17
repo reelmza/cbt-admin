@@ -259,7 +259,7 @@ const Page = () => {
               </div>
 
               {/* Bulk Upload Passports */}
-              <div className="hidden w-52">
+              <div className="w-52">
                 <Button
                   title="Bulk Upload Passports"
                   icon={<User2 size={16} strokeWidth={2.5} />}
