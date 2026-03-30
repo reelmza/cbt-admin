@@ -345,7 +345,10 @@ const Page = () => {
 
       {/* Dialogs - Student Bulk Upload */}
       <Dialog open={openBulkUpload} onOpenChange={setOpenBulkUpload}>
-        <DialogContent>
+        <DialogContent
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Bulk Upload Students</DialogTitle>
             <DialogDescription className="pr-28">

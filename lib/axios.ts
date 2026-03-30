@@ -11,7 +11,7 @@ export const getAxios = async (): Promise<void> => {
 
     localAxios = axios.create({
       baseURL: data.baseUrl,
-      timeout: 60000,
+      timeout: 120_000,
     });
   } else {
     console.log("App was unable to get current origin address");
