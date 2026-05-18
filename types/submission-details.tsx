@@ -43,7 +43,11 @@ export interface Answer {
   answerId: string;
   question: Question;
   selectedOption: string | null;
-  subjectiveAnswers: AnswerSlot[];
+  subjectiveAnswers: {
+    slotNumber: number;
+    answer: string;
+    isCorrect: boolean;
+  }[];
   theoryAnswer: string | null;
   score: number;
   status: AnswerStatus;

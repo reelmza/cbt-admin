@@ -108,24 +108,24 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                     {/* Left */}
                     <div className="w-7/12 border p-5 mb-5">
                       {/* Heading */}
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="flex justify-between items-center mb-5">
                         <div className="text-theme-gray mb-1 text-sm">
                           Question
                         </div>
 
                         <div className="flex items-center gap-2">
                           {/* Question Type */}
-                          <div className="text-sm text-theme-gray border px-2">
+                          <div className="text-xs text-theme-gray border px-2">
                             {ans?.question?.type === "subjective"
                               ? "subjective"
                               : "theory"}
                           </div>
                           {/* Marked Status */}
                           <div
-                            className={`text-sm px-2 ${
+                            className={`text-xs border  px-2 ${
                               ans.markedBy
-                                ? "text-theme-success bg-emerald-50"
-                                : "text-theme-warning bg-orange-50"
+                                ? "text-theme-success bg-emerald-50 border-emerald-200"
+                                : "text-theme-warning bg-orange-50 border-orange-200"
                             }`}
                           >
                             {ans.markedBy ? "Marked" : "Not Marked"}
@@ -149,9 +149,11 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
 
                       {/* Subjective Answer */}
                       {ans?.subjectiveAnswers && (
-                        <div className="text-theme-gray mb-1 text-sm">
+                        <div className="mb-1 text-sm">
                           {ans.subjectiveAnswers.map((slot, slotKey) => (
-                            <div key={slotKey}>{slot.slotNumber}</div>
+                            <div key={slotKey}>
+                              {`[${slot?.slotNumber}]`} {slot?.answer}
+                            </div>
                           ))}
                         </div>
                       )}
@@ -164,20 +166,19 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
 
                       {/* Expected Answer Theory */}
                       {ans?.question?.expectedAnswer && (
-                        <div className="mb-1 text-theme-gray">
+                        <div className="mb-1 text-sm">
                           {ans?.question?.expectedAnswer}
                         </div>
                       )}
 
                       {/* Expected Answer Subjective */}
                       {ans?.question?.answerSlots.length > 0 && (
-                        <div className="mb-1 text-theme-gray">
+                        <div className="mb-1 text-sm">
                           {ans?.question?.answerSlots.map(
                             (slotExp, slotKeyExp) => (
                               <div key={slotKeyExp}>
                                 <div>
-                                  Slot {slotExp.slotNumber}
-                                  {": "}
+                                  {`[${slotExp.slotNumber}]`}{" "}
                                   {slotExp.possibleAnswers.map(
                                     (posExp) => `${posExp}, `
                                   )}
