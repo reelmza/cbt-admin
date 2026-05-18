@@ -49,7 +49,6 @@ import { useRouter } from "next/navigation";
 import Papa from "papaparse";
 import { toastConfig } from "@/utils/toastConfig";
 import { toast } from "sonner";
-import { File } from "buffer";
 import Image from "next/image";
 
 const Main = () => {
@@ -854,7 +853,7 @@ const QuestionForm = ({
         answerSlots: options.map((item, key) => {
           return { slotNumber: key + 1, possibleAnswers: item.split(",") };
         }),
-        image: qstImage || null,
+        ...(qstImage && { image: qstImage }),
       };
 
     // Arrange formdata for subjective
@@ -865,7 +864,7 @@ const QuestionForm = ({
         score: targetSection?.defaultQuestionScore || 1,
         expectedAnswer: options[0],
         requiresManualMarking: true,
-        image: qstImage || null,
+        ...(qstImage && { image: qstImage }),
       };
 
     // Check if update is the correct action to execute
@@ -1012,7 +1011,7 @@ const QuestionForm = ({
         </div>
 
         {/* Image Upload/ */}
-        <div className="hidden relative overflow-hidden flexs items-center gap-2 cursor-pointer text-accent bg-accent-light h-7 rounded-md">
+        <div className="relative overflow-hidden flexs items-center gap-2 cursor-pointer text-accent bg-accent-light h-7 rounded-md">
           {qstImage ? (
             <div className="flex items-center gap-2 pl-2 h-full">
               <button

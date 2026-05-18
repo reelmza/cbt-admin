@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Button from "@/components/button";
+import Preload from "@/components/preload";
 
 const Page = ({ id }: { id: string }) => {
   const controller = new AbortController();
@@ -147,7 +148,7 @@ const Page = ({ id }: { id: string }) => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      {loading !== "page" && pageData && (
+      {pageData && (
         <>
           <div className="w-full flex gap-10 min-h-full">
             {/* Pofile Picture */}
@@ -295,15 +296,7 @@ const Page = ({ id }: { id: string }) => {
         </>
       )}
 
-      {/* Page Loading */}
-      {loading === "page" ? (
-        <div className="flex items-center gap-2 mt-2 text-theme-gray">
-          <Spinner />
-          <div className="text-sm">Fetching data</div>
-        </div>
-      ) : (
-        ""
-      )}
+      <Preload loading={loading} pageData={pageData ? true : false} />
     </div>
   );
 };

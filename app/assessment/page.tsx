@@ -1,17 +1,17 @@
 "use client";
 import Button from "@/components/button";
+import Preload from "@/components/preload";
 import PageNavigator from "@/components/sections/page-navigator";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import TableSearchBox from "@/components/table-searchbox";
-import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
-import { assessmentTableData } from "@/utils/dummy-data";
 import { Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import Link from "next/link";
 import { ChangeEvent, useEffect, useState } from "react";
+import Image from "next/image";
 
 const Page = () => {
   const controller = new AbortController();
@@ -78,156 +78,155 @@ const Page = () => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      {/* Page Navigator */}
-      <PageNavigator
-        navList={[
-          {
-            name: "All Assessment",
-            fx: () => {
-              if (!pageData) return;
-              setFilteredPageData(pageData);
-            },
-          },
-          {
-            name: "Not Started",
-            fx: () => {
-              setFilteredPageData((prev) => {
-                if (!pageData) return prev;
+      {pageData && (
+        <>
+          {/* Page Navigator */}
+          <PageNavigator
+            navList={[
+              {
+                name: "All Assessment",
+                fx: () => {
+                  if (!pageData) return;
+                  setFilteredPageData(pageData);
+                },
+              },
+              {
+                name: "Not Started",
+                fx: () => {
+                  setFilteredPageData((prev) => {
+                    if (!pageData) return prev;
 
-                const newData = pageData?.filter(
-                  (dt) => dt.authorizedToStart == false
-                );
-                if (newData) {
-                  return newData;
-                }
+                    const newData = pageData?.filter(
+                      (dt) => dt.authorizedToStart == false
+                    );
+                    if (newData) {
+                      return newData;
+                    }
 
-                return prev;
-              });
-            },
-          },
-          {
-            name: "Completed",
-            fx: () => {
-              setFilteredPageData((prev) => {
-                if (!pageData) return prev;
+                    return prev;
+                  });
+                },
+              },
+              {
+                name: "Completed",
+                fx: () => {
+                  setFilteredPageData((prev) => {
+                    if (!pageData) return prev;
 
-                const newData = pageData?.filter((dt) => dt.endReason !== null);
-                if (newData) {
-                  return newData;
-                }
+                    const newData = pageData?.filter(
+                      (dt) => dt.endReason !== null
+                    );
+                    if (newData) {
+                      return newData;
+                    }
 
-                return prev;
-              });
-            },
-          },
-          {
-            name: "Ongoing",
-            fx: () => {
-              setFilteredPageData((prev) => {
-                if (!pageData) return prev;
-                const newData = pageData?.filter(
-                  (dt) => dt.authorizedToStart === true && dt.endReason === null
-                );
-                if (newData) {
-                  return newData;
-                }
+                    return prev;
+                  });
+                },
+              },
+              {
+                name: "Ongoing",
+                fx: () => {
+                  setFilteredPageData((prev) => {
+                    if (!pageData) return prev;
+                    const newData = pageData?.filter(
+                      (dt) =>
+                        dt.authorizedToStart === true && dt.endReason === null
+                    );
+                    if (newData) {
+                      return newData;
+                    }
 
-                return prev;
-              });
-            },
-          },
-        ]}
-      />
-      <Spacer size="lg" />
-
-      {/* Table Headers */}
-      <div className="flex items-center justify-between">
-        <TableSearchBox
-          placeholder="Search an assessment"
-          onChange={searchAss}
-        />
-
-        <Link href="/assessment/create" className="block w-52">
-          <Button
-            title={"Create an Assessment"}
-            loading={false}
-            variant={"fill"}
-            icon={<Plus size={16} />}
+                    return prev;
+                  });
+                },
+              },
+            ]}
           />
-        </Link>
-      </div>
+          <Spacer size="lg" />
 
-      <Table
-        tableHeading={[
-          { value: "Course", colSpan: "col-span-3" },
-          { value: "Due Date", colSpan: "col-span-3" },
-          { value: "Sections", colSpan: "col-span-1" },
-          { value: "Qst", colSpan: "col-span-1" },
-          { value: "Students", colSpan: "col-span-1" },
-          { value: "Marks", colSpan: "col-span-1" },
-          { value: "Status", colSpan: "col-span-1" },
-          { value: "Actions", colSpan: "col-span-1" },
-        ]}
-        tableData={
-          filteredPageData
-            ? filteredPageData.map((item, key: number) => [
-                {
-                  value: `${item.title}`,
-                  colSpan: "col-span-3",
-                },
-                {
-                  value: prettyDate(item.dueDate.split("T")[0]),
-                  colSpan: "col-span-3",
-                },
-                { value: item.sections.length, colSpan: "col-span-1" },
-                {
-                  value: item.sections.reduce(
-                    (acc: number, sct: { questions: [] }) => {
-                      if (sct.questions?.length) {
-                        return sct.questions?.length + acc;
-                      }
-                      return 0;
+          {/* Table Headers */}
+          <div className="flex items-center justify-between">
+            <TableSearchBox
+              placeholder="Search an assessment"
+              onChange={searchAss}
+            />
+
+            <Link href="/assessment/create" className="block w-52">
+              <Button
+                title={"Create an Assessment"}
+                loading={false}
+                variant={"fill"}
+                icon={<Plus size={16} />}
+              />
+            </Link>
+          </div>
+
+          <Table
+            tableHeading={[
+              { value: "Course", colSpan: "col-span-3" },
+              { value: "Due Date", colSpan: "col-span-3" },
+              { value: "Sections", colSpan: "col-span-1" },
+              { value: "Qst", colSpan: "col-span-1" },
+              { value: "Students", colSpan: "col-span-1" },
+              { value: "Marks", colSpan: "col-span-1" },
+              { value: "Status", colSpan: "col-span-1" },
+              { value: "Actions", colSpan: "col-span-1" },
+            ]}
+            tableData={
+              filteredPageData
+                ? filteredPageData.map((item, key: number) => [
+                    {
+                      value: `${item.title}`,
+                      colSpan: "col-span-3",
                     },
-                    0
-                  ),
-                  colSpan: "col-span-1",
-                },
-                { value: item?.students?.length, colSpan: "col-span-1" },
-                { value: item.totalMarks || "-", colSpan: "col-span-1" },
-                {
-                  value: item.status,
-                  colSpan: "col-span-1",
-                  type: "badge",
-                  color: `${
-                    item.status === "closed"
-                      ? "warning"
-                      : item.status === "ongoing"
-                      ? "info"
-                      : "success"
-                  }`,
-                },
-                {
-                  value: `assessment/${item._id}`,
-                  colSpan: "col-span-1",
-                  type: "link",
-                },
-              ])
-            : []
-        }
-        showSearch={false}
-        showOptions={false}
-      />
-
-      {/* Page Loading */}
-      {loading === "page" ? (
-        <div className="flex items-center gap-2 mt-2 text-theme-gray">
-          <Spinner />
-          <div className="text-sm">Fetching data</div>
-        </div>
-      ) : (
-        ""
+                    {
+                      value: prettyDate(item.dueDate.split("T")[0]),
+                      colSpan: "col-span-3",
+                    },
+                    { value: item.sections.length, colSpan: "col-span-1" },
+                    {
+                      value: item.sections.reduce(
+                        (acc: number, sct: { questions: [] }) => {
+                          if (sct.questions?.length) {
+                            return sct.questions?.length + acc;
+                          }
+                          return 0;
+                        },
+                        0
+                      ),
+                      colSpan: "col-span-1",
+                    },
+                    { value: item?.students?.length, colSpan: "col-span-1" },
+                    { value: item.totalMarks || "-", colSpan: "col-span-1" },
+                    {
+                      value: item.status,
+                      colSpan: "col-span-1",
+                      type: "badge",
+                      color: `${
+                        item.status === "closed"
+                          ? "warning"
+                          : item.status === "ongoing"
+                          ? "info"
+                          : "success"
+                      }`,
+                    },
+                    {
+                      value: `assessment/${item._id}`,
+                      colSpan: "col-span-1",
+                      type: "link",
+                    },
+                  ])
+                : []
+            }
+            showSearch={false}
+            showOptions={false}
+          />
+        </>
       )}
 
+      {/* Page Loading */}
+      <Preload loading={loading} pageData={pageData ? true : false} />
       <Spacer size="xl" />
     </div>
   );

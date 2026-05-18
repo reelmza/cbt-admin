@@ -19,6 +19,8 @@ import { toastConfig } from "@/utils/toastConfig";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import Link from "next/link";
+import Preload from "@/components/preload";
 
 const Page = ({ id }: { id: string }) => {
   const controller = new AbortController();
@@ -887,7 +889,7 @@ const Page = ({ id }: { id: string }) => {
                 <div className="text-sm">Results and Entries</div>
                 <Spacer size="sm" />
 
-                <div className="flex items-center-safe gap-4">
+                <div className="flex flex-wrap items-center-safe gap-4">
                   {/* Generate Entries */}
                   <div className="w-42">
                     <Button
@@ -929,6 +931,16 @@ const Page = ({ id }: { id: string }) => {
                       )}
                     </button>
                   </div>
+
+                  {/* Mark Submissions */}
+                  <Link href={`/assessment/${id}/marking`} className="w-42">
+                    <Button
+                      type="button"
+                      title={"Mark Submissions"}
+                      loading={false}
+                      variant={"fill"}
+                    />
+                  </Link>
                 </div>
 
                 <Spacer size="sm" />
@@ -942,15 +954,7 @@ const Page = ({ id }: { id: string }) => {
         </>
       )}
 
-      {/* Page Loading */}
-      {loading === "page" ? (
-        <div className="flex items-center gap-2 mt-2 text-theme-gray">
-          <Spinner />
-          <div className="text-sm">Fetching data</div>
-        </div>
-      ) : (
-        ""
-      )}
+      <Preload loading={loading} pageData={pageData ? true : false} />
     </div>
   );
 };

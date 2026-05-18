@@ -1,6 +1,7 @@
 "use client";
 import Button from "@/components/button";
 import Input from "@/components/input";
+import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import TableSearchBox from "@/components/table-searchbox";
@@ -111,136 +112,133 @@ const Page = () => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      <div className="flex items-center justify-between">
-        {/* <TableSearchBox placeholder="Search for a group" /> */}
-        <div className="w-10"></div>
+      {pageData && (
+        <>
+          <div className="flex items-center justify-between">
+            {/* <TableSearchBox placeholder="Search for a group" /> */}
+            <div className="w-10"></div>
 
-        <div className="block w-52">
-          <Button
-            title={"Create Department"}
-            loading={false}
-            variant={"fill"}
-            icon={<Plus size={16} />}
-            onClick={() => setShowCreateGroup(true)}
+            <div className="block w-52">
+              <Button
+                title={"Create Department"}
+                loading={false}
+                variant={"fill"}
+                icon={<Plus size={16} />}
+                onClick={() => setShowCreateGroup(true)}
+              />
+            </div>
+          </div>
+
+          <Table
+            tableHeading={[
+              { value: "Code", colSpan: "col-span-2" },
+              { value: "Department Name", colSpan: "col-span-3" },
+              { value: "Description", colSpan: "col-span-2" },
+
+              { value: "Faculty", colSpan: "col-span-3" },
+              { value: "Created", colSpan: "col-span-2" },
+            ]}
+            tableData={
+              pageData
+                ? pageData.map((item, key: number) => [
+                    {
+                      value: `${item.code}`,
+                      colSpan: "col-span-2",
+                    },
+
+                    { value: item.name, colSpan: "col-span-3" },
+                    { value: "-", colSpan: "col-span-2" },
+
+                    {
+                      value:
+                        rawData?.find((grp) => grp._id == item.group)?.name ||
+                        "",
+                      colSpan: "col-span-3",
+                    },
+
+                    {
+                      value: prettyDate(item.createdAt.split("T")[0]),
+                      colSpan: "col-span-2",
+                    },
+                  ])
+                : []
+            }
+            showSearch={false}
+            showOptions={false}
           />
-        </div>
-      </div>
 
-      <Table
-        tableHeading={[
-          { value: "Code", colSpan: "col-span-2" },
-          { value: "Department Name", colSpan: "col-span-3" },
-          { value: "Description", colSpan: "col-span-2" },
+          <Spacer size="xl" />
 
-          { value: "Faculty", colSpan: "col-span-3" },
-          { value: "Created", colSpan: "col-span-2" },
-        ]}
-        tableData={
-          pageData
-            ? pageData.map((item, key: number) => [
-                {
-                  value: `${item.code}`,
-                  colSpan: "col-span-2",
-                },
+          <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add a department</DialogTitle>
+                <DialogDescription className="pr-28">
+                  Add a new sub group
+                </DialogDescription>
+              </DialogHeader>
 
-                { value: item.name, colSpan: "col-span-3" },
-                { value: "-", colSpan: "col-span-2" },
+              <form className="pr-28" onSubmit={addGroup}>
+                {/* Course Code */}
+                <Input
+                  name="groupCode"
+                  type="text"
+                  placeholder={"Department code"}
+                  required
+                />
+                <Spacer size="sm" />
 
-                {
-                  value:
-                    rawData?.find((grp) => grp._id == item.group)?.name || "",
-                  colSpan: "col-span-3",
-                },
+                {/* Course name */}
+                <Input
+                  name="groupName"
+                  type="text"
+                  placeholder={"Department name"}
+                  required
+                />
+                <Spacer size="sm" />
 
-                {
-                  value: prettyDate(item.createdAt.split("T")[0]),
-                  colSpan: "col-span-2",
-                },
-              ])
-            : []
-        }
-        showSearch={false}
-        showOptions={false}
-      />
+                {/* Course Description */}
+                <Input
+                  name="groupDescription"
+                  type="text"
+                  placeholder={"Brief description or identifier"}
+                  required
+                />
+                <Spacer size="sm" />
 
-      {/* Page Loading */}
-      {loading === "page" ? (
-        <div className="flex items-center gap-2 mt-2 text-theme-gray">
-          <Spinner />
-          <div className="text-sm">Fetching data</div>
-        </div>
-      ) : (
-        ""
+                {/* Group Select */}
+                <Select name="group" required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose Faculty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rawData &&
+                      rawData.map((grp, key) => {
+                        return (
+                          <SelectItem value={grp._id} key={key}>
+                            {grp.name}
+                          </SelectItem>
+                        );
+                      })}
+                  </SelectContent>
+                </Select>
+                <Spacer size="md" />
+
+                <Button
+                  title={"Add Department"}
+                  loading={loading === "addGroup"}
+                  variant={"fill"}
+                  icon={<Plus size={20} />}
+                />
+
+                <Spacer size="md" />
+              </form>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
 
-      <Spacer size="xl" />
-
-      <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add a department</DialogTitle>
-            <DialogDescription className="pr-28">
-              Add a new sub group
-            </DialogDescription>
-          </DialogHeader>
-
-          <form className="pr-28" onSubmit={addGroup}>
-            {/* Course Code */}
-            <Input
-              name="groupCode"
-              type="text"
-              placeholder={"Department code"}
-              required
-            />
-            <Spacer size="sm" />
-
-            {/* Course name */}
-            <Input
-              name="groupName"
-              type="text"
-              placeholder={"Department name"}
-              required
-            />
-            <Spacer size="sm" />
-
-            {/* Course Description */}
-            <Input
-              name="groupDescription"
-              type="text"
-              placeholder={"Brief description or identifier"}
-              required
-            />
-            <Spacer size="sm" />
-
-            {/* Group Select */}
-            <Select name="group" required>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose Faculty" />
-              </SelectTrigger>
-              <SelectContent>
-                {rawData &&
-                  rawData.map((grp, key) => {
-                    return (
-                      <SelectItem value={grp._id} key={key}>
-                        {grp.name}
-                      </SelectItem>
-                    );
-                  })}
-              </SelectContent>
-            </Select>
-            <Spacer size="md" />
-
-            <Button
-              title={"Add Department"}
-              loading={loading === "addGroup"}
-              variant={"fill"}
-              icon={<Plus size={20} />}
-            />
-
-            <Spacer size="md" />
-          </form>
-        </DialogContent>
-      </Dialog>
+      <Preload loading={loading} pageData={pageData ? true : false} />
     </div>
   );
 };

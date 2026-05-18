@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/api/v1/utility/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "womenlegacyacademy.com",
+        port: "",
+        pathname: "/api/v1/utility/uploads/**",
+      },
     ],
   },
 };

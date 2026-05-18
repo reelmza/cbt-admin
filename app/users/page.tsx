@@ -32,6 +32,7 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageMetaData, User } from "./users.types";
+import Preload from "@/components/preload";
 
 const Page = () => {
   const controller = new AbortController();
@@ -227,7 +228,7 @@ const Page = () => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      {loading !== "page" && pageData && (
+      {pageData && (
         <>
           <PageNavigator
             navList={[
@@ -330,157 +331,149 @@ const Page = () => {
           {/* Spacing */}
           <Spacer size="xl" />
           <Spacer size="xl" />
+
+          {/* Dialogs - Student Bulk Upload */}
+          <Dialog open={openBulkUpload} onOpenChange={setOpenBulkUpload}>
+            <DialogContent
+              onEscapeKeyDown={(e) => e.preventDefault()}
+              onInteractOutside={(e) => e.preventDefault()}
+            >
+              <DialogHeader>
+                <DialogTitle>Bulk Upload Students</DialogTitle>
+                <DialogDescription className="pr-28">
+                  Add students to the database so that you can assign them to
+                  assessments later on.
+                </DialogDescription>
+              </DialogHeader>
+
+              <form className="pr-28" onSubmit={bulkUpload}>
+                {/* File Upload */}
+                <Input
+                  id="bulkUpload"
+                  name="bulkUpload"
+                  type="file"
+                  className="cursor-pointer"
+                  required
+                />
+                <Spacer size="sm" />
+
+                {/* Faculty */}
+                <Select
+                  name="group"
+                  onValueChange={(val) => {
+                    if (!groups) return;
+                    const target = groups.find((grp) => grp._id == val);
+                    target && setSelectedGroup(target);
+                  }}
+                  required
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        groups && groups?.length > 1
+                          ? "Choose Faculty"
+                          : "No faculty created"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups
+                      ? groups.map((grp, key) => {
+                          return (
+                            <SelectItem value={grp._id} key={key}>
+                              {grp.name}
+                            </SelectItem>
+                          );
+                        })
+                      : ""}
+                  </SelectContent>
+                </Select>
+                <Spacer size="sm" />
+
+                {/* Department */}
+                <Select name="subGroup" required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        selectedGroup && selectedGroup?.subGroups?.length > 0
+                          ? "Choose Department"
+                          : "No deparment created"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedGroup?.subGroups ? (
+                      <>
+                        {selectedGroup.subGroups.map((grp, key) => (
+                          <SelectItem value={grp._id} key={key}>
+                            {grp.name}
+                          </SelectItem>
+                        ))}
+                      </>
+                    ) : (
+                      ""
+                    )}
+                  </SelectContent>
+                </Select>
+                <Spacer size="sm" />
+
+                <Button
+                  title={"Upload File"}
+                  loading={loading === "bulkUpload"}
+                  variant={"fill"}
+                  icon={<CloudUpload size={20} />}
+                />
+
+                <Spacer size="md" />
+                <div className="text-sm text-theme-gray">
+                  Use the template provided, if there is an error, no student
+                  will be uploaded.
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialogs - Student Passport Upload */}
+          <Dialog open={openPassUpload} onOpenChange={setOpenPassUpload}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Bulk Upload Passports</DialogTitle>
+                <DialogDescription className="pr-28">
+                  Upload passport zipped file
+                </DialogDescription>
+              </DialogHeader>
+
+              <form className="pr-28" onSubmit={passUpload}>
+                {/* File Upload */}
+                <Input
+                  id="passports"
+                  name="passports"
+                  type="file"
+                  className="cursor-pointer"
+                  required
+                />
+                <Spacer size="md" />
+
+                {/* Submit Button */}
+                <Button
+                  title={"Upload File"}
+                  loading={loading === "passUpload"}
+                  variant={"fill"}
+                  icon={<CloudUpload size={20} />}
+                />
+                <Spacer size="md" />
+
+                <div className="text-sm text-theme-gray">
+                  All passports will be matched to corresponding registration
+                  numbers.
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </>
       )}
 
-      {/* Page Loading */}
-      {loading === "page" ? (
-        <div className="flex items-center gap-2 mt-2 text-theme-gray">
-          <Spinner />
-          <div className="text-sm">Fetching data</div>
-        </div>
-      ) : (
-        ""
-      )}
-
-      {/* Dialogs - Student Bulk Upload */}
-      <Dialog open={openBulkUpload} onOpenChange={setOpenBulkUpload}>
-        <DialogContent
-          onEscapeKeyDown={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle>Bulk Upload Students</DialogTitle>
-            <DialogDescription className="pr-28">
-              Add students to the database so that you can assign them to
-              assessments later on.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form className="pr-28" onSubmit={bulkUpload}>
-            {/* File Upload */}
-            <Input
-              id="bulkUpload"
-              name="bulkUpload"
-              type="file"
-              className="cursor-pointer"
-              required
-            />
-            <Spacer size="sm" />
-
-            {/* Faculty */}
-            <Select
-              name="group"
-              onValueChange={(val) => {
-                if (!groups) return;
-                const target = groups.find((grp) => grp._id == val);
-                target && setSelectedGroup(target);
-              }}
-              required
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={
-                    groups && groups?.length > 1
-                      ? "Choose Faculty"
-                      : "No faculty created"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {groups
-                  ? groups.map((grp, key) => {
-                      return (
-                        <SelectItem value={grp._id} key={key}>
-                          {grp.name}
-                        </SelectItem>
-                      );
-                    })
-                  : ""}
-              </SelectContent>
-            </Select>
-            <Spacer size="sm" />
-
-            {/* Department */}
-            <Select name="subGroup" required>
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={
-                    selectedGroup && selectedGroup?.subGroups?.length > 0
-                      ? "Choose Department"
-                      : "No deparment created"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {selectedGroup?.subGroups ? (
-                  <>
-                    {selectedGroup.subGroups.map((grp, key) => (
-                      <SelectItem value={grp._id} key={key}>
-                        {grp.name}
-                      </SelectItem>
-                    ))}
-                  </>
-                ) : (
-                  ""
-                )}
-              </SelectContent>
-            </Select>
-            <Spacer size="sm" />
-
-            <Button
-              title={"Upload File"}
-              loading={loading === "bulkUpload"}
-              variant={"fill"}
-              icon={<CloudUpload size={20} />}
-            />
-
-            <Spacer size="md" />
-            <div className="text-sm text-theme-gray">
-              Use the template provided, if there is an error, no student will
-              be uploaded.
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialogs - Student Passport Upload */}
-      <Dialog open={openPassUpload} onOpenChange={setOpenPassUpload}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Bulk Upload Passports</DialogTitle>
-            <DialogDescription className="pr-28">
-              Upload passport zipped file
-            </DialogDescription>
-          </DialogHeader>
-
-          <form className="pr-28" onSubmit={passUpload}>
-            {/* File Upload */}
-            <Input
-              id="passports"
-              name="passports"
-              type="file"
-              className="cursor-pointer"
-              required
-            />
-            <Spacer size="md" />
-
-            {/* Submit Button */}
-            <Button
-              title={"Upload File"}
-              loading={loading === "passUpload"}
-              variant={"fill"}
-              icon={<CloudUpload size={20} />}
-            />
-            <Spacer size="md" />
-
-            <div className="text-sm text-theme-gray">
-              All passports will be matched to corresponding registration
-              numbers.
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <Preload loading={loading} pageData={pageData ? true : false} />
     </div>
   );
 };

@@ -197,3 +197,11 @@ body {
     @apply bg-background text-foreground;
   }
 }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fade {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}

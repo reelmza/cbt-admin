@@ -21,6 +21,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { toastConfig } from "@/utils/toastConfig";
 import { Course } from "./courses.types";
+import Preload from "@/components/preload";
 
 const Page = () => {
   const controller = new AbortController();
@@ -123,112 +124,110 @@ const Page = () => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      {/* Table Options */}
-      <div className="flex items-center justify-between">
-        {/* Search bar */}
-        <TableSearchBox
-          placeholder="Search an course"
-          onChange={searchCourse}
-        />
+      <>
+        {pageData && (
+          <>
+            {/* Table Options */}
+            <div className="flex items-center justify-between">
+              {/* Search bar */}
+              <TableSearchBox
+                placeholder="Search an course"
+                onChange={searchCourse}
+              />
 
-        {/* Buttons */}
-        <div>
-          <div className="w-52">
-            <Button
-              title="Add a course"
-              icon={<Plus size={16} strokeWidth={2.5} />}
-              variant="fill"
-              loading={false}
-              onClick={() => setOpenAddCourse((prev) => !prev)}
-            />
-          </div>
-        </div>
-      </div>
+              {/* Buttons */}
+              <div>
+                <div className="w-52">
+                  <Button
+                    title="Add a course"
+                    icon={<Plus size={16} strokeWidth={2.5} />}
+                    variant="fill"
+                    loading={false}
+                    onClick={() => setOpenAddCourse((prev) => !prev)}
+                  />
+                </div>
+              </div>
+            </div>
 
-      {/* Table */}
-      <Table
-        tableHeading={[
-          { value: "Course Code", colSpan: "col-span-2" },
-          { value: "Course Title", colSpan: "col-span-3" },
-          { value: "Description", colSpan: "col-span-5" },
+            {/* Table */}
+            <Table
+              tableHeading={[
+                { value: "Course Code", colSpan: "col-span-2" },
+                { value: "Course Title", colSpan: "col-span-3" },
+                { value: "Description", colSpan: "col-span-5" },
 
-          { value: "Created", colSpan: "col-span-2" },
-        ]}
-        tableData={
-          filteredPageData
-            ? filteredPageData.map((item, key) => [
-                { value: item.code, colSpan: "col-span-2" },
-                { value: item.title, colSpan: "col-span-3" },
-                { value: item.description, colSpan: "col-span-5" },
-                {
-                  value: item.createdAt.split("T")[0],
-                  colSpan: "col-span-2",
-                },
-              ])
-            : []
-        }
-        showSearch={false}
-        showOptions={false}
-      />
-
-      {/* Page Loading */}
-      {loading === "page" ? (
-        <div className="flex items-center gap-2 mt-2 text-theme-gray">
-          <Spinner />
-          <div className="text-sm">Fetching data</div>
-        </div>
-      ) : (
-        ""
-      )}
-
-      <Dialog open={openAddCourse} onOpenChange={setOpenAddCourse}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add a course</DialogTitle>
-            <DialogDescription className="pr-28">
-              Add a new taken subject in the school.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form className="pr-28" onSubmit={addCourse}>
-            {/* Course Code */}
-            <Input
-              name="courseCode"
-              type="text"
-              placeholder={"Enter course code"}
-              required
-            />
-            <Spacer size="sm" />
-
-            {/* Course title */}
-            <Input
-              name="courseTitle"
-              type="text"
-              placeholder={"Enter course title"}
-              required
-            />
-            <Spacer size="sm" />
-
-            {/* Course Description */}
-            <Input
-              name="courseDescription"
-              type="text"
-              placeholder={"Enter bief description"}
-              required
-            />
-            <Spacer size="sm" />
-
-            <Button
-              title={"Add course"}
-              loading={loading === "addCourse"}
-              variant={"fill"}
-              icon={<Plus size={20} />}
+                { value: "Created", colSpan: "col-span-2" },
+              ]}
+              tableData={
+                filteredPageData
+                  ? filteredPageData.map((item, key) => [
+                      { value: item.code, colSpan: "col-span-2" },
+                      { value: item.title, colSpan: "col-span-3" },
+                      { value: item.description, colSpan: "col-span-5" },
+                      {
+                        value: item.createdAt.split("T")[0],
+                        colSpan: "col-span-2",
+                      },
+                    ])
+                  : []
+              }
+              showSearch={false}
+              showOptions={false}
             />
 
-            <Spacer size="md" />
-          </form>
-        </DialogContent>
-      </Dialog>
+            <Dialog open={openAddCourse} onOpenChange={setOpenAddCourse}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add a course</DialogTitle>
+                  <DialogDescription className="pr-28">
+                    Add a new taken subject in the school.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <form className="pr-28" onSubmit={addCourse}>
+                  {/* Course Code */}
+                  <Input
+                    name="courseCode"
+                    type="text"
+                    placeholder={"Enter course code"}
+                    required
+                  />
+                  <Spacer size="sm" />
+
+                  {/* Course title */}
+                  <Input
+                    name="courseTitle"
+                    type="text"
+                    placeholder={"Enter course title"}
+                    required
+                  />
+                  <Spacer size="sm" />
+
+                  {/* Course Description */}
+                  <Input
+                    name="courseDescription"
+                    type="text"
+                    placeholder={"Enter bief description"}
+                    required
+                  />
+                  <Spacer size="sm" />
+
+                  <Button
+                    title={"Add course"}
+                    loading={loading === "addCourse"}
+                    variant={"fill"}
+                    icon={<Plus size={20} />}
+                  />
+
+                  <Spacer size="md" />
+                </form>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
+      </>
+
+      <Preload loading={loading} pageData={pageData ? true : false} />
     </div>
   );
 };
