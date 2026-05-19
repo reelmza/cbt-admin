@@ -63,9 +63,9 @@ const Page = ({ id }: { id: string }) => {
               { value: "Student Name", colSpan: "col-span-4" },
               { value: "Reg No.", colSpan: "col-span-2" },
               { value: "Level", colSpan: "col-span-1" },
-              { value: "Status", colSpan: "col-span-2" },
+              { value: "Has Automarked", colSpan: "col-span-2" },
               { value: "Score", colSpan: "col-span-1" },
-              { value: "Marked?", colSpan: "col-span-1" },
+              { value: "Finalized?", colSpan: "col-span-1" },
             ]}
             tableData={
               pageData?.submissions

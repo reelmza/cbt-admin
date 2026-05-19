@@ -8,6 +8,9 @@ import { SubmissionDetailResponse } from "@/types";
 import { Check, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { toastConfig } from "@/utils/toastConfig";
+import Button from "@/components/button";
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 const Page = ({ id, studentId }: { id: string; studentId: string }) => {
@@ -43,8 +46,51 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
       );
 
       if (res.status == 200) {
-        console.log(res.data.data);
-        setPageData(res.data.data);
+        const updatedAnswer = (res.data.data.answers as any[]).find(
+          (a) => a.question._id === questionId,
+        );
+
+        if (updatedAnswer && pageData) {
+          setPageData({
+            ...pageData,
+            answers: pageData.answers.map((ans) =>
+              ans.question.id === questionId
+                ? {
+                    ...ans,
+                    score: updatedAnswer.score,
+                    status: updatedAnswer.status,
+                    markedBy: updatedAnswer.markedBy,
+                    isManuallyMarked: updatedAnswer.isManuallyMarked,
+                  }
+                : ans,
+            ),
+          });
+
+          toast.success("Question marked successfully", toastConfig);
+        }
+      }
+
+      setLoading(null);
+    } catch (error) {
+      setLoading(null);
+      console.log(error);
+    }
+  };
+
+  // ─── Finalize Marking ──────────────────────────────────────────────────────
+  const finalizeMarking = async () => {
+    try {
+      setLoading("finalizeMarking");
+
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(
+        `/assessment/finalize-marking/${pageData?.submissionId}`,
+        {},
+        { signal: controller.signal },
+      );
+
+      if (res.status == 200) {
+        toast.success("Marking finalized successfully", toastConfig);
       }
 
       setLoading(null);
@@ -110,97 +156,126 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
 
           {/* Answer list — only pending (unmarked) answers */}
           <div className="pt-20 pb-10">
-            {pageData?.answers
-              .filter((item) => item.selectedOption === null)
-              .map((ans, key) => {
-                return (
-                  <div key={key} className="w-full flex gap-10">
-                    {/* Left — question + student answer + expected answer */}
-                    <div className="w-7/12 border p-5 mb-5">
-                      {/* Heading */}
-                      <div className="flex justify-between items-center mb-5">
-                        <div className="text-theme-gray mb-1 text-sm">
-                          Question
-                        </div>
+            {pageData?.answers.map((ans, key) => {
+              return (
+                <div key={key} className="w-full flex gap-10">
+                  {/* Left — question + student answer + expected answer */}
+                  <div className="w-7/12 shrink-0 border p-5 mb-5">
+                    {/* Heading */}
+                    <div className="flex justify-between items-center mb-5">
+                      <div className="text-theme-gray mb-1 text-sm">
+                        Question
+                      </div>
 
-                        <div className="flex items-center gap-2">
-                          {/* Question Type */}
-                          <div className="text-xs text-theme-gray border px-2">
-                            {ans?.question?.type === "subjective"
-                              ? "subjective"
-                              : "theory"}
-                          </div>
-                          {/* Marked Status */}
+                      <div className="flex items-center gap-2">
+                        {/* Question Type */}
+                        <div className="text-xs text-theme-gray border px-2">
+                          {ans?.question?.type === "subjective"
+                            ? "subjective"
+                            : ans.question.type === "multiple_choice"
+                              ? "multiple choice"
+                              : ans.question.type === "theory"
+                                ? "theory"
+                                : ans.question.type}
+                        </div>
+                        {/* Marked Status for non auto marked*/}
+                        {ans.status !== "auto-marked" && (
                           <div
-                            className={`text-xs border  px-2 ${
-                              ans.markedBy
+                            className={`text-xs border px-2 ${
+                              ans.markedBy && ans.score > 0
                                 ? "text-theme-success bg-emerald-50 border-emerald-200"
-                                : "text-theme-warning bg-orange-50 border-orange-200"
+                                : ans.markedBy && ans.score < 1
+                                  ? "text-theme-warning bg-red-50 border-red-200"
+                                  : "text-theme-gray bg-gray-100 border-gray-200"
                             }`}
                           >
-                            {ans.markedBy ? "Marked" : "Not Marked"}
+                            {ans.score > 0
+                              ? "Correct"
+                              : ans.score < 1
+                                ? "Wrong"
+                                : "Not Marked"}
                           </div>
-                        </div>
+                        )}
+
+                        {ans.status == "auto-marked" && (
+                          <div
+                            className={`text-xs border px-2 text-theme-success bg-emerald-50 border-emerald-200 ${ans.score > 0 ? "text-theme-success bg-emerald-50 border-emerald-200" : "text-theme-warning bg-red-50 border-red-200"}
+                          `}
+                          >
+                            auto-marked
+                          </div>
+                        )}
+
+                        {ans.status == "auto-marked" && (
+                          <div
+                            className={`text-xs border px-2 text-theme-success bg-emerald-50 border-emerald-200 ${ans.score > 0 ? "text-theme-success bg-emerald-50 border-emerald-200" : "text-theme-warning bg-red-50 border-red-200"}
+                          `}
+                          >
+                            {ans.score > 0 ? "Corect" : "Wrong"}
+                          </div>
+                        )}
                       </div>
-
-                      {/* Questions */}
-                      <div className="mb-2">{ans?.question?.text}</div>
-
-                      {/* _________________________________________________ */}
-                      {/* Students Answer */}
-                      <div className="text-theme-gray mb-1 text-sm mt-5">
-                        Student's Answer
-                      </div>
-
-                      {/* Theory Answer */}
-                      {ans?.theoryAnswer && (
-                        <div className="mb-1 text-sm">{ans?.theoryAnswer}</div>
-                      )}
-
-                      {/* Subjective Answer */}
-                      {ans?.subjectiveAnswers && (
-                        <div className="mb-1 text-sm">
-                          {ans.subjectiveAnswers.map((slot, slotKey) => (
-                            <div key={slotKey}>
-                              {`[${slot?.slotNumber}]`} {slot?.answer}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* _________________________________________________ */}
-                      {/* Expected Answer */}
-                      <div className="text-theme-gray mb-1 text-sm border-t pt-2">
-                        Expected Answer
-                      </div>
-
-                      {/* Expected Answer Theory */}
-                      {ans?.question?.expectedAnswer && (
-                        <div className="mb-1 text-sm">
-                          {ans?.question?.expectedAnswer}
-                        </div>
-                      )}
-
-                      {/* Expected Answer Subjective */}
-                      {ans?.question?.answerSlots.length > 0 && (
-                        <div className="mb-1 text-sm">
-                          {ans?.question?.answerSlots.map(
-                            (slotExp, slotKeyExp) => (
-                              <div key={slotKeyExp}>
-                                <div>
-                                  {`[${slotExp.slotNumber}]`}{" "}
-                                  {slotExp.possibleAnswers.map(
-                                    (posExp) => `${posExp}, `,
-                                  )}
-                                </div>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
                     </div>
 
-                    {/* Right — marking controls (fail / set score) */}
+                    {/* Questions */}
+                    <div className="mb-2">{ans?.question?.text}</div>
+
+                    {/* _________________________________________________ */}
+                    {/* Students Answer */}
+                    <div className="text-theme-gray mb-1 text-sm mt-5">
+                      Student's Answer
+                    </div>
+
+                    {/* Theory Answer */}
+                    {ans?.theoryAnswer && (
+                      <div className="mb-1 text-sm">{ans?.theoryAnswer}</div>
+                    )}
+
+                    {/* Subjective Answer */}
+                    {ans?.subjectiveAnswers && (
+                      <div className="mb-1 text-sm">
+                        {ans.subjectiveAnswers.map((slot, slotKey) => (
+                          <div key={slotKey}>
+                            {`[${slot?.slotNumber}]`} {slot?.answer}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* _________________________________________________ */}
+                    {/* Expected Answer */}
+                    <div className="text-theme-gray mb-1 text-sm border-t pt-2">
+                      Expected Answer
+                    </div>
+
+                    {/* Expected Answer Theory */}
+                    {ans?.question?.expectedAnswer && (
+                      <div className="mb-1 text-sm">
+                        {ans?.question?.expectedAnswer}
+                      </div>
+                    )}
+
+                    {/* Expected Answer Subjective */}
+                    {ans?.question?.answerSlots.length > 0 && (
+                      <div className="mb-1 text-sm">
+                        {ans?.question?.answerSlots.map(
+                          (slotExp, slotKeyExp) => (
+                            <div key={slotKeyExp}>
+                              <div>
+                                {`[${slotExp.slotNumber}]`}{" "}
+                                {slotExp.possibleAnswers.map(
+                                  (posExp) => `${posExp}, `,
+                                )}
+                              </div>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right — marking controls (fail / set score) */}
+                  {ans.status !== "auto-marked" && (
                     <div className="w-5/12 h-full my-auto cursor-pointer ">
                       <button
                         className="flex items-center bg-red-100 h-10 cursor-pointer w-fit mb-2"
@@ -240,12 +315,13 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                           type="number"
                           name="score"
                           min={1}
+                          max={ans?.question?.maxScore || 1}
                           className="flex items-center justify-center w-20 h-full border-r border-emerald-200 px-2 outline-none text-theme-gray"
                           defaultValue={ans?.score}
                           placeholder="Score"
                         />
 
-                        <button className="flex items-center justify-center h-10 w-10 text-theme-success bg-emerald-200 hover:bg-emerald-300">
+                        <button className="flex items-center justify-center h-10 w-10 text-theme-success bg-emerald-200 hover:bg-emerald-300 cursor-pointer">
                           {loading !==
                           `pass-markQuestion-${ans?.question?.id}` ? (
                             <Check size={22} />
@@ -258,9 +334,21 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                         Set Score
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Finalize marking */}
+          <div className="w-60 pb-10">
+            <Button
+              title="Finalize Marking"
+              variant="fill"
+              loading={loading === "finalizeMarking"}
+              onClick={finalizeMarking}
+              type="button"
+            />
           </div>
         </>
       )}

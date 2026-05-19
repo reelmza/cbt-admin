@@ -37,7 +37,7 @@ export interface Question {
   requiresManualMarking: boolean;
 }
 
-export type AnswerStatus = "processing" | "pending" | "marked";
+export type AnswerStatus = "processing" | "pending" | "marked" | "auto-marked";
 
 export interface Answer {
   answerId: string;
@@ -55,7 +55,12 @@ export interface Answer {
   markedBy: string | null;
 }
 
-export type SubmissionStatus = "completed" | "pending" | "in-progress";
+export type SubmissionStatus =
+  | "completed"
+  | "pending"
+  | "in-progress"
+  | "auto-marked"
+  | "reviewed";
 
 export interface SubmissionDetailResponse {
   assessment: AssessmentRef;
