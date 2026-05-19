@@ -9,19 +9,24 @@ import { Check, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useEffect, useState } from "react";
 
+// ─── Main Page ───────────────────────────────────────────────────────────────
 const Page = ({ id, studentId }: { id: string; studentId: string }) => {
   const controller = new AbortController();
   const { data: session } = useSession();
 
+  // ─── State ─────────────────────────────────────────────────────────────────
+  // loading uses a string key to track per-question spinner state
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<SubmissionDetailResponse | null>(
-    null
+    null,
   );
 
+  // ─── Mark Question ─────────────────────────────────────────────────────────
+  // action: "pass" assigns the given score; "fail" sends score 0
   const markQuestion = async (
     questionId: string,
     score: number,
-    action: string
+    action: string,
   ) => {
     try {
       action === "pass"
@@ -34,11 +39,12 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
         { score: score, type: "pass" },
         {
           signal: controller.signal,
-        }
+        },
       );
 
       if (res.status == 200) {
         console.log(res.data.data);
+        setPageData(res.data.data);
       }
 
       setLoading(null);
@@ -48,6 +54,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
     }
   };
 
+  // ─── Fetch Submission ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!session) return;
 
@@ -58,7 +65,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
           `/assessment/submissions/${id}/${studentId}`,
           {
             signal: controller.signal,
-          }
+          },
         );
 
         if (res.status == 200) {
@@ -82,10 +89,12 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
     };
   }, [session]);
 
+  // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="w-full h-full min-h-full p-10 font-sans">
       {pageData && (
         <>
+          {/* Sticky header — student info */}
           <div className="flex flex-col justify-end fixed top-0 pt-10 pb-5 right-0 w-8/10 bg-white px-8">
             <div className="leading-none text-xl font-bold">
               Mark Assessment
@@ -99,13 +108,14 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
             }`}</div>
           </div>
 
+          {/* Answer list — only pending (unmarked) answers */}
           <div className="pt-20 pb-10">
             {pageData?.answers
-              .filter((item) => item.status === "pending")
+              .filter((item) => item.selectedOption === null)
               .map((ans, key) => {
                 return (
                   <div key={key} className="w-full flex gap-10">
-                    {/* Left */}
+                    {/* Left — question + student answer + expected answer */}
                     <div className="w-7/12 border p-5 mb-5">
                       {/* Heading */}
                       <div className="flex justify-between items-center mb-5">
@@ -180,17 +190,17 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                                 <div>
                                   {`[${slotExp.slotNumber}]`}{" "}
                                   {slotExp.possibleAnswers.map(
-                                    (posExp) => `${posExp}, `
+                                    (posExp) => `${posExp}, `,
                                   )}
                                 </div>
                               </div>
-                            )
+                            ),
                           )}
                         </div>
                       )}
                     </div>
 
-                    {/* Right */}
+                    {/* Right — marking controls (fail / set score) */}
                     <div className="w-5/12 h-full my-auto cursor-pointer ">
                       <button
                         className="flex items-center bg-red-100 h-10 cursor-pointer w-fit mb-2"
@@ -222,7 +232,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                           markQuestion(
                             ans?.question?.id,
                             Number(target.score.value),
-                            "pass"
+                            "pass",
                           );
                         }}
                       >
@@ -259,6 +269,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
   );
 };
 
+// ─── Page Wrapper — unwraps Next.js async params and injects SessionProvider ──
 export const PageWrapper = ({
   params,
 }: {
