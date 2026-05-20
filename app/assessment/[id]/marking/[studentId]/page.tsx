@@ -189,9 +189,9 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                                   : "text-theme-gray bg-gray-100 border-gray-200"
                             }`}
                           >
-                            {ans.score > 0
+                            {ans.score > 0 && ans.markedBy
                               ? "Correct"
-                              : ans.score < 1
+                              : ans.score < 1 && ans.markedBy
                                 ? "Wrong"
                                 : "Not Marked"}
                           </div>
@@ -242,6 +242,11 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                       </div>
                     )}
 
+                    {/* Objective Answer */}
+                    {ans?.selectedOption && (
+                      <div className="mb-1 text-sm">{ans?.selectedOption}</div>
+                    )}
+
                     {/* _________________________________________________ */}
                     {/* Expected Answer */}
                     <div className="text-theme-gray mb-1 text-sm border-t pt-2">
@@ -252,6 +257,20 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                     {ans?.question?.expectedAnswer && (
                       <div className="mb-1 text-sm">
                         {ans?.question?.expectedAnswer}
+                      </div>
+                    )}
+
+                    {/* Expected Answer Theory */}
+                    {ans?.question?.correctAnswer && (
+                      <div className="mb-1 text-sm">
+                        {ans?.question?.options.map((opt, key) => (
+                          <div
+                            key={key}
+                            className={`mb-1 ${opt.label === ans?.question?.correctAnswer ? " text-theme-success" : ""}`}
+                          >
+                            {opt.label}: {opt.text}
+                          </div>
+                        ))}
                       </div>
                     )}
 
