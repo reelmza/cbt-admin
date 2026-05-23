@@ -5,7 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { SubmissionDetailResponse } from "@/types";
-import { Check, X } from "lucide-react";
+import { Check, Stars, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -14,7 +14,6 @@ import Button from "@/components/button";
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 const Page = ({ id, studentId }: { id: string; studentId: string }) => {
-  const controller = new AbortController();
   const { data: session } = useSession();
 
   // ─── State ─────────────────────────────────────────────────────────────────
@@ -31,6 +30,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
     score: number,
     action: string,
   ) => {
+    const controller = new AbortController();
     try {
       action === "pass"
         ? setLoading(`pass-markQuestion-${questionId}`)
@@ -77,8 +77,26 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
     }
   };
 
+  // ─── AI Mark ───────────────────────────────────────────────────────────────
+  const aiMark = async () => {
+    try {
+      setLoading("aiMark");
+      attachHeaders(session!.user.token);
+      await localAxios.post(`/assessment/ai-mark/${id}/${studentId}`);
+      toast.success("AI marking completed successfully", toastConfig);
+      setLoading(null);
+    } catch (error: any) {
+      setLoading(null);
+      toast.error(
+        error?.response?.data?.message ?? "Failed to run AI marking.",
+        toastConfig,
+      );
+    }
+  };
+
   // ─── Finalize Marking ──────────────────────────────────────────────────────
   const finalizeMarking = async () => {
+    const controller = new AbortController();
     try {
       setLoading("finalizeMarking");
 
@@ -103,6 +121,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
   // ─── Fetch Submission ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
 
     const getAssessments = async () => {
       try {
@@ -121,7 +140,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
 
         setLoading(null);
       } catch (error: any) {
-        if (error.name !== "CanceledError") {
+        if (!controller.signal.aborted) {
           setLoading("pageError");
           console.log(error);
         }
@@ -141,17 +160,29 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
       {pageData && (
         <>
           {/* Sticky header — student info */}
-          <div className="flex flex-col justify-end fixed top-0 pt-10 pb-5 right-0 w-8/10 bg-white px-8">
-            <div className="leading-none text-xl font-bold">
-              Mark Assessment
+          <div className="flex items-center justify-between fixed top-0 pt-10 pb-5 right-0 w-8/10 bg-white px-8">
+            <div className="flex flex-col justify-end">
+              <div className="leading-none text-xl font-bold">
+                Mark Assessment
+              </div>
+              <div className="text-sm">
+                {pageData?.student?.fullName}
+                {` (${pageData?.student?.regNo})`}
+              </div>
+              <div className="text-sm">{`Submitted on ${
+                pageData?.submittedAt ? prettyDate(pageData?.submittedAt) : ""
+              }`}</div>
             </div>
-            <div className="text-sm">
-              {pageData?.student?.fullName}
-              {` (${pageData?.student?.regNo})`}
+            <div className="w-36">
+              <Button
+                title="AI Mark"
+                variant="fill"
+                loading={loading === "aiMark"}
+                icon={<Stars size={14} />}
+                onClick={aiMark}
+                type="button"
+              />
             </div>
-            <div className="text-sm">{`Submitted on ${
-              pageData?.submittedAt ? prettyDate(pageData?.submittedAt) : ""
-            }`}</div>
           </div>
 
           {/* Answer list — only pending (unmarked) answers */}

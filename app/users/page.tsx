@@ -26,7 +26,7 @@ import { attachHeaders, getAxios, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
 
-import { CloudUpload, User2 } from "lucide-react";
+import { CloudUpload, Download, User2 } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
@@ -35,8 +35,6 @@ import { PageMetaData, User } from "./users.types";
 import Preload from "@/components/preload";
 
 const Page = () => {
-  const controller = new AbortController();
-  const router = useRouter();
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
   const [openPassUpload, setOpenPassUpload] = useState(false);
 
@@ -73,7 +71,7 @@ const Page = () => {
         setLoading(null);
         setOpenBulkUpload(false);
         toast.success(res.data.message);
-        window.location.reload();
+        // window.location.reload();
       }
     } catch (error: any) {
       console.log(error);
@@ -81,7 +79,7 @@ const Page = () => {
       if (error?.status == 400) {
         toast.error(
           "Error, Please check your user entries for duplicates",
-          toastConfig
+          toastConfig,
         );
       }
       setLoading(null);
@@ -117,6 +115,26 @@ const Page = () => {
     }
   };
 
+  const downloadTemplate = async () => {
+    try {
+      setLoading("downloadTemplate");
+      attachHeaders(session!.user.token);
+      const res = await localAxios.get("/import/template/students", {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "students_template.xlsx";
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setLoading(null);
+    } catch (error) {
+      toast.error("Failed to download template.", toastConfig);
+      setLoading(null);
+    }
+  };
+
   const searchStudent = async (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
 
@@ -139,6 +157,7 @@ const Page = () => {
   };
 
   const getPage = async (val: string) => {
+    const controller = new AbortController();
     try {
       attachHeaders(session!.user.token);
       let targetPage;
@@ -158,7 +177,7 @@ const Page = () => {
         `/student/all?pageNumber=${targetPage}`,
         {
           signal: controller.signal,
-        }
+        },
       );
 
       if (res.status === 200) {
@@ -183,6 +202,7 @@ const Page = () => {
 
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
 
     const getData = async () => {
       if (!localAxios) return;
@@ -212,7 +232,7 @@ const Page = () => {
 
         setLoading(null);
       } catch (error: any) {
-        if (error.name !== "CanceledError") {
+        if (!controller.signal.aborted) {
           setLoading("pageError");
           console.log(error);
         }
@@ -427,7 +447,21 @@ const Page = () => {
                 <Spacer size="md" />
                 <div className="text-sm text-theme-gray">
                   Use the template provided, if there is an error, no student
-                  will be uploaded.
+                  will be uploaded. <br />
+                  <br />
+                  <button
+                    type="button"
+                    onClick={downloadTemplate}
+                    disabled={loading === "downloadTemplate"}
+                    className="inline-flex items-center gap-1 text-accent underline underline-offset-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {loading === "downloadTemplate" ? (
+                      <Spinner className="size-3" />
+                    ) : (
+                      <Download size={12} />
+                    )}
+                    Download Upload Template
+                  </button>
                 </div>
               </form>
             </DialogContent>

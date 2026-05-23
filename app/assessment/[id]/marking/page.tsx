@@ -1,14 +1,16 @@
 "use client";
 
+import Button from "@/components/button";
 import Preload from "@/components/preload";
 import Table from "@/components/table";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { AssessmentSubmissionsResponse } from "@/types";
+import { toastConfig } from "@/utils/toastConfig";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const Page = ({ id }: { id: string }) => {
-  const controller = new AbortController();
   const { data: session } = useSession();
 
   const [loading, setLoading] = useState<string | null>("page");
@@ -18,6 +20,7 @@ const Page = ({ id }: { id: string }) => {
 
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
 
     const getAssessments = async () => {
       try {
@@ -33,7 +36,7 @@ const Page = ({ id }: { id: string }) => {
 
         setLoading(null);
       } catch (error: any) {
-        if (error.name !== "CanceledError") {
+        if (!controller.signal.aborted) {
           setLoading("pageError");
           console.log(error);
         }
@@ -51,12 +54,39 @@ const Page = ({ id }: { id: string }) => {
     };
   }, [session]);
 
+  const handleRemark = async () => {
+    try {
+      setLoading("handleMark");
+      attachHeaders(session!.user.token);
+      await localAxios.post(`/assessment/remark-all/${id}`);
+      toast.success("Remark triggered successfully.", toastConfig);
+      setLoading(null);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ?? "Failed to trigger remark.",
+        toastConfig,
+      );
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="w-full h-full p-10 font-sans">
       {pageData && (
         <>
-          <div className="text-2xl">
-            List of submissions for {pageData?.assessment.title}
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-2xl">
+              List of submissions for {pageData?.assessment.title}
+            </div>
+            <div className="w-48">
+              <Button
+                title="Remark Assessment"
+                variant="fill"
+                loading={loading === "handleMark"}
+                onClick={handleRemark}
+                type="button"
+              />
+            </div>
           </div>
           <Table
             tableHeading={[
@@ -102,6 +132,9 @@ const Page = ({ id }: { id: string }) => {
             showSearch={false}
             showOptions={false}
           />
+
+          {/* Space */}
+          <div className="h-20"></div>
         </>
       )}
 

@@ -99,9 +99,9 @@ export const sideBarPages: SideBarPageType[] = [
   //   route: "/security",
   //   icon: <Shield size={18} />,
   // },
-  // {
-  //   name: "Settings",
-  //   route: "/settings",
-  //   icon: <Cog size={18} />,
-  // },
+  {
+    name: "Settings",
+    route: "/settings",
+    icon: <Cog size={18} />,
+  },
 ];

@@ -52,7 +52,6 @@ import { toast } from "sonner";
 import Image from "next/image";
 
 const Main = () => {
-  const controller = new AbortController();
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -68,7 +67,7 @@ const Main = () => {
 
   const [assDetails, setAssDetails] = useState<AssessmentType | null>(null);
   const [activeSection, setActiveSection] = useState<null | [string, number]>(
-    null
+    null,
   );
   const [sections, setSections] = useState<SectionType | null>([]);
 
@@ -186,7 +185,7 @@ const Main = () => {
             // Bulk upload logic if current section being itterated is multiple_choice
             if (sct.type === "multiple_choice") {
               sct.questions = results.data.map((rw) =>
-                formatCsvRowToQuestion(rw)
+                formatCsvRowToQuestion(rw),
               );
             }
           });
@@ -215,6 +214,7 @@ const Main = () => {
 
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
 
     const getData = async () => {
       try {
@@ -228,7 +228,7 @@ const Main = () => {
         }
         setLoading(null);
       } catch (error: any) {
-        if (error.name !== "CanceledError") {
+        if (!controller.signal.aborted) {
           setLoading("pageError");
           console.log(error);
         }
@@ -239,7 +239,6 @@ const Main = () => {
     !courses && getData();
 
     return () => {
-      // Cancel any api request on page unmount
       controller.abort();
     };
   }, [session]);
@@ -364,6 +363,8 @@ const Main = () => {
                           onClick={() => {
                             setOptions([]);
                             setQuestion("");
+                            setQstImage(null);
+
                             setActiveSection([
                               section.type,
                               section.questions.length,
@@ -392,8 +393,8 @@ const Main = () => {
                                   if (section.type == "subjective") {
                                     setOptions(
                                       qst.answerSlots.map((item) =>
-                                        item.possibleAnswers.join(",")
-                                      )
+                                        item.possibleAnswers.join(","),
+                                      ),
                                     );
                                   }
 
@@ -506,7 +507,7 @@ const Main = () => {
                   };
                   setAssDetails({
                     title: courses.find(
-                      (item) => item._id == target.courseId.value
+                      (item) => item._id == target.courseId.value,
                     )!.code,
                     course: target.courseId.value,
                     session: target.session.value,
@@ -706,7 +707,7 @@ const Main = () => {
               };
 
               setSections((prev) =>
-                prev ? [...prev, newSection] : [newSection]
+                prev ? [...prev, newSection] : [newSection],
               );
 
               setShowSectionsModal(false);
@@ -714,6 +715,7 @@ const Main = () => {
               setQuestion("");
               setOptions([]);
               setCorrectAnswer("A");
+              setQstImage(null);
             }}
           >
             {/* Section Title */}
@@ -884,7 +886,7 @@ const QuestionForm = ({
 
               return sect;
             })
-          : prev
+          : prev,
       );
       toast.success("Question updated", toastConfig);
       return;
@@ -910,7 +912,7 @@ const QuestionForm = ({
 
             return newSect;
           })
-        : prev
+        : prev,
     );
 
     // Reset form only when questions are less than 60
@@ -919,6 +921,7 @@ const QuestionForm = ({
       setQuestion("");
       setOptions([]);
       setActiveSection([formType, activeSection[1] + 1]);
+      setQstImage(null);
     }
   };
 
@@ -929,13 +932,13 @@ const QuestionForm = ({
           return {
             ...sect,
             questions: sect.questions.filter(
-              (_, index) => index !== activeSection![1]
+              (_, index) => index !== activeSection![1],
             ),
           };
         }
 
         return sect;
-      })
+      }),
     );
 
     setQuestion("");
@@ -1045,7 +1048,7 @@ const QuestionForm = ({
                   if (!URI) {
                     toast.error(
                       "Unable to complete image upload, retry",
-                      toastConfig
+                      toastConfig,
                     );
                     return;
                   }
@@ -1127,8 +1130,8 @@ const QuestionForm = ({
                       formType == "multiple_choice"
                         ? "Enter an option"
                         : formType == "subjective"
-                        ? "Ans 1, Ans 2, Ans 3"
-                        : "Enter an answer"
+                          ? "Ans 1, Ans 2, Ans 3"
+                          : "Enter an answer"
                     }
                     value={option}
                     onChange={(e) =>

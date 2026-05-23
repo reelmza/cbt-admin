@@ -20,7 +20,6 @@ import Button from "@/components/button";
 import Preload from "@/components/preload";
 
 const Page = ({ id }: { id: string }) => {
-  const controller = new AbortController();
   const { data: session } = useSession();
 
   const [loading, setLoading] = useState<string | null>("page");
@@ -110,6 +109,7 @@ const Page = ({ id }: { id: string }) => {
 
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
 
     const getAssessments = async () => {
       try {
@@ -132,7 +132,7 @@ const Page = ({ id }: { id: string }) => {
 
         setLoading(null);
       } catch (error: any) {
-        if (error.name !== "CanceledError") {
+        if (!controller.signal.aborted) {
           setLoading("pageError");
           console.log(error);
         }

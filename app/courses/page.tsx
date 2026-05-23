@@ -24,7 +24,6 @@ import { Course } from "./courses.types";
 import Preload from "@/components/preload";
 
 const Page = () => {
-  const controller = new AbortController();
   const [openAddCourse, setOpenAddCourse] = useState(false);
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<Course[] | null>(null);
@@ -93,6 +92,7 @@ const Page = () => {
 
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
 
     const getData = async () => {
       try {
@@ -108,7 +108,7 @@ const Page = () => {
         }
         setLoading(null);
       } catch (error: any) {
-        if (error.name !== "CanceledError") {
+        if (!controller.signal.aborted) {
           setLoading("pageError");
           console.log(error);
         }

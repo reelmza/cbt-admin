@@ -14,7 +14,6 @@ import { ChangeEvent, useEffect, useState } from "react";
 import Image from "next/image";
 
 const Page = () => {
-  const controller = new AbortController();
   const [loading, setLoading] = useState<string | null>("page");
   const { data: session } = useSession();
   const [pageData, setPageData] = useState<AssesmentApiResponse[] | null>(null);
@@ -45,6 +44,7 @@ const Page = () => {
 
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
 
     const getAssessments = async () => {
       try {
@@ -62,9 +62,8 @@ const Page = () => {
         setLoading(null);
       } catch (error: any) {
         console.log(error);
-        if (error.name !== "CanceledError") {
+        if (!controller.signal.aborted) {
           setLoading("pageError");
-          console.log(error);
         }
       }
     };

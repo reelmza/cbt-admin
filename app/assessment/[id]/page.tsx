@@ -23,7 +23,6 @@ import Link from "next/link";
 import Preload from "@/components/preload";
 
 const Page = ({ id }: { id: string }) => {
-  const controller = new AbortController();
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -36,6 +35,7 @@ const Page = ({ id }: { id: string }) => {
   // Update assessment status
   const updateStatus = async (val: string) => {
     if (!pageData) return;
+    const controller = new AbortController();
 
     setLoading("updateStatus");
     try {
@@ -72,6 +72,7 @@ const Page = ({ id }: { id: string }) => {
       duration: { value: string };
     };
 
+    const controller = new AbortController();
     setLoading("updateDuration");
     try {
       attachHeaders(session!.user.token);
@@ -110,6 +111,7 @@ const Page = ({ id }: { id: string }) => {
       startDate: { value: string };
     };
 
+    const controller = new AbortController();
     setLoading("updateStartDate");
     try {
       attachHeaders(session!.user.token);
@@ -145,6 +147,7 @@ const Page = ({ id }: { id: string }) => {
       dueDate: { value: string };
     };
 
+    const controller = new AbortController();
     setLoading("updateDueDate");
     try {
       attachHeaders(session!.user.token);
@@ -261,6 +264,7 @@ const Page = ({ id }: { id: string }) => {
   // Delete assessment
   const deleteAss = async () => {
     if (!pageData) return;
+    const controller = new AbortController();
 
     setLoading("deleteAss");
     try {
@@ -306,6 +310,7 @@ const Page = ({ id }: { id: string }) => {
       return;
     }
 
+    const controller = new AbortController();
     setLoading("assignToFaculty");
     try {
       attachHeaders(session!.user.token);
@@ -395,6 +400,7 @@ const Page = ({ id }: { id: string }) => {
 
   // Generate assessement entries
   const generateAssEntries = async () => {
+    const controller = new AbortController();
     setLoading("generateAssEntries");
     try {
       attachHeaders(session!.user.token);
@@ -431,6 +437,7 @@ const Page = ({ id }: { id: string }) => {
 
   // Generate assessment results
   const generateAssResults = async (output: String) => {
+    const controller = new AbortController();
     setLoading(`generateResults-${output}`);
     try {
       attachHeaders(session!.user.token);
@@ -477,6 +484,7 @@ const Page = ({ id }: { id: string }) => {
 
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
 
     const getAssessments = async () => {
       try {
@@ -497,7 +505,7 @@ const Page = ({ id }: { id: string }) => {
 
         setLoading(null);
       } catch (error: any) {
-        if (error.name !== "CanceledError") {
+        if (!controller.signal.aborted) {
           setLoading("pageError");
           console.log(error);
         }

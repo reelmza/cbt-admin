@@ -22,7 +22,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const Page = () => {
-  const controller = new AbortController();
   const { data: session } = useSession();
 
   const [showCreateGroup, setShowCreateGroup] = useState(false);
@@ -64,6 +63,7 @@ const Page = () => {
 
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
 
     const getGroups = async () => {
       try {
@@ -78,7 +78,7 @@ const Page = () => {
 
         setLoading(null);
       } catch (error: any) {
-        if (error.name !== "CanceledError") {
+        if (!controller.signal.aborted) {
           setLoading("pageError");
           console.log(error);
         }

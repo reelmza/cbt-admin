@@ -2,7 +2,7 @@ import { User } from "next-auth";
 
 export const schooLogin: (
   credentials: Partial<Record<"email" | "password" | "loginClient", unknown>>,
-  user: any
+  user: any,
 ) => Promise<User | null> = async (credentials, user) => {
   try {
     // Get user from database
@@ -18,10 +18,10 @@ export const schooLogin: (
           email: credentials.email,
           password: credentials.password,
         }),
-      }
+      },
     );
 
-    console.log(targetUser);
+    // console.log(targetUser);
 
     // Check if user exist
     if (targetUser.status === 422 || targetUser.status === 400) {
