@@ -12,6 +12,6 @@ export type PageDataType = {
   dueDate: string;
   startDate: string;
   shuffleQuestions: boolean;
-  passMark: number;
+  passmark: number;
   invigilators: string[];
 };
