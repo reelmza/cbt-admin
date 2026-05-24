@@ -15,7 +15,7 @@ type SettingKey =
   | "security"
   | "notifications";
 
-const navItems: { key: SettingKey; label: string; icon: React.ReactNode }[] = [
+const navItems: { key: SettingKey; label: string }[] = [
   { key: "general", label: "General" },
   // { key: "exams", label: "Exams" },
   { key: "appearance", label: "Appearance" },
@@ -67,7 +67,6 @@ const Page = () => {
                     : "text-theme-gray hover:bg-theme-gray-light"
                 }`}
               >
-                {item?.icon}
                 <span>{item.label}</span>
               </button>
             </li>

@@ -219,6 +219,7 @@ const Page = () => {
               variant="fill"
               icon={<User2 size={18} />}
               onClick={() => setShowCreateDialog(true)}
+              loading={false}
             />
           </div>
 
@@ -376,7 +377,6 @@ const Page = () => {
 
           <form className="pr-28" onSubmit={createAdmin}>
             <CustomInput
-              label="Full Name"
               name="fullName"
               type="text"
               placeholder="Enter full name"
@@ -385,7 +385,6 @@ const Page = () => {
             <Spacer size="sm" />
 
             <CustomInput
-              label="Email"
               name="email"
               type="email"
               placeholder="Enter email address"
@@ -394,7 +393,6 @@ const Page = () => {
             <Spacer size="sm" />
 
             <CustomInput
-              label="Password"
               name="password"
               type="password"
               placeholder="Enter password"
