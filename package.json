@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 7000",
-    "build": "next build --turbopack",
+    "build": "next build --turbopack && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
+    "bundle": "cp -r .next/standalone/.next build/ && cp -r .next/standalone/public build/ && cp .next/standalone/package.json build/ && cp .next/standalone/server.js build/",
     "start": "next start -p 7000",
     "lint": "biome check",
     "format": "biome format --write"

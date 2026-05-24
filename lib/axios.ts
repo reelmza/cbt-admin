@@ -21,7 +21,7 @@ export const getAxios = async (): Promise<void> => {
           window.dispatchEvent(new CustomEvent("session-expired"));
         }
         return Promise.reject(error);
-      }
+      },
     );
   } else {
     console.log("App was unable to get current origin address");
