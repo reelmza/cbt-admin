@@ -6,7 +6,14 @@ import { attachHeaders, localAxios } from "@/lib/axios";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CircleQuestionMark, Trash2, User2, X } from "lucide-react";
+import {
+  ArrowRight,
+  CircleQuestionMark,
+  Pencil,
+  Trash2,
+  User2,
+  X,
+} from "lucide-react";
 import { StudentProfile } from "./id.types";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -18,6 +25,16 @@ import {
 } from "@/components/ui/dialog";
 import Button from "@/components/button";
 import Preload from "@/components/preload";
+import Input from "@/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { toastConfig } from "@/utils/toastConfig";
 
 const Page = ({ id }: { id: string }) => {
   const { data: session } = useSession();
@@ -26,17 +43,19 @@ const Page = ({ id }: { id: string }) => {
   const [pageData, setPageData] = useState<AssesmentApiResponse[] | null>(null);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState<string | boolean>(
-    false
+    false,
   );
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const removeAss = async (assId: string) => {
+    const globalController = new AbortController();
     setLoading("removeAss");
     try {
       attachHeaders(session!.user.token);
 
       // Get students assessments
       const res = await localAxios.post(`/assessment/unassign/${assId}`, {
-        signal: controller.signal,
+        signal: globalController.signal,
       });
 
       if (res.status === 200 || res.status === 201) {
@@ -66,6 +85,7 @@ const Page = ({ id }: { id: string }) => {
   };
 
   const removeSub = async (assId: string) => {
+    const globalController = new AbortController();
     setLoading("removeSub");
     try {
       attachHeaders(session!.user.token);
@@ -74,8 +94,8 @@ const Page = ({ id }: { id: string }) => {
       const res = await localAxios.post(
         `/assessment/remove-submission/${assId}`,
         {
-          signal: controller.signal,
-        }
+          signal: globalController.signal,
+        },
       );
 
       if (res.status === 200 || res.status === 201) {
@@ -103,6 +123,45 @@ const Page = ({ id }: { id: string }) => {
         console.log(error);
       }
 
+      setLoading(null);
+    }
+  };
+
+  const updateStudent = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      fullName: { value: string };
+      email: { value: string };
+      phoneNumber: { value: string };
+      level: { value: string };
+      gender: { value: string };
+      accessCode: { value: string };
+    };
+
+    setLoading("update");
+    try {
+      attachHeaders(session!.user.token);
+
+      const res = await localAxios.patch(`/student/update/${id}`, {
+        fullName: target.fullName.value,
+        email: target.email.value,
+        phoneNumber: target.phoneNumber.value,
+        level: Number(target.level.value),
+        gender: target.gender.value,
+        accessCode: target.accessCode.value,
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        setProfile((prev) => (prev ? { ...prev, ...res.data.data } : prev));
+        setShowEditDialog(false);
+        toast.success("Student details updated.");
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      console.log(error);
+      toast.error("Failed to update student details.", toastConfig);
       setLoading(null);
     }
   };
@@ -165,7 +224,16 @@ const Page = ({ id }: { id: string }) => {
               <div>
                 {/* Full Name */}
                 <div className="font-semibold">Full Name</div>
-                <div className="text-2xl font-bold">{profile?.fullName}</div>
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl font-bold">{profile?.fullName}</div>
+                  <button
+                    className="flex items-center justify-center  gap-1 text-sm text-theme-gray hover:text-accent cursor-pointer ml-10"
+                    onClick={() => setShowEditDialog(true)}
+                  >
+                    <Pencil size={16} />
+                    Edit User
+                  </button>
+                </div>
                 <Spacer size="sm" />
 
                 {/* Reg Number */}
@@ -235,6 +303,69 @@ const Page = ({ id }: { id: string }) => {
           </div>
 
           <Spacer size="xl" />
+
+          {/* Dialog - Edit Student Details */}
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Student Details</DialogTitle>
+                <DialogDescription>
+                  Update the student's profile information.
+                </DialogDescription>
+              </DialogHeader>
+
+              <form className="flex flex-col gap-3" onSubmit={updateStudent}>
+                <Input
+                  name="fullName"
+                  type="text"
+                  placeholder="Full Name"
+                  defaultValue={profile?.fullName}
+                  required
+                />
+
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="Email Address"
+                  defaultValue={profile?.email}
+                />
+                <Input
+                  name="phoneNumber"
+                  type="text"
+                  placeholder="Phone Number"
+                  defaultValue={profile?.phoneNumber}
+                />
+                <Input
+                  name="level"
+                  type="number"
+                  placeholder="Level"
+                  defaultValue={String(profile?.level ?? "")}
+                />
+                <Select name="gender" defaultValue={profile?.gender}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  name="accessCode"
+                  type="text"
+                  placeholder="Access Code"
+                  defaultValue={profile?.accessCode}
+                />
+                <Spacer size="sm" />
+                <Button
+                  title="Save Changes"
+                  loading={loading === "update"}
+                  variant="fill"
+                  icon={<ArrowRight size={16} />}
+                />
+              </form>
+            </DialogContent>
+          </Dialog>
 
           {/* Dialog - Remove Assessment */}
           <Dialog

@@ -33,6 +33,7 @@ const SideBox = ({ schoolName }: SideBoxProps) => {
         height={271}
         alt="School logo"
         priority
+        unoptimized
       />
       <Spacer size="lg" />
 

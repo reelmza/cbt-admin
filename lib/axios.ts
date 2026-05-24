@@ -13,6 +13,16 @@ export const getAxios = async (): Promise<void> => {
       baseURL: data.baseUrl,
       timeout: 120_000,
     });
+
+    localAxios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error?.response?.status === 401) {
+          window.dispatchEvent(new CustomEvent("session-expired"));
+        }
+        return Promise.reject(error);
+      }
+    );
   } else {
     console.log("App was unable to get current origin address");
   }

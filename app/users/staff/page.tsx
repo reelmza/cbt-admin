@@ -31,22 +31,23 @@ import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import Preload from "@/components/preload";
 
 const Page = () => {
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
   const [openPassUpload, setOpenPassUpload] = useState(false);
 
   const [loading, setLoading] = useState<string | null>("page");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pageData, setPageData] = useState<
     | null
     | {
-        _id: number;
+        _id: string;
         fullName: string;
         email: string;
         phoneNumber: string;
         password: string;
-        regNumber: string;
-        level: string;
+        role: string;
         createdAt: string;
         school: string;
       }[]
@@ -144,12 +145,12 @@ const Page = () => {
         setLoading(null);
       } catch (error: any) {
         if (!controller.signal.aborted) {
+          if (error.status === 403) {
+            setErrorMessage(
+              "Access Denied$You are not authorized to access this resource.",
+            );
+          }
           setLoading("pageError");
-          console.log(error);
-        }
-
-        if (error.status === 403) {
-          setLoading("accessError");
           console.log(error);
         }
       }
@@ -164,7 +165,7 @@ const Page = () => {
 
   return (
     <div className="w-full h-full p-10 font-sans">
-      {!loading && pageData && (
+      {pageData && (
         <>
           <PageNavigator
             navList={[
@@ -174,62 +175,30 @@ const Page = () => {
           />
           <Spacer size="lg" />
 
-          {/* Table Options */}
-          <div className="flex items-center justify-between">
-            {/* Search bar */}
-            {/* <TableSearchBox placeholder="Search for a student" /> */}
-
-            {/* Buttons */}
-            <div className="flex items-center gap-4">
-              {/* Bulk Upload Students */}
-              <div className="w-52">
-                <Button
-                  title="Bulk Upload Students"
-                  icon={<CloudUpload size={16} strokeWidth={2.5} />}
-                  variant="fill"
-                  loading={false}
-                  onClick={() => setOpenBulkUpload((prev) => !prev)}
-                />
-              </div>
-
-              {/* Bulk Upload Passports */}
-              <div className="w-52">
-                <Button
-                  title="Bulk Upload Passports"
-                  icon={<User2 size={16} strokeWidth={2.5} />}
-                  variant="fill"
-                  loading={false}
-                  onClick={() => setOpenPassUpload((prev) => !prev)}
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Table */}
           <Table
             tableHeading={[
-              { value: "Student Name", colSpan: "col-span-4" },
-              { value: "Registration Number", colSpan: "col-span-2" },
-              { value: "Level", colSpan: "col-span-1" },
+              { value: "Admin Name", colSpan: "col-span-3" },
+              { value: "Email", colSpan: "col-span-3" },
+              { value: "Type", colSpan: "col-span-1" },
               { value: "Phone Number", colSpan: "col-span-2" },
               { value: "Enrolled", colSpan: "col-span-2" },
-              { value: "", colSpan: "col-span-1" },
+              { value: "ID", colSpan: "col-span-1" },
             ]}
             tableData={
               pageData
                 ? pageData.map((item, key) => [
-                    { value: item?.fullName, colSpan: "col-span-4" },
-                    { value: item?.regNumber, colSpan: "col-span-2" },
-                    { value: item?.level, colSpan: "col-span-1" },
+                    { value: item?.fullName, colSpan: "col-span-3" },
+                    { value: item?.email, colSpan: "col-span-3" },
+                    { value: item?.role, colSpan: "col-span-1" },
                     { value: item?.phoneNumber, colSpan: "col-span-2" },
                     {
                       value: prettyDate(item?.createdAt.split("T")[0]) || "-",
                       colSpan: "col-span-2",
                     },
                     {
-                      value: `users/${item._id}`,
+                      value: `/${item._id.slice(0, 5)}...`,
                       colSpan: "col-span-1",
-                      type: "link",
                     },
                   ])
                 : []
@@ -244,26 +213,11 @@ const Page = () => {
         </>
       )}
 
-      {/* Page Loading */}
-      {loading === "page" ? (
-        <div className="flex items-center gap-2 mt-2 text-theme-gray">
-          <Spinner />
-          <div className="text-sm">Fetching data</div>
-        </div>
-      ) : (
-        ""
-      )}
-
-      {/* Access Error */}
-      {loading === "accessError" ? (
-        <div className="flex items-center gap-2 mt-2 text-theme-gray">
-          <div className="text-sm">
-            You are not authorized to access this resource.
-          </div>
-        </div>
-      ) : (
-        ""
-      )}
+      <Preload
+        loading={loading}
+        pageData={pageData ? true : false}
+        errorMessage={errorMessage}
+      />
 
       {/* Dialogs - Student Bulk Upload */}
       <Dialog open={openBulkUpload} onOpenChange={setOpenBulkUpload}>

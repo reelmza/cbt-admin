@@ -164,7 +164,7 @@ const GeneralSetting = () => {
                   <input
                     ref={logoInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/png, image/jpeg"
                     className="hidden"
                     onChange={handleLogoChange}
                   />

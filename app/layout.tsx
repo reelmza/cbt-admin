@@ -5,6 +5,7 @@ import "./globals.css";
 import { Info } from "lucide-react";
 import SideBar from "@/components/sections/side-bar";
 import { Toaster } from "@/components/ui/sonner";
+import SessionExpiredOverlay from "@/components/session-expired-overlay";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -22,6 +23,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const schoolName = process.env.SCHOOL_NAME?.toLowerCase() ?? null;
+
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
@@ -36,10 +39,11 @@ export default function RootLayout({
 
         {/* Show app only on desktop */}
         <div className="hidden md:flex items-center justify-center h-full w-full">
-          <SideBar />
+          <SideBar schoolName={schoolName} />
           {children}
         </div>
 
+        <SessionExpiredOverlay />
         <Toaster />
       </body>
     </html>

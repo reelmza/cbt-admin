@@ -160,7 +160,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
       {pageData && (
         <>
           {/* Sticky header — student info */}
-          <div className="flex items-center justify-between fixed top-0 pt-10 pb-5 right-0 w-8/10 bg-white px-8">
+          <div className="flex items-center justify-between fixed top-0 pt-5 pb-5 right-0 w-8/10 bg-white px-8">
             <div className="flex flex-col justify-end">
               <div className="leading-none text-xl font-bold">
                 Mark Assessment
@@ -173,20 +173,27 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                 pageData?.submittedAt ? prettyDate(pageData?.submittedAt) : ""
               }`}</div>
             </div>
-            <div className="w-36">
+            <div
+              className={`w-36 ${process.env.NEXT_PUBLIC_ISLOCAL ? "pointer-events-none opacity-50 select-none" : ""}`}
+            >
               <Button
-                title="AI Mark"
+                title="AI Marking"
                 variant="fill"
                 loading={loading === "aiMark"}
                 icon={<Stars size={14} />}
                 onClick={aiMark}
                 type="button"
               />
+              {process.env.NEXT_PUBLIC_ISLOCAL && (
+                <div className="mt-1 text-xs text-theme-gray text-center w-full italic">
+                  On cloud only
+                </div>
+              )}
             </div>
           </div>
 
           {/* Answer list — only pending (unmarked) answers */}
-          <div className="pt-20 pb-10">
+          <div className="pt-28 pb-10">
             {pageData?.answers.map((ans, key) => {
               return (
                 <div key={key} className="w-full flex gap-10">

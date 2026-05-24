@@ -18,7 +18,15 @@ import { useRouter } from "next/navigation";
 import { toastConfig } from "@/utils/toastConfig";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { X } from "lucide-react";
 import Link from "next/link";
 import Preload from "@/components/preload";
 
@@ -31,6 +39,93 @@ const Page = ({ id }: { id: string }) => {
   const [groups, setGroups] = useState<GroupType[] | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
   const [departmentOnly, setDepartmentOnly] = useState(false);
+  const [showInvigilatorDialog, setShowInvigilatorDialog] = useState(false);
+  const [admins, setAdmins] = useState<
+    { _id: string; fullName: string }[] | null
+  >(null);
+  const [selectedAdminId, setSelectedAdminId] = useState<string>("");
+
+  // Fetch all admins for invigilator dropdown
+  const fetchAdmins = async () => {
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.get("/admin/all");
+      if (res.status === 200) {
+        setAdmins(res.data.data.data);
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || error?.message,
+        toastConfig,
+      );
+    }
+  };
+
+  // Assign invigilator
+  const assignInvigilator = async () => {
+    if (!selectedAdminId) return;
+    const globalController = new AbortController();
+    setLoading("assignInvigilator");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.post(
+        `/admin/assign-invigilator/${id}`,
+        { userId: selectedAdminId },
+        { signal: globalController.signal },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success("Invigilator assigned successfully", toastConfig);
+        setShowInvigilatorDialog(false);
+        setSelectedAdminId("");
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
+  // Remove invigilator
+  const removeInvigilator = async (adminId: string) => {
+    const globalController = new AbortController();
+    setLoading(`removeInvigilator-${adminId}`);
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.delete(
+        `/admin/remove-invigilator/${id}/${adminId}`,
+        { signal: globalController.signal },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        setPageData((prev) =>
+          prev
+            ? {
+                ...prev,
+                invigilators: prev.invigilators.filter((i) => i !== adminId),
+              }
+            : prev,
+        );
+        toast.success("Invigilator removed successfully", toastConfig);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
 
   // Update assessment status
   const updateStatus = async (val: string) => {
@@ -45,7 +140,7 @@ const Page = ({ id }: { id: string }) => {
         { status: val },
         {
           signal: controller.signal,
-        }
+        },
       );
 
       if (res.status === 201) {
@@ -56,10 +151,12 @@ const Page = ({ id }: { id: string }) => {
 
       setLoading(null);
     } catch (error: any) {
-      console.log(error);
       if (error.name !== "CanceledError") {
-        setLoading("pageError");
-        console.log(error);
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
       }
     }
   };
@@ -81,7 +178,7 @@ const Page = ({ id }: { id: string }) => {
         { timeLimit: Number(target.duration.value) },
         {
           signal: controller.signal,
-        }
+        },
       );
 
       if (res.status === 201 || res.status === 200) {
@@ -90,15 +187,18 @@ const Page = ({ id }: { id: string }) => {
         });
         toast.success(
           `Successfully assigned ${target.duration.value} mintues to test`,
-          toastConfig
+          toastConfig,
         );
       }
 
       setLoading(null);
     } catch (error: any) {
       if (error.name !== "CanceledError") {
-        setLoading("pageError");
-        console.log(error);
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
       }
     }
   };
@@ -120,7 +220,7 @@ const Page = ({ id }: { id: string }) => {
         { startDate: new Date(target.startDate.value).toISOString() },
         {
           signal: controller.signal,
-        }
+        },
       );
 
       if (res.status === 201) {
@@ -133,8 +233,11 @@ const Page = ({ id }: { id: string }) => {
       setLoading(null);
     } catch (error: any) {
       if (error.name !== "CanceledError") {
-        setLoading("pageError");
-        console.log(error);
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
       }
     }
   };
@@ -157,7 +260,7 @@ const Page = ({ id }: { id: string }) => {
 
         {
           signal: controller.signal,
-        }
+        },
       );
 
       if (res.status === 201) {
@@ -170,8 +273,85 @@ const Page = ({ id }: { id: string }) => {
       setLoading(null);
     } catch (error: any) {
       if (error.name !== "CanceledError") {
-        setLoading("pageError");
-        console.log(error);
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
+  // Update total marks
+  const updateTotalMarks = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      totalMarks: { value: string };
+    };
+
+    const controller = new AbortController();
+    setLoading("updateTotalMarks");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(
+        `/admin/update-assessment/${id}`,
+        { totalMarks: Number(target.totalMarks.value) },
+        { signal: controller.signal },
+      );
+
+      if (res.status === 201 || res.status === 200) {
+        setPageData((prev) => {
+          return { ...res.data.data, course: prev?.course };
+        });
+        toast.success("Total marks updated successfully", toastConfig);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
+  // Update pass mark
+  const updatePassMark = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      passmark: { value: string };
+    };
+
+    const controller = new AbortController();
+    setLoading("updatePassMark");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(
+        `/admin/update-assessment/${id}`,
+        { passmark: Number(target.passmark.value) },
+        { signal: controller.signal },
+      );
+
+      if (res.status === 201 || res.status === 200) {
+        setPageData((prev) => {
+          return { ...res.data.data, course: prev?.course };
+        });
+        toast.success("Pass mark updated successfully", toastConfig);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
       }
     }
   };
@@ -179,12 +359,12 @@ const Page = ({ id }: { id: string }) => {
   // Start assessment
   const authorizeAss = async () => {
     if (!pageData) return;
-
+    const globalController = new AbortController();
     setLoading("authorizeAss");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.patch(`/assessment/authorize/${id}`, {
-        signal: controller.signal,
+        signal: globalController.signal,
       });
 
       if (res.status === 201 || res.status === 200) {
@@ -197,8 +377,11 @@ const Page = ({ id }: { id: string }) => {
       setLoading(null);
     } catch (error: any) {
       if (error.name !== "CanceledError") {
-        setLoading("pageError");
-        console.log(error);
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
       }
     }
   };
@@ -206,12 +389,12 @@ const Page = ({ id }: { id: string }) => {
   // End assessment
   const endAssessment = async () => {
     if (!pageData) return;
-
+    const globalController = new AbortController();
     setLoading("endAssessment");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.patch(`/assessment/end/${id}`, {
-        signal: controller.signal,
+        signal: globalController.signal,
       });
 
       if (res.status === 200 || res.status === 200) {
@@ -224,8 +407,11 @@ const Page = ({ id }: { id: string }) => {
       setLoading(null);
     } catch (error: any) {
       if (error.name !== "CanceledError") {
-        setLoading("pageError");
-        console.log(error);
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
       }
     }
   };
@@ -233,12 +419,12 @@ const Page = ({ id }: { id: string }) => {
   // Restart assessment
   const restartAss = async () => {
     if (!pageData) return;
-
+    const globalController = new AbortController();
     setLoading("restartAss");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.patch(`/assessment/reset-status/${id}`, {
-        signal: controller.signal,
+        signal: globalController.signal,
       });
 
       if (res.status === 200 || res.status === 200) {
@@ -255,8 +441,41 @@ const Page = ({ id }: { id: string }) => {
       setLoading(null);
     } catch (error: any) {
       if (error.name !== "CanceledError") {
-        setLoading("pageError");
-        console.log(error);
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
+  // Toggle shuffle questions
+  const toggleShuffle = async (val: boolean) => {
+    const globalController = new AbortController();
+    setLoading("toggleShuffle");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(
+        `/assessment/update-assessment/${id}`,
+        { shuffleQuestions: val },
+        { signal: globalController.signal },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        setPageData((prev) =>
+          prev ? { ...prev, shuffleQuestions: val } : prev,
+        );
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
       }
     }
   };
@@ -326,7 +545,7 @@ const Page = ({ id }: { id: string }) => {
         },
         {
           signal: controller.signal,
-        }
+        },
       );
 
       if (res.status === 200) {
@@ -334,7 +553,7 @@ const Page = ({ id }: { id: string }) => {
           `Assessment ${
             target.action.value === "assign" ? "Assigned" : "Unassigned"
           } successfully`,
-          toastConfig
+          toastConfig,
         );
       }
 
@@ -367,25 +586,26 @@ const Page = ({ id }: { id: string }) => {
         throw new Error();
 
       const targetStudent = studentRes.data.data.data.find(
-        (sd: any) => sd.regNumber === target.regNumber.value
+        (sd: any) => sd.regNumber === target.regNumber.value,
       );
       if (!targetStudent) {
         toast.error("Student does not exist", toastConfig);
         throw new Error("Student does not exist");
       }
 
+      const globalController = new AbortController();
       const res = await localAxios.post(
         `/assessment/assign/${id}`,
         { students: [targetStudent._id] },
         {
-          signal: controller.signal,
-        }
+          signal: globalController.signal,
+        },
       );
 
       if (res.status == 200) {
         toast.success(
           `${targetStudent.fullName} added to assessment successfully`,
-          toastConfig
+          toastConfig,
         );
       }
 
@@ -410,7 +630,7 @@ const Page = ({ id }: { id: string }) => {
         {
           responseType: "blob",
           signal: controller.signal,
-        }
+        },
       );
 
       if (res.status === 200) {
@@ -450,7 +670,7 @@ const Page = ({ id }: { id: string }) => {
           },
           responseType: "blob",
           signal: controller.signal,
-        }
+        },
       );
 
       if (res.status === 200) {
@@ -469,7 +689,7 @@ const Page = ({ id }: { id: string }) => {
       if (res.status === 400) {
         toast.error(
           "No results prepared for this assessment yet.",
-          toastConfig
+          toastConfig,
         );
       }
 
@@ -563,7 +783,7 @@ const Page = ({ id }: { id: string }) => {
                       {card.title === "Vissibility" && (
                         <div
                           className={`w-fit text-xs px-2 py-0.5 rounded-sm mb-1 ${
-                            card.value == "published"
+                            card.value == "open"
                               ? "text-emerald-600 bg-emerald-100"
                               : ""
                           }`}
@@ -747,6 +967,70 @@ const Page = ({ id }: { id: string }) => {
                     />
                   </div>
                 </form>
+
+                <Spacer size="md" />
+
+                {/* Total Marks */}
+                <div className="text-sm text-theme-gray">Total Marks</div>
+                <Spacer size="sm" />
+                <form
+                  className="flex items-center gap-4"
+                  onSubmit={updateTotalMarks}
+                >
+                  <Input
+                    defaultValue={pageData.totalMarks.toString()}
+                    name="totalMarks"
+                    type="number"
+                    placeholder="Enter total marks"
+                  />
+                  <div className="w-32 shrink-0">
+                    <Button
+                      type="submit"
+                      title="Save"
+                      loading={loading === "updateTotalMarks"}
+                      variant="outline"
+                    />
+                  </div>
+                </form>
+                <Spacer size="md" />
+
+                {/* Pass Mark */}
+                <div className="text-sm text-theme-gray">Pass Mark (%)</div>
+                <Spacer size="sm" />
+                <form
+                  className="flex items-center gap-4"
+                  onSubmit={updatePassMark}
+                >
+                  <Input
+                    defaultValue={pageData.passmark?.toString() ?? ""}
+                    name="passmark"
+                    type="number"
+                    placeholder="Enter pass mark percentage"
+                  />
+                  <div className="w-32 shrink-0">
+                    <Button
+                      type="submit"
+                      title="Save"
+                      loading={loading === "updatePassMark"}
+                      variant="outline"
+                    />
+                  </div>
+                </form>
+                <Spacer size="md" />
+
+                {/* Shuffle Questions */}
+                <div className="text-sm text-theme-gray">Shuffle Questions</div>
+                <Spacer size="sm" />
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={pageData.shuffleQuestions ?? false}
+                    onCheckedChange={toggleShuffle}
+                    disabled={loading === "toggleShuffle"}
+                  />
+                  <Label className="text-sm text-accent-dim">
+                    {pageData.shuffleQuestions ? "Enabled" : "Disabled"}
+                  </Label>
+                </div>
 
                 <Spacer size="xl" />
 
@@ -949,12 +1233,120 @@ const Page = ({ id }: { id: string }) => {
                       variant={"fill"}
                     />
                   </Link>
+
+                  {/* Analytics */}
+                  <Link href={`/assessment/${id}/analytics`} className="w-42">
+                    <Button
+                      type="button"
+                      title={"Analytics"}
+                      loading={false}
+                      variant={"outline"}
+                    />
+                  </Link>
+
+                  {/* Invigilator */}
+                  <div className="w-42">
+                    <Button
+                      type="button"
+                      title="Invigilator"
+                      loading={false}
+                      variant={"outline"}
+                      onClick={() => {
+                        setShowInvigilatorDialog(true);
+                        fetchAdmins();
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <Spacer size="sm" />
               </div>
             </div>
           </div>
+
+          {/* Dialog - Assign Invigilator */}
+          <Dialog
+            open={showInvigilatorDialog}
+            onOpenChange={setShowInvigilatorDialog}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invigilators</DialogTitle>
+                <DialogDescription>
+                  Manage invigilators assigned to this assessment.
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* Assigned invigilators */}
+              <div className="text-sm text-theme-gray mb-1">Assigned</div>
+              {pageData?.invigilators?.length ? (
+                <div className="flex flex-col gap-2">
+                  {pageData.invigilators.map((adminId) => {
+                    const admin = admins?.find((a) => a._id === adminId);
+                    return (
+                      <div
+                        key={adminId}
+                        className="flex items-center justify-between h-10 px-3 border rounded-md text-sm"
+                      >
+                        <span>{admin ? admin.fullName : adminId}</span>
+                        <button
+                          className="text-theme-gray hover:text-red-500 cursor-pointer"
+                          onClick={() => removeInvigilator(adminId)}
+                        >
+                          {loading === `removeInvigilator-${adminId}` ? (
+                            <Spinner className="size-4" />
+                          ) : (
+                            <X size={16} />
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-sm text-theme-gray">
+                  No invigilators assigned.
+                </div>
+              )}
+
+              <Spacer size="sm" />
+
+              {/* Add new invigilator */}
+              <div className="text-sm text-theme-gray mb-1">
+                Add Invigilator
+              </div>
+              <Select
+                onValueChange={setSelectedAdminId}
+                value={selectedAdminId}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={
+                      admins === null ? "Loading admins..." : "Select an admin"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {admins
+                    ?.filter((a) => !pageData?.invigilators?.includes(a._id))
+                    .map((admin) => (
+                      <SelectItem key={admin._id} value={admin._id}>
+                        {admin.fullName}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+
+              <Spacer size="sm" />
+
+              <Button
+                title="Assign Invigilator"
+                loading={loading === "assignInvigilator"}
+                variant="fill"
+                onClick={assignInvigilator}
+              />
+            </DialogContent>
+          </Dialog>
 
           {/* Spacer */}
           <Spacer size="xl" />

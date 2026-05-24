@@ -5,8 +5,13 @@ import { usePathname } from "next/navigation";
 import Spacer from "../spacer";
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 
-const SideBar = () => {
+interface SideBarProps {
+  schoolName?: string | null;
+}
+
+const SideBar = ({ schoolName }: SideBarProps) => {
   const path = usePathname();
 
   // Hide sidebar on pre-auth pages
@@ -21,9 +26,24 @@ const SideBar = () => {
 
   return (
     <>
-      <div className="fixed left-0 flex flex-col w-2/10 h-full shrink-0 border-r border-neutral-200 bg-background py-10 px-5 font-sans">
+      <div className="fixed left-0 flex flex-col w-2/10 h-full shrink-0 border-r border-neutral-200 bg-background py-5 px-5 font-sans">
         <div className="h-fit">
-          <h1 className="font-bold text-xl text-accent font-sans">EBSU CBT</h1>
+          <div className="flex items-center gap-2">
+            <Image
+              src={
+                schoolName
+                  ? `/images/${schoolName}-logo-auth.webp`
+                  : `/images/school-logo-auth.webp`
+              }
+              width={48}
+              height={48}
+              alt="School logo"
+              unoptimized
+            />
+            <h1 className="font-bold text-xl text-accent font-sans">
+              {schoolName ? schoolName.toUpperCase() : "CBT"} CBT
+            </h1>
+          </div>
           <Spacer size="md" />
         </div>
 

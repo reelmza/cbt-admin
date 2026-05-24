@@ -11,4 +11,7 @@ export type PageDataType = {
   endReason: string | boolean;
   dueDate: string;
   startDate: string;
+  shuffleQuestions: boolean;
+  passMark: number;
+  invigilators: string[];
 };
