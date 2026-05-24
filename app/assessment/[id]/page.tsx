@@ -1240,7 +1240,7 @@ const Page = ({ id }: { id: string }) => {
                       type="button"
                       title={"Analytics"}
                       loading={false}
-                      variant={"outline"}
+                      variant={"fill"}
                     />
                   </Link>
 
@@ -1250,7 +1250,7 @@ const Page = ({ id }: { id: string }) => {
                       type="button"
                       title="Invigilator"
                       loading={false}
-                      variant={"outline"}
+                      variant={"fill"}
                       onClick={() => {
                         setShowInvigilatorDialog(true);
                         fetchAdmins();

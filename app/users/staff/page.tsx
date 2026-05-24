@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/input";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,8 @@ import Preload from "@/components/preload";
 const Page = () => {
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
   const [openPassUpload, setOpenPassUpload] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createRole, setCreateRole] = useState("admin");
 
   const [loading, setLoading] = useState<string | null>("page");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -93,6 +96,40 @@ const Page = () => {
       }
       setLoading(null);
     }
+  };
+
+  const createAdmin = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      fullName: { value: string };
+      email: { value: string };
+      password: { value: string };
+    };
+
+    setLoading("createAdmin");
+    try {
+      const res = await localAxios.post("/admin/create", {
+        fullName: target.fullName.value,
+        email: target.email.value,
+        password: target.password.value,
+        role: createRole,
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        setPageData((prev) =>
+          prev ? [res.data.data, ...prev] : [res.data.data],
+        );
+        setShowCreateDialog(false);
+        toast.success("Admin created successfully");
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || error?.message,
+        toastConfig,
+      );
+    }
+    setLoading(null);
   };
 
   const passUpload = async (e: React.SyntheticEvent) => {
@@ -174,6 +211,16 @@ const Page = () => {
             ]}
           />
           <Spacer size="lg" />
+
+          {/* Actions */}
+          <div className="w-42 float-right justify-end mb-4">
+            <Button
+              title="Create Admin"
+              variant="fill"
+              icon={<User2 size={18} />}
+              onClick={() => setShowCreateDialog(true)}
+            />
+          </div>
 
           {/* Table */}
           <Table
@@ -313,6 +360,69 @@ const Page = () => {
               Use the template provided, if there is an error, no student will
               be uploaded.
             </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialogs - Create Admin */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Admin</DialogTitle>
+            <DialogDescription className="pr-28">
+              Add a new administrator to the system.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="pr-28" onSubmit={createAdmin}>
+            <CustomInput
+              label="Full Name"
+              name="fullName"
+              type="text"
+              placeholder="Enter full name"
+              required
+            />
+            <Spacer size="sm" />
+
+            <CustomInput
+              label="Email"
+              name="email"
+              type="email"
+              placeholder="Enter email address"
+              required
+            />
+            <Spacer size="sm" />
+
+            <CustomInput
+              label="Password"
+              name="password"
+              type="password"
+              placeholder="Enter password"
+              required
+            />
+            <Spacer size="sm" />
+
+            <Select
+              name="role"
+              defaultValue="admin"
+              onValueChange={(val) => setCreateRole(val)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="super-admin">Super Admin</SelectItem>
+              </SelectContent>
+            </Select>
+            <Spacer size="md" />
+
+            <Button
+              title="Create Admin"
+              loading={loading === "createAdmin"}
+              variant="fill"
+              icon={<User2 size={20} />}
+            />
           </form>
         </DialogContent>
       </Dialog>
