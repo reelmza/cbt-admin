@@ -138,7 +138,9 @@ const GeneralSetting = () => {
 
           <form onSubmit={saveInstitution}>
             <div className="border rounded-lg p-6 mb-4">
-              <div className="text-sm font-medium mb-4">Institution Details</div>
+              <div className="text-sm font-medium mb-4">
+                Institution Details
+              </div>
 
               {/* Logo upload */}
               <div className="text-xs text-theme-gray mb-1">School Logo</div>
@@ -189,7 +191,9 @@ const GeneralSetting = () => {
                 </div>
               </div>
 
-              <div className="text-xs text-theme-gray mb-1">Institution Name</div>
+              <div className="text-xs text-theme-gray mb-1">
+                Institution Name
+              </div>
               <Input
                 name="schoolName"
                 type="text"
@@ -232,7 +236,9 @@ const GeneralSetting = () => {
             <div className="border rounded-lg p-6">
               <div className="text-sm font-medium mb-4">Academic Session</div>
 
-              <div className="text-xs text-theme-gray mb-1">Current Session</div>
+              <div className="text-xs text-theme-gray mb-1">
+                Current Session
+              </div>
               <Input
                 name="session"
                 type="text"
