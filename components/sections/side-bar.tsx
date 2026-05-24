@@ -21,8 +21,13 @@ const SideBar = ({ schoolName }: SideBarProps) => {
     path.includes("signup") ||
     path.includes("login")
   ) {
-    return;
+    return null;
   }
+
+  const schoolList = [
+    { name: "EBSU", fullName: "Ebonyi State University, Abakaliki." },
+    { name: "ADSU", fullName: "Adamawa State University, Mubi North." },
+  ];
 
   return (
     <>
@@ -35,14 +40,25 @@ const SideBar = ({ schoolName }: SideBarProps) => {
                   ? `/images/${schoolName}-logo-auth.webp`
                   : `/images/school-logo-auth.webp`
               }
-              width={48}
-              height={48}
+              width={52}
+              height={52}
               alt="School logo"
               unoptimized
+              className={"shrink-0"}
             />
-            <h1 className="font-bold text-xl text-accent font-sans">
-              {schoolName ? schoolName.toUpperCase() : "CBT"} CBT
-            </h1>
+            <div className="grow font-bold text-xl text-accent font-sans">
+              <div className="leading-none">
+                {schoolName
+                  ? schoolName.toUpperCase() + " CBT"
+                  : "CBT APP"}{" "}
+              </div>
+              <div className="text-xs font-medium text-theme-gray">
+                {schoolName
+                  ? schoolList.find((s) => s.name.toLowerCase() === schoolName)
+                      ?.fullName
+                  : "Oayastech CBT Exams Portal"}
+              </div>
+            </div>
           </div>
           <Spacer size="md" />
         </div>
