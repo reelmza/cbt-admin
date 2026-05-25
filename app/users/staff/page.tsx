@@ -411,6 +411,7 @@ const Page = () => {
               <SelectContent>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="super-admin">Super Admin</SelectItem>
+                <SelectItem value="invigilator">Invigilator</SelectItem>
               </SelectContent>
             </Select>
             <Spacer size="md" />

@@ -14,6 +14,7 @@ import {
   Shield,
   UserRound,
   UsersRound,
+  ScanEye,
 } from "lucide-react";
 import { JSX } from "react";
 
@@ -99,6 +100,11 @@ export const sideBarPages: SideBarPageType[] = [
   //   route: "/security",
   //   icon: <Shield size={18} />,
   // },
+  {
+    name: "Invigilator",
+    route: "/invigilator",
+    icon: <ScanEye size={18} />,
+  },
   {
     name: "Settings",
     route: "/settings",
