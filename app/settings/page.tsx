@@ -5,6 +5,7 @@ import ExamSetting from "@/components/settings/ExamSetting";
 import GeneralSetting from "@/components/settings/GeneralSetting";
 import NotificationSetting from "@/components/settings/NotificationSetting";
 import SecuritySetting from "@/components/settings/SecuritySetting";
+import Preload from "@/components/preload";
 import { useState } from "react";
 import { useSession, SessionProvider } from "next-auth/react";
 
@@ -35,16 +36,15 @@ const Page = () => {
   const [active, setActive] = useState<SettingKey>("general");
   const { data: session } = useSession();
 
-  if (session && session?.user.role !== "superadmin") {
+  if (!session) return null;
+
+  if (session.user.role !== "superadmin") {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-gray-600">
-            You do not have permission to access this page.
-          </p>
-        </div>
-      </div>
+      <Preload
+        loading="pageError"
+        pageData={false}
+        errorMessage="Access Denied$You are not authorized to manage settings"
+      />
     );
   }
 
