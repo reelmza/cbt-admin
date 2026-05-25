@@ -12,6 +12,7 @@ export type PageDataType = {
   dueDate: string;
   startDate: string;
   shuffleQuestions: boolean;
+  allowBrowserRestriction: boolean;
   passmark: number;
   invigilators: string[];
 };

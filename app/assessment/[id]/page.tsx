@@ -44,6 +44,7 @@ const Page = ({ id }: { id: string }) => {
     { _id: string; fullName: string }[] | null
   >(null);
   const [selectedAdminId, setSelectedAdminId] = useState<string>("");
+  const globalController = new AbortController();
 
   // Fetch all admins for invigilator dropdown
   const fetchAdmins = async () => {
@@ -64,7 +65,6 @@ const Page = ({ id }: { id: string }) => {
   // Assign invigilator
   const assignInvigilator = async () => {
     if (!selectedAdminId) return;
-    const globalController = new AbortController();
     setLoading("assignInvigilator");
     try {
       attachHeaders(session!.user.token);
@@ -94,7 +94,6 @@ const Page = ({ id }: { id: string }) => {
 
   // Remove invigilator
   const removeInvigilator = async (adminId: string) => {
-    const globalController = new AbortController();
     setLoading(`removeInvigilator-${adminId}`);
     try {
       attachHeaders(session!.user.token);
@@ -130,8 +129,6 @@ const Page = ({ id }: { id: string }) => {
   // Update assessment status
   const updateStatus = async (val: string) => {
     if (!pageData) return;
-    const controller = new AbortController();
-
     setLoading("updateStatus");
     try {
       attachHeaders(session!.user.token);
@@ -139,7 +136,7 @@ const Page = ({ id }: { id: string }) => {
         `/admin/update-assessment/${id}`,
         { status: val },
         {
-          signal: controller.signal,
+          signal: globalController.signal,
         },
       );
 
@@ -169,7 +166,6 @@ const Page = ({ id }: { id: string }) => {
       duration: { value: string };
     };
 
-    const controller = new AbortController();
     setLoading("updateDuration");
     try {
       attachHeaders(session!.user.token);
@@ -177,7 +173,7 @@ const Page = ({ id }: { id: string }) => {
         `/admin/update-assessment/${id}`,
         { timeLimit: Number(target.duration.value) },
         {
-          signal: controller.signal,
+          signal: globalController.signal,
         },
       );
 
@@ -211,7 +207,6 @@ const Page = ({ id }: { id: string }) => {
       startDate: { value: string };
     };
 
-    const controller = new AbortController();
     setLoading("updateStartDate");
     try {
       attachHeaders(session!.user.token);
@@ -219,7 +214,7 @@ const Page = ({ id }: { id: string }) => {
         `/admin/update-assessment/${id}`,
         { startDate: new Date(target.startDate.value).toISOString() },
         {
-          signal: controller.signal,
+          signal: globalController.signal,
         },
       );
 
@@ -250,7 +245,6 @@ const Page = ({ id }: { id: string }) => {
       dueDate: { value: string };
     };
 
-    const controller = new AbortController();
     setLoading("updateDueDate");
     try {
       attachHeaders(session!.user.token);
@@ -259,7 +253,7 @@ const Page = ({ id }: { id: string }) => {
         { dueDate: new Date(target.dueDate.value).toISOString() },
 
         {
-          signal: controller.signal,
+          signal: globalController.signal,
         },
       );
 
@@ -290,14 +284,13 @@ const Page = ({ id }: { id: string }) => {
       totalMarks: { value: string };
     };
 
-    const controller = new AbortController();
     setLoading("updateTotalMarks");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.patch(
         `/admin/update-assessment/${id}`,
         { totalMarks: Number(target.totalMarks.value) },
-        { signal: controller.signal },
+        { signal: globalController.signal },
       );
 
       if (res.status === 201 || res.status === 200) {
@@ -327,14 +320,13 @@ const Page = ({ id }: { id: string }) => {
       passmark: { value: string };
     };
 
-    const controller = new AbortController();
     setLoading("updatePassMark");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.patch(
         `/admin/update-assessment/${id}`,
         { passmark: Number(target.passmark.value) },
-        { signal: controller.signal },
+        { signal: globalController.signal },
       );
 
       if (res.status === 201 || res.status === 200) {
@@ -359,7 +351,6 @@ const Page = ({ id }: { id: string }) => {
   // Start assessment
   const authorizeAss = async () => {
     if (!pageData) return;
-    const globalController = new AbortController();
     setLoading("authorizeAss");
     try {
       attachHeaders(session!.user.token);
@@ -389,7 +380,6 @@ const Page = ({ id }: { id: string }) => {
   // End assessment
   const endAssessment = async () => {
     if (!pageData) return;
-    const globalController = new AbortController();
     setLoading("endAssessment");
     try {
       attachHeaders(session!.user.token);
@@ -419,7 +409,6 @@ const Page = ({ id }: { id: string }) => {
   // Restart assessment
   const restartAss = async () => {
     if (!pageData) return;
-    const globalController = new AbortController();
     setLoading("restartAss");
     try {
       attachHeaders(session!.user.token);
@@ -452,7 +441,6 @@ const Page = ({ id }: { id: string }) => {
 
   // Toggle shuffle questions
   const toggleShuffle = async (val: boolean) => {
-    const globalController = new AbortController();
     setLoading("toggleShuffle");
     try {
       attachHeaders(session!.user.token);
@@ -480,16 +468,43 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
+  // Toggle browser restrictions
+  const toggleBrowserRestriction = async (val: boolean) => {
+    setLoading("toggleBrowserRestriction");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(
+        `/assessment/update-assessment/${id}`,
+        { allowBrowserRestriction: val },
+        { signal: globalController.signal },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        setPageData((prev) =>
+          prev ? { ...prev, allowBrowserRestriction: val } : prev,
+        );
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
   // Delete assessment
   const deleteAss = async () => {
     if (!pageData) return;
-    const controller = new AbortController();
-
     setLoading("deleteAss");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.delete(`/assessment/delete/${id}`, {
-        signal: controller.signal,
+        signal: globalController.signal,
       });
 
       if (res.status === 200) {
@@ -529,7 +544,6 @@ const Page = ({ id }: { id: string }) => {
       return;
     }
 
-    const controller = new AbortController();
     setLoading("assignToFaculty");
     try {
       attachHeaders(session!.user.token);
@@ -544,7 +558,7 @@ const Page = ({ id }: { id: string }) => {
           ...(target.subgroup.value && { subGroup: target.subgroup.value }),
         },
         {
-          signal: controller.signal,
+          signal: globalController.signal,
         },
       );
 
@@ -593,7 +607,6 @@ const Page = ({ id }: { id: string }) => {
         throw new Error("Student does not exist");
       }
 
-      const globalController = new AbortController();
       const res = await localAxios.post(
         `/assessment/assign/${id}`,
         { students: [targetStudent._id] },
@@ -620,7 +633,6 @@ const Page = ({ id }: { id: string }) => {
 
   // Generate assessement entries
   const generateAssEntries = async () => {
-    const controller = new AbortController();
     setLoading("generateAssEntries");
     try {
       attachHeaders(session!.user.token);
@@ -629,7 +641,7 @@ const Page = ({ id }: { id: string }) => {
 
         {
           responseType: "blob",
-          signal: controller.signal,
+          signal: globalController.signal,
         },
       );
 
@@ -657,7 +669,6 @@ const Page = ({ id }: { id: string }) => {
 
   // Generate assessment results
   const generateAssResults = async (output: String) => {
-    const controller = new AbortController();
     setLoading(`generateResults-${output}`);
     try {
       attachHeaders(session!.user.token);
@@ -669,7 +680,7 @@ const Page = ({ id }: { id: string }) => {
             fileType: output,
           },
           responseType: "blob",
-          signal: controller.signal,
+          signal: globalController.signal,
         },
       );
 
@@ -1029,6 +1040,21 @@ const Page = ({ id }: { id: string }) => {
                   />
                   <Label className="text-sm text-accent-dim">
                     {pageData.shuffleQuestions ? "Enabled" : "Disabled"}
+                  </Label>
+                </div>
+                <Spacer size="md" />
+
+                {/* Browser Restrictions */}
+                <div className="text-sm text-theme-gray">Browser Restrictions</div>
+                <Spacer size="sm" />
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={pageData.allowBrowserRestriction ?? false}
+                    onCheckedChange={toggleBrowserRestriction}
+                    disabled={loading === "toggleBrowserRestriction"}
+                  />
+                  <Label className="text-sm text-accent-dim">
+                    {pageData.allowBrowserRestriction ? "Enabled" : "Disabled"}
                   </Label>
                 </div>
 

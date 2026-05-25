@@ -5,14 +5,39 @@ import { usePathname } from "next/navigation";
 import Spacer from "../spacer";
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
+import adsuLogo from "@/public/images/adsu-logo-auth.webp";
+import ebsuLogo from "@/public/images/ebsu-logo-auth.webp";
+import defaultLogo from "@/public/images/school-logo-auth.webp";
+import getEnv from "@/lib/getEnv";
+import { useEffect, useState } from "react";
 
-interface SideBarProps {
-  schoolName?: string | null;
-}
+const schoolList: {
+  [key: string]: { image: StaticImageData; shortName: string; fullName: string };
+} = {
+  adsu: {
+    image: adsuLogo,
+    shortName: "ADSU CBT",
+    fullName: "Adamawa State University, Mubi North.",
+  },
+  ebsu: {
+    image: ebsuLogo,
+    shortName: "EBSU CBT",
+    fullName: "Ebonyi State University, Abakaliki.",
+  },
+};
 
-const SideBar = ({ schoolName }: SideBarProps) => {
+const SideBar = () => {
   const path = usePathname();
+  const [envVars, setEnvVars] = useState<{ schoolName: string } | null>(null);
+
+  useEffect(() => {
+    const getVars = async () => {
+      const vars = await getEnv();
+      if (vars) setEnvVars(vars);
+    };
+    getVars();
+  }, []);
 
   // Hide sidebar on pre-auth pages
   if (
@@ -24,10 +49,8 @@ const SideBar = ({ schoolName }: SideBarProps) => {
     return null;
   }
 
-  const schoolList = [
-    { name: "EBSU", fullName: "Ebonyi State University, Abakaliki." },
-    { name: "ADSU", fullName: "Adamawa State University, Mubi North." },
-  ];
+  const school =
+    envVars?.schoolName ? schoolList[envVars.schoolName.toLowerCase()] : null;
 
   return (
     <>
@@ -35,28 +58,19 @@ const SideBar = ({ schoolName }: SideBarProps) => {
         <div className="h-fit">
           <div className="flex items-center gap-2">
             <Image
-              src={
-                schoolName
-                  ? `/images/${schoolName}-logo-auth.webp`
-                  : `/images/school-logo-auth.webp`
-              }
+              src={school?.image ?? defaultLogo}
               width={52}
               height={52}
               alt="School logo"
               unoptimized
-              className={"shrink-0"}
+              className="shrink-0"
             />
             <div className="grow font-bold text-xl text-accent font-sans">
               <div className="leading-none">
-                {schoolName
-                  ? schoolName.toUpperCase() + " CBT"
-                  : "CBT APP"}{" "}
+                {school?.shortName ?? "CBT APP"}
               </div>
               <div className="text-xs font-medium text-theme-gray">
-                {schoolName
-                  ? schoolList.find((s) => s.name.toLowerCase() === schoolName)
-                      ?.fullName
-                  : "Oayastech CBT Exams Portal"}
+                {school?.fullName ?? "Oayastech CBT Exams Portal"}
               </div>
             </div>
           </div>
@@ -66,7 +80,7 @@ const SideBar = ({ schoolName }: SideBarProps) => {
         {/* Sidebar Links */}
         <ul className="grow flex flex-col gap-y-2 w-full">
           {sideBarPages.map((item, key) => (
-            <li key={key} className={`w-full h-fit`}>
+            <li key={key} className="w-full h-fit">
               {/* Main Link */}
               <Link
                 href={item.route}
@@ -95,7 +109,6 @@ const SideBar = ({ schoolName }: SideBarProps) => {
                     >
                       {itemChild?.icon}
                       <span>{itemChild.name}</span>
-
                       <div className="absolute -left-4 h-[1px] w-2"></div>
                     </Link>
                   ))}
