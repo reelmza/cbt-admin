@@ -174,7 +174,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
               }`}</div>
             </div>
             <div
-              className={`w-36 ${process.env.NEXT_PUBLIC_ISLOCAL ? "pointer-events-none opacity-50 select-none" : ""}`}
+              className={`w-36 ${!process.env.NEXT_PUBLIC_ISLOCAL ? "pointer-events-none opacity-50 select-none" : ""}`}
             >
               <Button
                 title="AI Marking"
@@ -298,7 +298,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                       </div>
                     )}
 
-                    {/* Expected Answer Theory */}
+                    {/* Expected Answer Objective */}
                     {ans?.question?.correctAnswer && (
                       <div className="mb-1 text-sm">
                         {ans?.question?.options.map((opt, key) => (
@@ -328,6 +328,16 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                           ),
                         )}
                       </div>
+                    )}
+
+                    {ans?.aiFeedback && (
+                      <>
+                        <div className="flex items-center gap-2 text-theme-gray mb-1 text-sm border-t pt-2">
+                          <Stars size={14} />
+                          <div> AI Feedback</div>
+                        </div>
+                        <div className="mb-1 text-sm">{ans?.aiFeedback}</div>
+                      </>
                     )}
                   </div>
 

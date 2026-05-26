@@ -35,6 +35,7 @@ const Page = ({ id }: { id: string }) => {
   const { data: session } = useSession();
 
   const [loading, setLoading] = useState<string | null>("page");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pageData, setPageData] = useState<PageDataType | null>(null);
   const [groups, setGroups] = useState<GroupType[] | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
@@ -808,8 +809,21 @@ const Page = ({ id }: { id: string }) => {
         setLoading(null);
       } catch (error: any) {
         if (!controller.signal.aborted) {
+          const status = error?.response?.status;
+          if (status === 403) {
+            setErrorMessage(
+              "Access Denied$You don't have permission to view this assessment.",
+            );
+          } else if (status === 404) {
+            setErrorMessage(
+              "Assessment Not Found$This assessment does not exist or may have been deleted.",
+            );
+          } else {
+            setErrorMessage(
+              "Something went wrong$The assessment could not be loaded. Please try again.",
+            );
+          }
           setLoading("pageError");
-          console.log(error);
         }
       }
     };
@@ -1533,7 +1547,7 @@ const Page = ({ id }: { id: string }) => {
         </>
       )}
 
-      <Preload loading={loading} pageData={pageData ? true : false} />
+      <Preload loading={loading} pageData={pageData ? true : false} errorMessage={errorMessage} />
     </div>
   );
 };

@@ -53,6 +53,7 @@ export interface Answer {
   status: AnswerStatus;
   isManuallyMarked: boolean;
   markedBy: string | null;
+  aiFeedback?: string;
 }
 
 export type SubmissionStatus =
