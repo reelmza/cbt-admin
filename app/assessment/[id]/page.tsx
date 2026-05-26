@@ -40,6 +40,8 @@ const Page = ({ id }: { id: string }) => {
   const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
   const [departmentOnly, setDepartmentOnly] = useState(false);
   const [showInvigilatorDialog, setShowInvigilatorDialog] = useState(false);
+  const [showBulkAssignDialog, setShowBulkAssignDialog] = useState(false);
+  const [bulkAssignFile, setBulkAssignFile] = useState<File | null>(null);
   const [admins, setAdmins] = useState<
     { _id: string; fullName: string }[] | null
   >(null);
@@ -631,6 +633,75 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
+  // Download bulk assign template
+  const downloadAssignTemplate = async () => {
+    setLoading("downloadAssignTemplate");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.get("/import/template/assign-students", {
+        responseType: "blob",
+        signal: globalController.signal,
+      });
+
+      if (res.status === 200) {
+        const blob = res.data;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "assign-students-template.xlsx";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
+  // Bulk assign students via xlsx
+  const bulkAssignStudents = async () => {
+    if (!bulkAssignFile) {
+      toast.error("Please select a file", toastConfig);
+      return;
+    }
+
+    setLoading("bulkAssignStudents");
+    try {
+      attachHeaders(session!.user.token);
+      const formData = new FormData();
+      formData.append("file", bulkAssignFile);
+
+      const res = await localAxios.post(
+        `/import/assign-students/${id}`,
+        formData,
+        { signal: globalController.signal },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success(res.data.message, toastConfig);
+        setShowBulkAssignDialog(false);
+        setBulkAssignFile(null);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
   // Generate assessement entries
   const generateAssEntries = async () => {
     setLoading("generateAssEntries");
@@ -1203,6 +1274,20 @@ const Page = ({ id }: { id: string }) => {
                 </form>
                 <Spacer size="lg" />
 
+                {/* Bulk assign students */}
+                <div className="text-sm">Bulk assign students (carryover / borrowed course)</div>
+                <Spacer size="sm" />
+                <div className="w-42">
+                  <Button
+                    type="button"
+                    title="Bulk Assign"
+                    loading={false}
+                    variant="outline"
+                    onClick={() => setShowBulkAssignDialog(true)}
+                  />
+                </div>
+                <Spacer size="lg" />
+
                 {/* Generate entries */}
                 <div className="text-sm">Results and Entries</div>
                 <Spacer size="sm" />
@@ -1371,6 +1456,74 @@ const Page = ({ id }: { id: string }) => {
                 variant="fill"
                 onClick={assignInvigilator}
               />
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog - Bulk Assign Students */}
+          <Dialog
+            open={showBulkAssignDialog}
+            onOpenChange={(open) => {
+              setShowBulkAssignDialog(open);
+              if (!open) setBulkAssignFile(null);
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Bulk Assign Students</DialogTitle>
+                <DialogDescription>
+                  Upload an Excel file (.xlsx) with student registration numbers to bulk assign carryover or borrowed-course students.
+                </DialogDescription>
+              </DialogHeader>
+
+              <Spacer size="sm" />
+
+              <div
+                className={`w-full border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${
+                  bulkAssignFile
+                    ? "border-accent bg-accent/5"
+                    : "border-theme-gray-light hover:border-accent/50"
+                }`}
+                onClick={() => document.getElementById("bulk-assign-file-input")?.click()}
+              >
+                <input
+                  id="bulk-assign-file-input"
+                  type="file"
+                  accept=".xlsx"
+                  className="hidden"
+                  onChange={(e) => setBulkAssignFile(e.target.files?.[0] ?? null)}
+                />
+                {bulkAssignFile ? (
+                  <>
+                    <div className="text-sm font-medium text-accent">{bulkAssignFile.name}</div>
+                    <div className="text-xs text-theme-gray">Click to change file</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-sm text-theme-gray">Click to select an .xlsx file</div>
+                    <div className="text-xs text-theme-gray">Only .xlsx files are accepted</div>
+                  </>
+                )}
+              </div>
+
+              <Spacer size="sm" />
+
+              <Button
+                title="Upload & Assign"
+                loading={loading === "bulkAssignStudents"}
+                variant="fill"
+                onClick={bulkAssignStudents}
+              />
+
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  className="text-xs text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                  disabled={loading === "downloadAssignTemplate"}
+                  onClick={downloadAssignTemplate}
+                >
+                  {loading === "downloadAssignTemplate" ? "Downloading..." : "Download template"}
+                </button>
+              </div>
             </DialogContent>
           </Dialog>
 
