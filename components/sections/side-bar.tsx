@@ -13,7 +13,11 @@ import getEnv from "@/lib/getEnv";
 import { useEffect, useState } from "react";
 
 const schoolList: {
-  [key: string]: { image: StaticImageData; shortName: string; fullName: string };
+  [key: string]: {
+    image: StaticImageData;
+    shortName: string;
+    fullName: string;
+  };
 } = {
   adsu: {
     image: adsuLogo,
@@ -49,8 +53,9 @@ const SideBar = () => {
     return null;
   }
 
-  const school =
-    envVars?.schoolName ? schoolList[envVars.schoolName.toLowerCase()] : null;
+  const school = envVars?.schoolName
+    ? schoolList[envVars.schoolName.toLowerCase()]
+    : null;
 
   return (
     <>
@@ -60,10 +65,10 @@ const SideBar = () => {
             <Image
               src={school?.image ?? defaultLogo}
               width={52}
-              height={52}
               alt="School logo"
               unoptimized
               className="shrink-0"
+              loading="eager"
             />
             <div className="grow font-bold text-xl text-accent font-sans">
               <div className="leading-none">

@@ -5,6 +5,8 @@ import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
+import { Radio } from "lucide-react";
+import Link from "next/link";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
@@ -210,6 +212,13 @@ const Page = () => {
                         ? "Cleared to Started"
                         : "Not Cleared to Started"}
                     </span>
+                    <Link
+                      href={`/invigilator/${selected._id}/monitoring`}
+                      className="flex items-center gap-1.5 text-xs font-semibold bg-accent text-white rounded px-2 py-1 hover:bg-accent-dim transition-colors"
+                    >
+                      <Radio size={12} />
+                      Monitoring
+                    </Link>
                   </div>
                 </div>
 
