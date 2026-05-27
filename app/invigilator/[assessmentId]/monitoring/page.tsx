@@ -57,6 +57,7 @@ const studentStatusBadgeColor = (
   if (status === "submitted") return "success";
   if (status === "in-progress") return "info";
   if (status === "locked") return "error";
+  if (status === "disconnected") return "warning";
   return "warning";
 };
 
@@ -72,6 +73,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
   );
   const [students, setStudents] = useState<AssignedStudent[]>([]);
   const [stats, setStats] = useState<AssessmentStats | null>(null);
+  const [progressMap, setProgressMap] = useState<
+    Record<string, { answered: number; total: number }>
+  >({});
 
   // Fetch initial assessment data
   useEffect(() => {
@@ -88,9 +92,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
         if (res.status === 200 || res.status === 201) {
           const raw = res.data.data;
-          const list: MonitoringAssessment[] = Array.isArray(raw)
-            ? raw
-            : [raw];
+          const list: MonitoringAssessment[] = Array.isArray(raw) ? raw : [raw];
           const match = list.find((a) => a._id === assessmentId);
 
           if (match) {
@@ -148,11 +150,162 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
       socket.on("connect", () => {
         setConnected(true);
         socket.emit("monitor-assessment", assessmentId);
+        // Re-sync on every (re)connect to catch events fired before we joined the room
+        attachHeaders(session!.user.token);
+        localAxios
+          .get("/assessment/my-invigilator-assessments")
+          .then((res) => {
+            if (res.status === 200 || res.status === 201) {
+              const raw = res.data.data;
+              const list: MonitoringAssessment[] = Array.isArray(raw)
+                ? raw
+                : [raw];
+              const match = list.find((a) => a._id === assessmentId);
+              if (match) {
+                setStudents(match.assignedStudents);
+                setStats(match.stats);
+              }
+            }
+          })
+          .catch(() => {});
       });
 
       socket.on("disconnect", () => {
         setConnected(false);
       });
+
+      socket.on(
+        "candidate-joined",
+        ({ studentId }: { studentId: string; name: string }) => {
+          console.log(studentId, "joined");
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === studentId ? { ...s, status: "in-progress" } : s,
+            ),
+          );
+          setStats((prev) =>
+            prev ? { ...prev, inProgress: prev.inProgress + 1 } : prev,
+          );
+        },
+      );
+
+      socket.on(
+        "candidate-disconnected",
+        ({ studentId }: { studentId: string; name: string }) => {
+          console.log("candidate-disconnected", studentId);
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === studentId ? { ...s, status: "disconnected" } : s,
+            ),
+          );
+        },
+      );
+
+      socket.on(
+        "candidate-alert",
+        ({
+          studentId,
+          violationCount,
+        }: {
+          type: string;
+          studentId: string;
+          violationCount: number;
+          timestamp: string;
+        }) => {
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === studentId ? { ...s, violationCount } : s,
+            ),
+          );
+        },
+      );
+
+      socket.on(
+        "candidate-locked",
+        ({ studentId }: { studentId: string; reason: string }) => {
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === studentId ? { ...s, status: "locked" } : s,
+            ),
+          );
+          setStats((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  locked: prev.locked + 1,
+                  inProgress: Math.max(0, prev.inProgress - 1),
+                }
+              : prev,
+          );
+        },
+      );
+
+      socket.on(
+        "candidate-unlocked",
+        ({ studentId }: { studentId: string }) => {
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === studentId ? { ...s, status: "in-progress" } : s,
+            ),
+          );
+          setStats((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  locked: Math.max(0, prev.locked - 1),
+                  inProgress: prev.inProgress + 1,
+                }
+              : prev,
+          );
+        },
+      );
+
+      socket.on(
+        "candidate-progress",
+        ({
+          studentId,
+          answered,
+          total,
+        }: {
+          studentId: string;
+          answered: number;
+          total: number;
+        }) => {
+          setProgressMap((prev) => ({
+            ...prev,
+            [studentId]: { answered, total },
+          }));
+        },
+      );
+
+      socket.on(
+        "candidate-auto-submitted",
+        ({
+          studentId,
+          violationCount,
+        }: {
+          studentId: string;
+          reason: string;
+          violationCount: number;
+        }) => {
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === studentId
+                ? { ...s, status: "submitted", violationCount }
+                : s,
+            ),
+          );
+          setStats((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  submitted: prev.submitted + 1,
+                  inProgress: Math.max(0, prev.inProgress - 1),
+                }
+              : prev,
+          );
+        },
+      );
     };
 
     initSocket();
@@ -246,28 +399,38 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           {/* Student Table */}
           <Table
             tableHeading={[
-              { value: "Full Name", colSpan: "col-span-5" },
+              { value: "Full Name", colSpan: "col-span-4" },
               { value: "Reg Number", colSpan: "col-span-3" },
               { value: "Status", colSpan: "col-span-2" },
-              { value: "Violations", colSpan: "col-span-2" },
+              { value: "Progress", colSpan: "col-span-2" },
+              { value: "Violations", colSpan: "col-span-1" },
             ]}
-            tableData={students.map((student) => [
-              { value: student.fullName, colSpan: "col-span-5" },
-              { value: student.regNumber, colSpan: "col-span-3" },
-              {
-                value: student.status,
-                colSpan: "col-span-2",
-                type: "badge" as const,
-                color: studentStatusBadgeColor(student.status),
-              },
-              {
-                value: student.violationCount,
-                colSpan: "col-span-2",
-                ...(student.violationCount > 0
-                  ? { color: "error" as const }
-                  : {}),
-              },
-            ])}
+            tableData={students.map((student) => {
+              const progress = progressMap[student.id];
+              return [
+                { value: student.fullName, colSpan: "col-span-4" },
+                { value: student.regNumber, colSpan: "col-span-3" },
+                {
+                  value: student.status,
+                  colSpan: "col-span-2",
+                  type: "badge" as const,
+                  color: studentStatusBadgeColor(student.status),
+                },
+                {
+                  value: progress
+                    ? `${progress.answered} / ${progress.total}`
+                    : "—",
+                  colSpan: "col-span-2",
+                },
+                {
+                  value: student.violationCount,
+                  colSpan: "col-span-1",
+                  ...(student.violationCount > 0
+                    ? { color: "error" as const }
+                    : {}),
+                },
+              ];
+            })}
             showSearch={false}
             showOptions={false}
           />

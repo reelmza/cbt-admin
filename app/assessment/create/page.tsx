@@ -65,6 +65,10 @@ const Main = () => {
     { _id: string; code: string; title: string }[] | null
   >(null);
 
+  const [schoolConfig, setSchoolConfig] = useState<{
+    academicSession: string;
+    academicYear: string;
+  } | null>(null);
   const [assDetails, setAssDetails] = useState<AssessmentType | null>(null);
   const [activeSection, setActiveSection] = useState<null | [string, number]>(
     null,
@@ -94,7 +98,7 @@ const Main = () => {
     setLoading("submitAss");
     let formData = {
       ...assDetails,
-      timeLimit: 5, //deault 5 min
+      timeLimit: 30, //deault 30 min
     };
     if (!sections) return;
 
@@ -219,12 +223,16 @@ const Main = () => {
     const getData = async () => {
       try {
         attachHeaders(session!.user.token);
-        const res = await localAxios.get("/admin/courses", {
-          signal: controller.signal,
-        });
+        const [coursesRes, configRes] = await Promise.all([
+          localAxios.get("/admin/courses", { signal: controller.signal }),
+          localAxios.get("/config/school", { signal: controller.signal }),
+        ]);
 
-        if (res.status === 201) {
-          setCourses(res.data.data.courses);
+        if (coursesRes.status === 201) {
+          setCourses(coursesRes.data.data.courses);
+        }
+        if (configRes.status === 200) {
+          setSchoolConfig(configRes.data.data);
         }
         setLoading(null);
       } catch (error: any) {
@@ -545,29 +553,34 @@ const Main = () => {
                 {/* Session and term */}
                 <div className="flex items-center justify-between gap-2">
                   {/* Session */}
-                  <Select name="session">
+                  <Select
+                    name="session"
+                    defaultValue={schoolConfig?.academicSession}
+                  >
                     <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
                       <SelectValue placeholder="Select a session" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectLabel>Fruits</SelectLabel>
-                        <SelectItem value="2024/2025">2024/2025</SelectItem>
-                        <SelectItem value="2025/2026">2025/2026</SelectItem>
+                        <SelectLabel>Select Session</SelectLabel>
+                        <SelectItem value={schoolConfig?.academicSession || ""}>
+                          {schoolConfig?.academicSession}
+                        </SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
 
                   {/* Term */}
-                  <Select name="term">
+                  <Select name="term" defaultValue={"2"}>
                     <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
                       <SelectValue placeholder="Select a term" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Select Term</SelectLabel>
-                        <SelectItem value="1">First</SelectItem>
-                        <SelectItem value="2">Second</SelectItem>
+                        <SelectItem value={"2"}>
+                          {schoolConfig?.academicYear}
+                        </SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
