@@ -31,9 +31,6 @@ const Table = ({
     <div className="w-full h-fit flex flex-col font-sans">
       {/* Options Row */}
       <div className="flex items-center justify-between">
-        {/* Search Box */}
-        {/* {showSearch ? <TableSearchBox placeholder="Search" /> : ""} */}
-
         {/* Options Buttons */}
         {showOptions ? (
           <div className="w-fit flex items-center gap-2">
@@ -65,7 +62,7 @@ const Table = ({
       <Spacer size="lg" />
 
       {/* Table Heading */}
-      <div className="h-10 grid grid-cols-12 bg-accent-light font-medium text-accent rounded-md">
+      <div className="h-10 grid grid-cols-12 bg-accent-light font-medium text-accent rounded-xs">
         {tableHeading.map((rowCol, key) => (
           <div
             className={`h-full flex items-center pl-2 text-sm leading-none gap-2 ${
@@ -103,10 +100,10 @@ const Table = ({
                 rowCol.color === "warning"
                   ? "text-theme-warning"
                   : rowCol.color === "info"
-                  ? "text-theme-info "
-                  : rowCol.color === "success"
-                  ? "text-theme-succes"
-                  : "text-theme-error"
+                    ? "text-theme-info "
+                    : rowCol.color === "success"
+                      ? "text-theme-succes"
+                      : "text-theme-error"
               }`}
               key={rowColKey}
             >
@@ -131,10 +128,10 @@ const Table = ({
                     rowCol.color === "warning"
                       ? "bg-theme-warning/5"
                       : rowCol.color === "info"
-                      ? "bg-theme-info/5"
-                      : rowCol.color === "success"
-                      ? "bg-theme-success/5"
-                      : "bg-theme-error/5"
+                        ? "bg-theme-info/5"
+                        : rowCol.color === "success"
+                          ? "bg-theme-success/5"
+                          : "bg-theme-error/5"
                   }`}
                 >
                   {rowCol.value}

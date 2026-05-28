@@ -897,7 +897,7 @@ const Page = ({ id }: { id: string }) => {
                 return (
                   <div
                     key={key}
-                    className="col-span-3 p-5 shadow rounded-lg border flex flex-col gap-5"
+                    className="col-span-3 p-5 rounded-lg border flex flex-col gap-5"
                   >
                     <div className="text-theme-gray text-sm">{card.title}</div>
 
@@ -929,7 +929,7 @@ const Page = ({ id }: { id: string }) => {
             {/* Control Cards*/}
             <div className="grid grid-cols-12 gap-4">
               {/* Left Cards */}
-              <div className="col-span-5 shadow border rounded-md p-5">
+              <div className="col-span-5 border rounded-md p-5">
                 {/* Test Vissibility */}
                 <div className="text-sm text-theme-gray">Test Vissibility</div>
                 <Spacer size="sm" />
@@ -1196,7 +1196,7 @@ const Page = ({ id }: { id: string }) => {
               </div>
 
               {/* Right Cards */}
-              <div className="col-span-7 shadow border rounded-md p-5">
+              <div className="col-span-7 border rounded-md p-5">
                 {/* Assign students */}
                 <div className="text-sm">
                   Assign to level, faculty and/or department
@@ -1360,7 +1360,7 @@ const Page = ({ id }: { id: string }) => {
                   </div>
 
                   {/* Generate Result */}
-                  <div className="bg-accent rounded-md flex items-center pl-4 h-10 overflow-hidden">
+                  <div className="bg-accent rounded-xs flex items-center pl-4 h-10 overflow-hidden">
                     <span className="text-white text-sm pr-4">
                       Generate Results
                     </span>

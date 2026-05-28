@@ -296,7 +296,7 @@ const Page = () => {
           {/* Navigation */}
           <div className="flex items-center justify-between w-4/10">
             <button
-              className="flex items-center justify-center gap-2 h-8 w-28 rounded-md border text-theme-gray cursor-pointer text-sm"
+              className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
               onClick={() => getPage("prev")}
             >
               <span>Previous</span>
@@ -307,7 +307,7 @@ const Page = () => {
               {`(${pageMetaData?.totalItems})`}
             </div>
             <button
-              className="flex items-center justify-center gap-2 h-8 w-28 rounded-md border text-theme-gray cursor-pointer text-sm"
+              className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
               onClick={() => getPage("next")}
             >
               <span>Next</span>

@@ -70,8 +70,8 @@ const SideBar = () => {
               className="shrink-0"
               loading="eager"
             />
-            <div className="grow font-bold text-xl text-accent font-sans">
-              <div className="leading-none">
+            <div className="grow text-xl text-accent">
+              <div className="leading-none  font-extrabold font-serif">
                 {school?.shortName ?? "CBT APP"}
               </div>
               <div className="text-xs font-medium text-theme-gray">
@@ -93,7 +93,7 @@ const SideBar = () => {
                   path.includes(item.route)
                     ? "bg-accent-light text-accent font-semibold hover:bg-accent-light/70"
                     : "text-theme-gray hover:bg-theme-gray-light"
-                } rounded-md animate-all duration-200 ease-in`}
+                } rounded-xs animate-all duration-200 ease-in`}
               >
                 {item.icon}
                 <span>{item.name}</span>

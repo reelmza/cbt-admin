@@ -9,7 +9,7 @@ const TableSearchBox = ({
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }) => {
   return (
-    <form className="flex items-center justify-betweenh-12 w-4/10 rounded-md border border-theme-gray-light">
+    <form className="flex items-center justify-betweenh-12 w-4/10 rounded-xs border border-theme-gray-light">
       <input
         type="text"
         className="bg-transparent h-full grow px-3 text-sm outline-none text-theme-gray"

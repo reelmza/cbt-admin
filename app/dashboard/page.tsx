@@ -36,7 +36,7 @@ const Page = () => {
   return (
     <div className="grow min-h-full p-10 font-sans">
       {/* Top Banner */}
-      <div className="px-10 py-14 bg-accent rounded-xl">
+      <div className="px-10 py-14 bg-accent rounded-xs">
         <div className="text-3xl font-extrabold text-white">
           {session?.user.fullName}
         </div>
@@ -51,7 +51,7 @@ const Page = () => {
         {quickLinks.map((link, key) => {
           return (
             <button
-              className="w-[32%] min-h-52 p-10 pr-14 border border-theme-gray-mid shadow-xl shadow-theme-gray/5 rounded-xl cursor-pointer text-left hover:bg-accent-light/50 hover:border-accent-light animate-all duration-500 ease-in-out"
+              className="w-[32%] min-h-52 p-10 pr-14 border border-theme-gray-mid shadow-xl shadow-theme-gray/5 rounded-xs cursor-pointer text-left hover:bg-accent-light/50 hover:border-accent-light animate-all duration-500 ease-in-out"
               key={key}
               onClick={() => router.push(link.route)}
             >

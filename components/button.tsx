@@ -24,23 +24,23 @@ const Button = ({
   onClick,
 }: ButtonType) => {
   const buttonVariants = {
-    fill: `flex items-center justify-center h-10 w-full font-medium rounded-md leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-accent hover:bg-accent/80 text-accent-light shadow shadow-accent-light/20 ${
+    fill: `flex items-center justify-center h-10 w-full font-medium rounded-xs leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-accent hover:bg-accent/80 text-accent-light shadow shadow-accent-light/20 ${
       loading ? "opacity-75 pointer-events-none" : ""
     }`,
 
-    fillError: `flex items-center justify-center h-10 w-full font-medium rounded-md leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-theme-error hover:bg-theme-error/80 text-white shadow shadow-theme-error-light/20 ${
+    fillError: `flex items-center justify-center h-10 w-full font-medium rounded-xs leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-theme-error hover:bg-theme-error/80 text-white shadow shadow-theme-error-light/20 ${
       loading ? "opacity-75 pointer-events-none" : ""
     }`,
 
-    fillErrorOutline: `flex items-center justify-center h-10 w-full font-medium rounded-md leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm border-theme-error/50 border text-theme-error ${
+    fillErrorOutline: `flex items-center justify-center h-10 w-full font-medium rounded-xs leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm border-theme-error/50 border text-theme-error ${
       loading ? "opacity-75 pointer-events-none" : ""
     }`,
 
-    fillErrorGhost: `flex items-center justify-center h-10 w-full font-medium rounded-md leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm  text-theme-error  ${
+    fillErrorGhost: `flex items-center justify-center h-10 w-full font-medium rounded-xs leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm  text-theme-error  ${
       loading ? "opacity-75 pointer-events-none" : ""
     }`,
 
-    outline: `flex items-center justify-center h-10 w-full font-medium rounded-md leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-transparent hover:bg-theme-gray-light/80 text-theme-gray border border-theme-gray-light shadow-sm shadow-theme-gray-light/20 ${
+    outline: `flex items-center justify-center h-10 w-full font-medium rounded-xs leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-transparent hover:bg-theme-gray-light/80 text-theme-gray border border-theme-gray-light shadow-sm shadow-theme-gray-light/20 ${
       loading ? "opacity-75 pointer-events-none" : ""
     }`,
   };

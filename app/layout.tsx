@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Noto_Serif } from "next/font/google";
 
 import "./globals.css";
 import { Info } from "lucide-react";
@@ -9,6 +9,11 @@ import SessionExpiredOverlay from "@/components/session-expired-overlay";
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+const notoSerif = Noto_Serif({
+  variable: "--font-noto-serif",
   subsets: ["latin"],
 });
 
@@ -25,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${inter.variable} ${notoSerif.variable} antialiased`}>
         {/* Info text for smaller screens */}
         <div className="md:hidden h-full w-full bg-neutral-50 flex flex-col items-center justify-center">
           <Info size={32} className="text-accent-dim" />
