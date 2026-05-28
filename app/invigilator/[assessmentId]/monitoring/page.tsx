@@ -16,6 +16,7 @@ type AssignedStudent = {
   regNumber: string;
   status: string;
   violationCount: number;
+  connectionStatus?: "online" | "offline";
 };
 
 type AssessmentStats = {
@@ -79,7 +80,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
   // Fetch initial assessment data
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user.token) return;
     const controller = new AbortController();
 
     const getData = async () => {
@@ -97,7 +98,12 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
           if (match) {
             setAssessment(match);
-            setStudents(match.assignedStudents);
+            setStudents(
+              match.assignedStudents.map((s) => ({
+                ...s,
+                connectionStatus: "offline" as const,
+              })),
+            );
             setStats(match.stats);
           } else {
             setErrorMessage(
@@ -124,11 +130,12 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user.token]);
 
   // Initialize socket once after session is available
   useEffect(() => {
-    if (!session || socketRef.current) return;
+    if (socketRef.current) return;
+    if (!session?.user?.id) return;
 
     let cancelled = false;
 
@@ -150,24 +157,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
       socket.on("connect", () => {
         setConnected(true);
         socket.emit("monitor-assessment", assessmentId);
-        // Re-sync on every (re)connect to catch events fired before we joined the room
-        attachHeaders(session!.user.token);
-        localAxios
-          .get("/assessment/my-invigilator-assessments")
-          .then((res) => {
-            if (res.status === 200 || res.status === 201) {
-              const raw = res.data.data;
-              const list: MonitoringAssessment[] = Array.isArray(raw)
-                ? raw
-                : [raw];
-              const match = list.find((a) => a._id === assessmentId);
-              if (match) {
-                setStudents(match.assignedStudents);
-                setStats(match.stats);
-              }
-            }
-          })
-          .catch(() => {});
+        socket.emit("join-user-room", session.user.id); // User._id
       });
 
       socket.on("disconnect", () => {
@@ -176,11 +166,18 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
       socket.on(
         "candidate-joined",
-        ({ studentId }: { studentId: string; name: string }) => {
-          console.log(studentId, "joined");
+        ({ studentId, name }: { studentId: string; name: string }) => {
+          console.log(name, "joined");
+
           setStudents((prev) =>
             prev.map((s) =>
-              s.id === studentId ? { ...s, status: "in-progress" } : s,
+              s.id === studentId
+                ? {
+                    ...s,
+                    status: "in-progress",
+                    connectionStatus: "online" as const,
+                  }
+                : s,
             ),
           );
           setStats((prev) =>
@@ -191,11 +188,17 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
       socket.on(
         "candidate-disconnected",
-        ({ studentId }: { studentId: string; name: string }) => {
-          console.log("candidate-disconnected", studentId);
+        ({ studentId, name }: { studentId: string; name: string }) => {
+          console.log("candidate-disconnected", name, studentId);
           setStudents((prev) =>
             prev.map((s) =>
-              s.id === studentId ? { ...s, status: "disconnected" } : s,
+              s.id === studentId
+                ? {
+                    ...s,
+                    status: "disconnected",
+                    connectionStatus: "offline" as const,
+                  }
+                : s,
             ),
           );
         },
@@ -322,7 +325,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
         }
       }
     };
-  }, [session]);
+  }, [session?.user.id]);
 
   return (
     <div className="w-full h-full p-10 font-sans">
@@ -399,22 +402,32 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           {/* Student Table */}
           <Table
             tableHeading={[
-              { value: "Full Name", colSpan: "col-span-4" },
+              { value: "Full Name", colSpan: "col-span-3" },
               { value: "Reg Number", colSpan: "col-span-3" },
               { value: "Status", colSpan: "col-span-2" },
+              { value: "Con.", colSpan: "col-span-1" },
               { value: "Progress", colSpan: "col-span-2" },
               { value: "Violations", colSpan: "col-span-1" },
             ]}
             tableData={students.map((student) => {
               const progress = progressMap[student.id];
               return [
-                { value: student.fullName, colSpan: "col-span-4" },
+                { value: student.fullName, colSpan: "col-span-3" },
                 { value: student.regNumber, colSpan: "col-span-3" },
                 {
                   value: student.status,
                   colSpan: "col-span-2",
                   type: "badge" as const,
                   color: studentStatusBadgeColor(student.status),
+                },
+                {
+                  value: student.connectionStatus ?? "offline",
+                  colSpan: "col-span-1",
+                  type: "badge" as const,
+                  color:
+                    student.connectionStatus === "online"
+                      ? ("success" as const)
+                      : ("error" as const),
                 },
                 {
                   value: progress

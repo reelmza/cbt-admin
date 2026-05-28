@@ -500,6 +500,33 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
+  // Archive assessment
+  const archiveAss = async () => {
+    if (!pageData) return;
+    setLoading("archiveAss");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.post(`/admin/archive/${id}`, {
+        signal: globalController.signal,
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success("Assessment archived successfully", toastConfig);
+        // router.push("/assessment");
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
   // Delete assessment
   const deleteAss = async () => {
     if (!pageData) return;
@@ -1130,7 +1157,9 @@ const Page = ({ id }: { id: string }) => {
                 <Spacer size="md" />
 
                 {/* Browser Restrictions */}
-                <div className="text-sm text-theme-gray">Browser Restrictions</div>
+                <div className="text-sm text-theme-gray">
+                  Browser Restrictions
+                </div>
                 <Spacer size="sm" />
                 <div className="flex items-center gap-3">
                   <Switch
@@ -1144,6 +1173,16 @@ const Page = ({ id }: { id: string }) => {
                 </div>
 
                 <Spacer size="xl" />
+
+                {/* Archive assessment */}
+                <div className="w-48">
+                  <Button
+                    title={"Archive Assessment"}
+                    loading={loading === "archiveAss"}
+                    variant={"fillErrorOutline"}
+                    onClick={archiveAss}
+                  />
+                </div>
 
                 {/* Delete assessment */}
                 <div className="w-48 hidden">
@@ -1289,7 +1328,9 @@ const Page = ({ id }: { id: string }) => {
                 <Spacer size="lg" />
 
                 {/* Bulk assign students */}
-                <div className="text-sm">Bulk assign students (carryover / borrowed course)</div>
+                <div className="text-sm">
+                  Bulk assign students (carryover / borrowed course)
+                </div>
                 <Spacer size="sm" />
                 <div className="w-42">
                   <Button
@@ -1485,7 +1526,8 @@ const Page = ({ id }: { id: string }) => {
               <DialogHeader>
                 <DialogTitle>Bulk Assign Students</DialogTitle>
                 <DialogDescription>
-                  Upload an Excel file (.xlsx) with student registration numbers to bulk assign carryover or borrowed-course students.
+                  Upload an Excel file (.xlsx) with student registration numbers
+                  to bulk assign carryover or borrowed-course students.
                 </DialogDescription>
               </DialogHeader>
 
@@ -1497,24 +1539,36 @@ const Page = ({ id }: { id: string }) => {
                     ? "border-accent bg-accent/5"
                     : "border-theme-gray-light hover:border-accent/50"
                 }`}
-                onClick={() => document.getElementById("bulk-assign-file-input")?.click()}
+                onClick={() =>
+                  document.getElementById("bulk-assign-file-input")?.click()
+                }
               >
                 <input
                   id="bulk-assign-file-input"
                   type="file"
                   accept=".xlsx"
                   className="hidden"
-                  onChange={(e) => setBulkAssignFile(e.target.files?.[0] ?? null)}
+                  onChange={(e) =>
+                    setBulkAssignFile(e.target.files?.[0] ?? null)
+                  }
                 />
                 {bulkAssignFile ? (
                   <>
-                    <div className="text-sm font-medium text-accent">{bulkAssignFile.name}</div>
-                    <div className="text-xs text-theme-gray">Click to change file</div>
+                    <div className="text-sm font-medium text-accent">
+                      {bulkAssignFile.name}
+                    </div>
+                    <div className="text-xs text-theme-gray">
+                      Click to change file
+                    </div>
                   </>
                 ) : (
                   <>
-                    <div className="text-sm text-theme-gray">Click to select an .xlsx file</div>
-                    <div className="text-xs text-theme-gray">Only .xlsx files are accepted</div>
+                    <div className="text-sm text-theme-gray">
+                      Click to select an .xlsx file
+                    </div>
+                    <div className="text-xs text-theme-gray">
+                      Only .xlsx files are accepted
+                    </div>
                   </>
                 )}
               </div>
@@ -1535,7 +1589,9 @@ const Page = ({ id }: { id: string }) => {
                   disabled={loading === "downloadAssignTemplate"}
                   onClick={downloadAssignTemplate}
                 >
-                  {loading === "downloadAssignTemplate" ? "Downloading..." : "Download template"}
+                  {loading === "downloadAssignTemplate"
+                    ? "Downloading..."
+                    : "Download template"}
                 </button>
               </div>
             </DialogContent>
@@ -1547,7 +1603,11 @@ const Page = ({ id }: { id: string }) => {
         </>
       )}
 
-      <Preload loading={loading} pageData={pageData ? true : false} errorMessage={errorMessage} />
+      <Preload
+        loading={loading}
+        pageData={pageData ? true : false}
+        errorMessage={errorMessage}
+      />
     </div>
   );
 };

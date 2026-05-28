@@ -5,6 +5,7 @@ import {
   Check,
   CircleQuestionMark,
   Cog,
+  Clock,
   GaugeCircle,
   GraduationCap,
   Library,
@@ -72,18 +73,13 @@ export const sideBarPages: SideBarPageType[] = [
     name: "Assessments",
     route: "/assessment",
     icon: <Library size={18} />,
-    // children: [
-    //   {
-    //     name: "Ongoing",
-    //     route: "/exams",
-    //     icon: <Monitor size={16} />,
-    //   },
-    //   {
-    //     name: "Completed Exams",
-    //     route: "/exams/complete",
-    //     icon: <Check size={16} />,
-    //   },
-    // ],
+    children: [
+      {
+        name: "Archived",
+        route: "/assessment/archives",
+        icon: <Clock size={16} />,
+      },
+    ],
   },
   // {
   //   name: "Results",

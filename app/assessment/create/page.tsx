@@ -489,7 +489,11 @@ const Main = () => {
       {/* Dialog modals */}
       {/* Dialog - Create Assessment */}
       <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-        <DialogContent>
+        <DialogContent
+          showCloseButton={false}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Assessment Details</DialogTitle>
             <DialogDescription>
