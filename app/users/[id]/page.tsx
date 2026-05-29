@@ -3,6 +3,7 @@
 import Spacer from "@/components/spacer";
 
 import { attachHeaders, localAxios } from "@/lib/axios";
+import { prettyDate } from "@/lib/dateFormater";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -209,97 +210,151 @@ const Page = ({ id }: { id: string }) => {
     <div className="w-full h-full p-10 font-sans">
       {pageData && (
         <>
-          <div className="w-full flex gap-10 min-h-full">
-            {/* Pofile Picture */}
-            <div className="border rounded-full h-[220px] w-[220px] flex items-center justify-center">
-              <User2
-                size={140}
-                strokeWidth={0.2}
-                className="text-theme-gray-mid"
-              />
+          {/* Top: Profile Card + Info Grid */}
+          <div className="flex gap-6 items-start">
+            {/* Left: Avatar card */}
+            <div className="shrink-0 w-52 flex flex-col items-center gap-4 border rounded-xl p-5">
+              <div className="w-36 h-36 rounded-xl overflow-hidden border bg-theme-gray-light flex items-center justify-center">
+                {profile?.passportPhoto ? (
+                  <img
+                    src={profile.passportPhoto}
+                    alt="Passport"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User2
+                    size={72}
+                    strokeWidth={0.3}
+                    className="text-theme-gray-mid"
+                  />
+                )}
+              </div>
+
+              <div className="text-center">
+                <div className="font-semibold text-sm leading-snug">
+                  {profile?.fullName}
+                </div>
+                <div className="text-xs text-theme-gray mt-0.5">
+                  {profile?.regNumber}
+                </div>
+                <div className="mt-2 inline-block text-xs font-medium bg-accent/10 text-accent px-2 py-0.5 rounded-sm">
+                  {profile?.level}L
+                </div>
+              </div>
+
+              <button
+                className="w-full flex items-center justify-center gap-1.5 text-xs text-theme-gray hover:text-accent border border-border rounded-md h-8 cursor-pointer transition-colors"
+                onClick={() => setShowEditDialog(true)}
+              >
+                <Pencil size={13} />
+                Edit Profile
+              </button>
             </div>
 
-            {/* User Profile & Courses*/}
-            <div className="grow">
-              <div>
-                {/* Full Name */}
-                <div className="font-semibold">Full Name</div>
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl font-bold">{profile?.fullName}</div>
-                  <button
-                    className="flex items-center justify-center  gap-1 text-sm text-theme-gray hover:text-accent cursor-pointer ml-10"
-                    onClick={() => setShowEditDialog(true)}
-                  >
-                    <Pencil size={16} />
-                    Edit User
-                  </button>
-                </div>
-                <Spacer size="sm" />
-
-                {/* Reg Number */}
-                <div className="">Reg Number: {profile?.regNumber}</div>
-                <div className="">Level: {profile?.level}</div>
-                <div className="">NIN: {profile?.nin}</div>
+            {/* Right: Info grid */}
+            <div className="grow border rounded-xl p-5">
+              <div className="text-sm font-semibold mb-4">
+                Student Information
               </div>
-              <Spacer size="xl" />
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { label: "Email", value: profile?.email || "—" },
+                  { label: "Phone Number", value: profile?.phoneNumber || "—" },
+                  { label: "NIN", value: profile?.nin || "—" },
+                  { label: "Access Code", value: profile?.accessCode || "—" },
+                  { label: "Role", value: profile?.role || "—" },
+                  {
+                    label: "Last Sync",
+                    value: profile?.lastSync
+                      ? prettyDate(profile.lastSync.split("T")[0])
+                      : "—",
+                  },
+                  {
+                    label: "Device Bound",
+                    value: profile?.deviceId ? "Yes" : "No",
+                  },
+                  { label: "IP Address", value: profile?.ipAddress || "—" },
+                  {
+                    label: "Enrolled",
+                    value: profile?.createdAt
+                      ? prettyDate(profile.createdAt.split("T")[0])
+                      : "—",
+                  },
+                ].map((field) => (
+                  <div key={field.label} className="flex flex-col gap-1">
+                    <div className="text-xs text-theme-gray">{field.label}</div>
+                    <div className="text-sm font-medium truncate">
+                      {field.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-              {/* Assigned Exams */}
-              <div className="w-6/10">
-                <div className="font-semibold">Assigned Exams</div>
-                <Spacer size="sm" />
-                {pageData.map((ex, key: number) => {
-                  return (
-                    <div
-                      key={key}
-                      className="w-full border rounded-md overflow-hidden mb-2 p-2"
-                    >
-                      {/* Title */}
-                      <div className="w-full rounded justify-between">
-                        {ex.course.code} : {ex.course.title}
+          <Spacer size="lg" />
+
+          {/* Assigned Exams */}
+          <div className="border rounded-xl p-5">
+            <div className="text-sm font-semibold mb-4">Assigned Exams</div>
+            {pageData.length === 0 ? (
+              <div className="text-sm text-theme-gray">No exams assigned.</div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {pageData.map((ex, key: number) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between border rounded-lg px-4 py-3 hover:bg-theme-gray-light/20"
+                  >
+                    <div>
+                      <div className="text-sm font-medium">
+                        {ex.course.code}
+                        <span className="text-theme-gray font-normal ml-2">
+                          {ex.course.title}
+                        </span>
                       </div>
-
-                      {/* Due Date */}
-                      <div className="text-sm mb-2 text-theme-gray">
+                      <div className="text-xs text-theme-gray mt-0.5">
                         Due: {ex.dueDate.split("T")[0]}
                       </div>
-
-                      {/* Buttons */}
-                      <div className="flex gap-x-4">
-                        {ex.status === "submitted" && (
-                          <button
-                            className="flex items-center justify-center cursor-pointer hover:text-red-600 text-sm gap-1"
-                            onClick={() =>
-                              setShowConfirmDialog(`sub-${ex._id}`)
-                            }
-                          >
-                            {loading !== ex._id &&
-                            ex._id.split("-")[0] !== "sub" ? (
-                              <Trash2 size={14} />
-                            ) : (
-                              <Spinner className="h-4" />
-                            )}
-                            Delete Submission
-                          </button>
-                        )}
-
-                        <button
-                          className="flex items-center justify-center cursor-pointer hover:text-red-600 text-sm gap-1"
-                          onClick={() => setShowConfirmDialog(`ass-${ex._id}`)}
-                        >
-                          {loading !== ex._id ? (
-                            <Trash2 size={14} />
-                          ) : (
-                            <Spinner className="h-4" />
-                          )}
-                          Delete Assessment
-                        </button>
-                      </div>
                     </div>
-                  );
-                })}
+
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-sm font-medium ${
+                          ex.status === "submitted"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-theme-gray-light text-theme-gray"
+                        }`}
+                      >
+                        {ex.status}
+                      </span>
+
+                      {ex.status === "submitted" && (
+                        <button
+                          className="flex items-center gap-1 text-xs text-theme-gray hover:text-red-500 cursor-pointer"
+                          onClick={() =>
+                            setShowConfirmDialog(`sub-${ex._id}`)
+                          }
+                        >
+                          <Trash2 size={13} />
+                          Remove Submission
+                        </button>
+                      )}
+
+                      <button
+                        className="flex items-center gap-1 text-xs text-theme-gray hover:text-red-500 cursor-pointer"
+                        onClick={() =>
+                          setShowConfirmDialog(`ass-${ex._id}`)
+                        }
+                      >
+                        <Trash2 size={13} />
+                        Unassign
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <Spacer size="md" />
-            </div>
+            )}
           </div>
 
           <Spacer size="xl" />
