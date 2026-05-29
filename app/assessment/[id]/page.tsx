@@ -43,6 +43,8 @@ const Page = ({ id }: { id: string }) => {
   const [showInvigilatorDialog, setShowInvigilatorDialog] = useState(false);
   const [showBulkAssignDialog, setShowBulkAssignDialog] = useState(false);
   const [bulkAssignFile, setBulkAssignFile] = useState<File | null>(null);
+  const [showBulkUnassignDialog, setShowBulkUnassignDialog] = useState(false);
+  const [bulkUnassignFile, setBulkUnassignFile] = useState<File | null>(null);
   const [admins, setAdmins] = useState<
     { _id: string; fullName: string }[] | null
   >(null);
@@ -442,20 +444,20 @@ const Page = ({ id }: { id: string }) => {
     }
   };
 
-  // Toggle shuffle questions
-  const toggleShuffle = async (val: boolean) => {
+  // Update shuffle questions sections
+  const updateShuffle = async (sections: string[]) => {
     setLoading("toggleShuffle");
     try {
       attachHeaders(session!.user.token);
       const res = await localAxios.patch(
         `/assessment/update-assessment/${id}`,
-        { shuffleQuestions: val },
+        { shuffleQuestions: sections },
         { signal: globalController.signal },
       );
 
       if (res.status === 200 || res.status === 201) {
         setPageData((prev) =>
-          prev ? { ...prev, shuffleQuestions: val } : prev,
+          prev ? { ...prev, shuffleQuestions: sections } : prev,
         );
       }
 
@@ -716,6 +718,75 @@ const Page = ({ id }: { id: string }) => {
         toast.success(res.data.message, toastConfig);
         setShowBulkAssignDialog(false);
         setBulkAssignFile(null);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
+  // Download bulk unassign template
+  const downloadUnassignTemplate = async () => {
+    setLoading("downloadUnassignTemplate");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.get("/import/template/unassign-students", {
+        responseType: "blob",
+        signal: globalController.signal,
+      });
+
+      if (res.status === 200) {
+        const blob = res.data;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "unassign-students-template.xlsx";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message || error?.message,
+          toastConfig,
+        );
+        setLoading(null);
+      }
+    }
+  };
+
+  // Bulk unassign students via xlsx
+  const bulkUnassignStudents = async () => {
+    if (!bulkUnassignFile) {
+      toast.error("Please select a file", toastConfig);
+      return;
+    }
+
+    setLoading("bulkUnassignStudents");
+    try {
+      attachHeaders(session!.user.token);
+      const formData = new FormData();
+      formData.append("file", bulkUnassignFile);
+
+      const res = await localAxios.post(
+        `/import/unassign-students/${id}`,
+        formData,
+        { signal: globalController.signal },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success(res.data.message, toastConfig);
+        setShowBulkUnassignDialog(false);
+        setBulkUnassignFile(null);
       }
 
       setLoading(null);
@@ -1144,15 +1215,35 @@ const Page = ({ id }: { id: string }) => {
                 {/* Shuffle Questions */}
                 <div className="text-sm text-theme-gray">Shuffle Questions</div>
                 <Spacer size="sm" />
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={pageData.shuffleQuestions ?? false}
-                    onCheckedChange={toggleShuffle}
-                    disabled={loading === "toggleShuffle"}
-                  />
-                  <Label className="text-sm text-accent-dim">
-                    {pageData.shuffleQuestions ? "Enabled" : "Disabled"}
-                  </Label>
+                <div className="flex items-center gap-2">
+                  {(["objective", "subjective", "theory"] as const).map(
+                    (section) => {
+                      const active = (pageData.shuffleQuestions ?? []).includes(
+                        section,
+                      );
+                      return (
+                        <button
+                          key={section}
+                          type="button"
+                          disabled={loading === "toggleShuffle"}
+                          onClick={() => {
+                            const current = pageData.shuffleQuestions ?? [];
+                            const next = active
+                              ? current.filter((s) => s !== section)
+                              : [...current, section];
+                            updateShuffle(next);
+                          }}
+                          className={`cursor-pointer capitalize text-xs px-3 py-1.5 rounded-sm border transition-colors disabled:opacity-50 disabled:pointer-events-none ${
+                            active
+                              ? "bg-accent text-white border-accent"
+                              : "text-theme-gray border-border hover:border-accent/50"
+                          }`}
+                        >
+                          {section}
+                        </button>
+                      );
+                    },
+                  )}
                 </div>
                 <Spacer size="md" />
 
@@ -1327,19 +1418,30 @@ const Page = ({ id }: { id: string }) => {
                 </form>
                 <Spacer size="lg" />
 
-                {/* Bulk assign students */}
+                {/* Bulk assign / unassign students */}
                 <div className="text-sm">
                   Bulk assign students (carryover / borrowed course)
                 </div>
                 <Spacer size="sm" />
-                <div className="w-42">
-                  <Button
-                    type="button"
-                    title="Bulk Assign"
-                    loading={false}
-                    variant="outline"
-                    onClick={() => setShowBulkAssignDialog(true)}
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="w-42">
+                    <Button
+                      type="button"
+                      title="Bulk Assign"
+                      loading={false}
+                      variant="outline"
+                      onClick={() => setShowBulkAssignDialog(true)}
+                    />
+                  </div>
+                  <div className="w-42">
+                    <Button
+                      type="button"
+                      title="Bulk Unassign"
+                      loading={false}
+                      variant="outline"
+                      onClick={() => setShowBulkUnassignDialog(true)}
+                    />
+                  </div>
                 </div>
                 <Spacer size="lg" />
 
@@ -1590,6 +1692,91 @@ const Page = ({ id }: { id: string }) => {
                   onClick={downloadAssignTemplate}
                 >
                   {loading === "downloadAssignTemplate"
+                    ? "Downloading..."
+                    : "Download template"}
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog - Bulk Unassign Students */}
+          <Dialog
+            open={showBulkUnassignDialog}
+            onOpenChange={(open) => {
+              setShowBulkUnassignDialog(open);
+              if (!open) setBulkUnassignFile(null);
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Bulk Unassign Students</DialogTitle>
+                <DialogDescription>
+                  Upload an Excel file (.xlsx) with student registration numbers
+                  to bulk unassign students from this assessment.
+                </DialogDescription>
+              </DialogHeader>
+
+              <Spacer size="sm" />
+
+              <div
+                className={`w-full border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${
+                  bulkUnassignFile
+                    ? "border-accent bg-accent/5"
+                    : "border-theme-gray-light hover:border-accent/50"
+                }`}
+                onClick={() =>
+                  document
+                    .getElementById("bulk-unassign-file-input")
+                    ?.click()
+                }
+              >
+                <input
+                  id="bulk-unassign-file-input"
+                  type="file"
+                  accept=".xlsx"
+                  className="hidden"
+                  onChange={(e) =>
+                    setBulkUnassignFile(e.target.files?.[0] ?? null)
+                  }
+                />
+                {bulkUnassignFile ? (
+                  <>
+                    <div className="text-sm font-medium text-accent">
+                      {bulkUnassignFile.name}
+                    </div>
+                    <div className="text-xs text-theme-gray">
+                      Click to change file
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-sm text-theme-gray">
+                      Click to select an .xlsx file
+                    </div>
+                    <div className="text-xs text-theme-gray">
+                      Only .xlsx files are accepted
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <Spacer size="sm" />
+
+              <Button
+                title="Upload & Unassign"
+                loading={loading === "bulkUnassignStudents"}
+                variant="fill"
+                onClick={bulkUnassignStudents}
+              />
+
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  className="text-xs text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                  disabled={loading === "downloadUnassignTemplate"}
+                  onClick={downloadUnassignTemplate}
+                >
+                  {loading === "downloadUnassignTemplate"
                     ? "Downloading..."
                     : "Download template"}
                 </button>

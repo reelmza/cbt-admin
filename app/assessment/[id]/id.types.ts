@@ -11,7 +11,7 @@ export type PageDataType = {
   endReason: string | boolean;
   dueDate: string;
   startDate: string;
-  shuffleQuestions: boolean;
+  shuffleQuestions: string[];
   allowBrowserRestriction: boolean;
   passmark: number;
   invigilators: string[];

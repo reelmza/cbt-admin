@@ -211,13 +211,20 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
       socket.on(
         "candidate-alert",
-        (data: {
+        ({
+          type,
+          socketId,
+          studentId,
+          count,
+          timestamp,
+        }: {
           type: string;
+          socketId: string;
+          count: number;
           studentId: string;
-          violationCount: number;
           timestamp: string;
         }) => {
-          console.log(data);
+          console.log(count, type, "alert for", studentId, "at", timestamp);
           // setStudents((prev) =>
           //   prev.map((s) =>
           //     s.id === studentId ? { ...s, violationCount } : s,

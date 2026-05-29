@@ -57,13 +57,13 @@ const Page = () => {
     };
 
     var formdata = new FormData();
-    formdata.append("file", target.bulkUpload.files[0], "students.csv");
-    formdata.append("group", target.group.value);
-    formdata.append("subGroup", target.subGroup.value);
+    formdata.append("file", target.bulkUpload.files[0]);
+    // formdata.append("group", target.group.value);
+    // formdata.append("subGroup", target.subGroup.value);
 
     setLoading("bulkUpload");
     try {
-      const res = await localAxios.post("/student/bulk-upload", formdata);
+      const res = await localAxios.post("/import/students", formdata);
 
       console.log(res);
 
