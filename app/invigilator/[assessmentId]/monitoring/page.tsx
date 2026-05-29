@@ -137,6 +137,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     if (socketRef.current) return;
     if (!session?.user?.id) return;
 
+    // Sentinel: block any concurrent run that passes the null check above
+    // before the real socket is assigned (async gap between fetch and io()).
+    socketRef.current = true as any;
     let cancelled = false;
 
     const initSocket = async () => {
@@ -145,11 +148,17 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
       const socketUrl = new URL(baseUrl).origin;
 
       // Cleanup ran before the async fetch resolved — abort
-      if (cancelled) return;
+      if (cancelled) {
+        socketRef.current = null;
+        return;
+      }
 
       const socket = io(socketUrl, {
         path: "/socket.io",
         transports: ["websocket"],
+        query: {
+          token: `Bearer ${session.user.token}`,
+        },
       });
 
       socketRef.current = socket;
@@ -157,7 +166,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
       socket.on("connect", () => {
         setConnected(true);
         socket.emit("monitor-assessment", assessmentId);
-        socket.emit("join-user-room", session.user.id); // User._id
+        // socket.emit("join-user-room", session.user.id); // User._id
       });
 
       socket.on("disconnect", () => {
@@ -167,8 +176,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
       socket.on(
         "candidate-joined",
         ({ studentId, name }: { studentId: string; name: string }) => {
-          console.log(name, "joined");
-
+          console.log(name, "joined", studentId);
           setStudents((prev) =>
             prev.map((s) =>
               s.id === studentId
@@ -179,9 +187,6 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                   }
                 : s,
             ),
-          );
-          setStats((prev) =>
-            prev ? { ...prev, inProgress: prev.inProgress + 1 } : prev,
           );
         },
       );
@@ -206,20 +211,18 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
       socket.on(
         "candidate-alert",
-        ({
-          studentId,
-          violationCount,
-        }: {
+        (data: {
           type: string;
           studentId: string;
           violationCount: number;
           timestamp: string;
         }) => {
-          setStudents((prev) =>
-            prev.map((s) =>
-              s.id === studentId ? { ...s, violationCount } : s,
-            ),
-          );
+          console.log(data);
+          // setStudents((prev) =>
+          //   prev.map((s) =>
+          //     s.id === studentId ? { ...s, violationCount } : s,
+          //   ),
+          // );
         },
       );
 
@@ -232,13 +235,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
             ),
           );
           setStats((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  locked: prev.locked + 1,
-                  inProgress: Math.max(0, prev.inProgress - 1),
-                }
-              : prev,
+            prev ? { ...prev, locked: prev.locked + 1 } : prev,
           );
         },
       );
@@ -252,13 +249,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
             ),
           );
           setStats((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  locked: Math.max(0, prev.locked - 1),
-                  inProgress: prev.inProgress + 1,
-                }
-              : prev,
+            prev ? { ...prev, locked: Math.max(0, prev.locked - 1) } : prev,
           );
         },
       );
@@ -266,10 +257,12 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
       socket.on(
         "candidate-progress",
         ({
+          socketId,
           studentId,
           answered,
           total,
         }: {
+          socketId: string;
           studentId: string;
           answered: number;
           total: number;
@@ -278,6 +271,17 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
             ...prev,
             [studentId]: { answered, total },
           }));
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === studentId
+                ? {
+                    ...s,
+                    status: "in-progress",
+                    connectionStatus: "online" as const,
+                  }
+                : s,
+            ),
+          );
         },
       );
 
@@ -299,13 +303,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
             ),
           );
           setStats((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  submitted: prev.submitted + 1,
-                  inProgress: Math.max(0, prev.inProgress - 1),
-                }
-              : prev,
+            prev ? { ...prev, submitted: prev.submitted + 1 } : prev,
           );
         },
       );
@@ -380,13 +378,17 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                 accent="text-theme-succes"
               />
               <StatCard
-                label="In Progress"
-                value={stats.inProgress}
+                label="Online"
+                value={
+                  students.filter((s) => s.connectionStatus === "online").length
+                }
                 accent="text-theme-info"
               />
               <StatCard
-                label="Still Writing"
-                value={stats.stillWriting}
+                label="Have Started"
+                value={
+                  students.filter((s) => s.status === "in-progress").length
+                }
                 accent="text-theme-info"
               />
               <StatCard
@@ -404,7 +406,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
             tableHeading={[
               { value: "Full Name", colSpan: "col-span-3" },
               { value: "Reg Number", colSpan: "col-span-3" },
-              { value: "Status", colSpan: "col-span-2" },
+              { value: "Started?", colSpan: "col-span-2" },
               { value: "Con.", colSpan: "col-span-1" },
               { value: "Progress", colSpan: "col-span-2" },
               { value: "Violations", colSpan: "col-span-1" },
@@ -415,7 +417,8 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                 { value: student.fullName, colSpan: "col-span-3" },
                 { value: student.regNumber, colSpan: "col-span-3" },
                 {
-                  value: student.status,
+                  value:
+                    student.status === "in-progress" ? "yes" : student.status,
                   colSpan: "col-span-2",
                   type: "badge" as const,
                   color: studentStatusBadgeColor(student.status),

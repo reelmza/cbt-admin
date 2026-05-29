@@ -69,6 +69,7 @@
 
   /* Fonts */
   --font-sans: var(--font-inter);
+  --font-serif: var(--font-roboto-serif);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);

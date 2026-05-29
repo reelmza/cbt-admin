@@ -869,7 +869,7 @@ const Page = ({ id }: { id: string }) => {
           <div className="w-full min-h-full">
             {/* Title */}
             <div>
-              <div className="text-2xl font-semibold">
+              <div className="text-2xl font-semibold font-serif">
                 {pageData.course.code}
               </div>
               <div className="text-theme-gray">{pageData.course.title}</div>
