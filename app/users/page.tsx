@@ -11,7 +11,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,8 +27,7 @@ import { toastConfig } from "@/utils/toastConfig";
 
 import { CloudUpload, Download, User2 } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PageMetaData, User } from "./users.types";
 import Preload from "@/components/preload";
@@ -45,6 +43,16 @@ const Page = () => {
 
   const [groups, setGroups] = useState<GroupType[] | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
+
+  const [filterKeyword, setFilterKeyword] = useState("");
+  const [filterLevel, setFilterLevel] = useState("");
+  const [filterGroupId, setFilterGroupId] = useState("");
+  const [filterSubGroupId, setFilterSubGroupId] = useState("");
+  const [filterGroup, setFilterGroup] = useState<GroupType | null>(null);
+
+  const fetchControllerRef = useRef<AbortController | null>(null);
+  const isMounted = useRef(false);
+
   const { data: session } = useSession();
 
   const bulkUpload = async (e: React.SyntheticEvent) => {
@@ -135,59 +143,45 @@ const Page = () => {
     }
   };
 
-  const searchStudent = async (e: ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-
-    const val = e.target.value.toUpperCase();
-
-    if (val === "") {
-      setFilteredPageData(pageData);
-      return;
-    }
-
-    const newData = pageData?.filter((dt) => dt.fullName.includes(val));
-
-    setFilteredPageData((prev) => {
-      if (newData) {
-        return newData;
-      }
-
-      return prev;
-    });
-  };
-
-  const getPage = async (val: string) => {
+  const fetchStudents = async ({
+    keyword,
+    level,
+    group,
+    subGroup,
+    page,
+    loadingKey = "fetchStudents",
+  }: {
+    keyword: string;
+    level: string;
+    group: string;
+    subGroup: string;
+    page: number;
+    loadingKey?: string;
+  }) => {
+    fetchControllerRef.current?.abort();
     const controller = new AbortController();
+    fetchControllerRef.current = controller;
+
+    setLoading(loadingKey);
+
+    const query = new URLSearchParams({ pageNumber: String(page) });
+    if (keyword) query.set("searchByKeyword", keyword);
+    if (level) query.set("level", level);
+    if (group) query.set("group", group);
+    if (subGroup) query.set("subGroup", subGroup);
+
     try {
       attachHeaders(session!.user.token);
-      let targetPage;
-
-      if (val === "next") {
-        if (!pageMetaData?.page) return;
-        setLoading("nextPage");
-        targetPage = pageMetaData?.page + 1;
-      } else {
-        if (!pageMetaData?.page) return;
-        targetPage = pageMetaData?.page - 1;
-        setLoading("prevPage");
-      }
-
-      // Get Students
-      const res = await localAxios.get(
-        `/student/all?pageNumber=${targetPage}`,
-        {
-          signal: controller.signal,
-        },
-      );
+      const res = await localAxios.get(`/student/all?${query.toString()}`, {
+        signal: controller.signal,
+      });
 
       if (res.status === 200) {
-        console.log(res);
-
         setPageData(res.data.data.data);
         setFilteredPageData(res.data.data.data);
-        setPageMetaData((prev) => {
-          const { data, ...dataToKeep } = res.data.data;
-          return dataToKeep;
+        setPageMetaData(() => {
+          const { data, ...rest } = res.data.data;
+          return rest;
         });
       }
 
@@ -195,10 +189,51 @@ const Page = () => {
     } catch (error: any) {
       if (error.name !== "CanceledError") {
         setLoading("pageError");
-        console.log(error);
       }
     }
   };
+
+  const getPage = (dir: string) => {
+    if (!pageMetaData?.page) return;
+    const targetPage =
+      dir === "next" ? pageMetaData.page + 1 : pageMetaData.page - 1;
+    fetchStudents({
+      keyword: filterKeyword,
+      level: filterLevel,
+      group: filterGroupId,
+      subGroup: filterSubGroupId,
+      page: targetPage,
+      loadingKey: dir === "next" ? "nextPage" : "prevPage",
+    });
+  };
+
+  const clearFilters = () => {
+    setFilterKeyword("");
+    setFilterLevel("");
+    setFilterGroupId("");
+    setFilterSubGroupId("");
+    setFilterGroup(null);
+    fetchStudents({ keyword: "", level: "", group: "", subGroup: "", page: 1 });
+  };
+
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    if (!session) return;
+    const timeout = setTimeout(() => {
+      fetchStudents({
+        keyword: filterKeyword,
+        level: filterLevel,
+        group: filterGroupId,
+        subGroup: filterSubGroupId,
+        page: 1,
+        loadingKey: "search",
+      });
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [filterKeyword]);
 
   useEffect(() => {
     if (!session) return;
@@ -262,8 +297,8 @@ const Page = () => {
           <div className="flex items-center justify-between">
             {/* Search bar */}
             <TableSearchBox
-              placeholder="Search an student"
-              onChange={searchStudent}
+              placeholder="Search by name, reg number, email or phone"
+              onChange={(e) => setFilterKeyword(e.target.value)}
             />
 
             {/* Buttons */}
@@ -292,6 +327,111 @@ const Page = () => {
             </div>
           </div>
           <Spacer size="md" />
+
+          {/* Filters */}
+          <div className="flex items-center gap-3">
+            {/* Level */}
+            <Select
+              value={filterLevel || "all"}
+              onValueChange={(val) => {
+                const newLevel = val === "all" ? "" : val;
+                setFilterLevel(newLevel);
+                fetchStudents({
+                  keyword: filterKeyword,
+                  level: newLevel,
+                  group: filterGroupId,
+                  subGroup: filterSubGroupId,
+                  page: 1,
+                });
+              }}
+            >
+              <SelectTrigger className="w-36 h-9 text-sm">
+                <SelectValue placeholder="All Levels" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="100">100L</SelectItem>
+                <SelectItem value="200">200L</SelectItem>
+                <SelectItem value="300">300L</SelectItem>
+                <SelectItem value="400">400L</SelectItem>
+                <SelectItem value="500">500L</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Faculty */}
+            <Select
+              value={filterGroupId || "all"}
+              onValueChange={(val) => {
+                const newGroup = val === "all" ? "" : val;
+                setFilterGroupId(newGroup);
+                setFilterSubGroupId("");
+                setFilterGroup(groups?.find((g) => g._id === newGroup) ?? null);
+                fetchStudents({
+                  keyword: filterKeyword,
+                  level: filterLevel,
+                  group: newGroup,
+                  subGroup: "",
+                  page: 1,
+                });
+              }}
+            >
+              <SelectTrigger className="w-44 h-9 text-sm">
+                <SelectValue placeholder="All Faculties" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Faculties</SelectItem>
+                {groups?.map((grp) => (
+                  <SelectItem key={grp._id} value={grp._id}>
+                    {grp.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Department */}
+            <Select
+              value={filterSubGroupId || "all"}
+              onValueChange={(val) => {
+                const newSubGroup = val === "all" ? "" : val;
+                setFilterSubGroupId(newSubGroup);
+                fetchStudents({
+                  keyword: filterKeyword,
+                  level: filterLevel,
+                  group: filterGroupId,
+                  subGroup: newSubGroup,
+                  page: 1,
+                });
+              }}
+              disabled={!filterGroup}
+            >
+              <SelectTrigger className="w-44 h-9 text-sm">
+                <SelectValue placeholder="All Departments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {filterGroup?.subGroups.map((sg) => (
+                  <SelectItem key={sg._id} value={sg._id}>
+                    {sg.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Clear */}
+            {(filterKeyword ||
+              filterLevel ||
+              filterGroupId ||
+              filterSubGroupId) && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-sm text-theme-gray hover:text-accent cursor-pointer underline underline-offset-2"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+          <Spacer size="sm" />
 
           {/* Navigation */}
           <div className="flex items-center justify-between w-4/10">
