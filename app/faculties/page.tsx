@@ -3,8 +3,6 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
-import Table from "@/components/table";
-import TableSearchBox from "@/components/table-searchbox";
 import {
   Dialog,
   DialogContent,
@@ -12,11 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +22,8 @@ const Page = () => {
   const { data: session } = useSession();
 
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [showEditGroup, setShowEditGroup] = useState(false);
+  const [editGroup, setEditGroup] = useState<GroupType | null>(null);
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<GroupType[] | null>(null);
 
@@ -55,6 +54,45 @@ const Page = () => {
         });
         toast.success("Faculty has been added successfully.", toastConfig);
       }
+    } catch (error) {
+      console.log(error);
+      setLoading(null);
+    }
+  };
+
+  const editGroupFn = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    if (!editGroup) return;
+
+    const target = e.target as typeof e.target & {
+      groupCode: { value: string };
+      groupName: { value: string };
+      groupDescription: { value: string };
+    };
+
+    setLoading("editGroup");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(`/school/group/${editGroup._id}`, {
+        code: target.groupCode.value,
+        name: target.groupName.value,
+        description: target.groupDescription.value,
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        setPageData((prev) =>
+          prev
+            ? prev.map((g) =>
+                g._id === editGroup._id ? { ...g, ...res.data.data } : g,
+              )
+            : prev,
+        );
+        setShowEditGroup(false);
+        setEditGroup(null);
+        toast.success("Faculty updated successfully.", toastConfig);
+      }
+
+      setLoading(null);
     } catch (error) {
       console.log(error);
       setLoading(null);
@@ -97,9 +135,7 @@ const Page = () => {
       {pageData && (
         <>
           <div className="flex items-center justify-between">
-            {/* <TableSearchBox placeholder="Search for a group" /> */}
             <div className="w-10"></div>
-
             <div className="block w-52">
               <Button
                 title={"Create Faculty"}
@@ -111,39 +147,66 @@ const Page = () => {
             </div>
           </div>
 
-          <Table
-            tableHeading={[
-              { value: "Faculty Code", colSpan: "col-span-2" },
-              { value: "Faculty Name", colSpan: "col-span-3" },
-              { value: "Description", colSpan: "col-span-4" },
-              { value: "Depts.", colSpan: "col-span-1" },
-              { value: "Created", colSpan: "col-span-2" },
-            ]}
-            tableData={
-              pageData
-                ? pageData.map((item, key: number) => [
-                    {
-                      value: `${item.code}`,
-                      colSpan: "col-span-2",
-                    },
+          <Spacer size="lg" />
 
-                    { value: item.name, colSpan: "col-span-3" },
+          {/* Table Header */}
+          <div className="h-10 grid grid-cols-12 bg-accent-light font-medium text-accent rounded-xs">
+            {[
+              { label: "Faculty Code", span: "col-span-2" },
+              { label: "Faculty Name", span: "col-span-3" },
+              { label: "Description", span: "col-span-3" },
+              { label: "Depts.", span: "col-span-1" },
+              { label: "Created", span: "col-span-2" },
+              { label: "", span: "col-span-1" },
+            ].map((col, i, arr) => (
+              <div
+                key={i}
+                className={`h-full flex items-center pl-2 text-sm leading-none ${col.span} ${i < arr.length - 1 ? "border-r border-accent-mid" : ""}`}
+              >
+                {col.label}
+              </div>
+            ))}
+          </div>
 
-                    { value: item.description, colSpan: "col-span-4" },
-                    { value: item.subGroups?.length, colSpan: "col-span-1" },
-                    {
-                      value: prettyDate(item.createdAt.split("T")[0]),
-                      colSpan: "col-span-2",
-                    },
-                  ])
-                : []
-            }
-            showSearch={false}
-            showOptions={false}
-          />
+          {/* Table Rows */}
+          {pageData.map((item) => (
+            <div
+              key={item._id}
+              className="h-12 grid grid-cols-12 border-b border-theme-gray-mid hover:bg-theme-gray-light/20 cursor-default"
+            >
+              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-2">
+                {item.code}
+              </div>
+              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-3">
+                {item.name}
+              </div>
+              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-3">
+                {item.description}
+              </div>
+              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-1">
+                {item.subGroups?.length}
+              </div>
+              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-2">
+                {prettyDate(item.createdAt.split("T")[0])}
+              </div>
+              <div className="h-full flex items-center pl-2 col-span-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditGroup(item);
+                    setShowEditGroup(true);
+                  }}
+                  className="text-theme-gray hover:text-accent cursor-pointer"
+                >
+                  <Pencil size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
 
           <Spacer size="xl" />
 
+          {/* Dialog - Create Faculty */}
           <Dialog open={showCreateGroup} onOpenChange={setShowCreateGroup}>
             <DialogContent>
               <DialogHeader>
@@ -154,7 +217,6 @@ const Page = () => {
               </DialogHeader>
 
               <form className="pr-28" onSubmit={addGroup}>
-                {/* Course Code */}
                 <Input
                   name="groupCode"
                   type="text"
@@ -163,7 +225,6 @@ const Page = () => {
                 />
                 <Spacer size="sm" />
 
-                {/* Course name */}
                 <Input
                   name="groupName"
                   type="text"
@@ -172,7 +233,6 @@ const Page = () => {
                 />
                 <Spacer size="sm" />
 
-                {/* Course Description */}
                 <Input
                   name="groupDescription"
                   type="text"
@@ -186,6 +246,65 @@ const Page = () => {
                   loading={loading === "addGroup"}
                   variant={"fill"}
                   icon={<Plus size={20} />}
+                />
+
+                <Spacer size="md" />
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog - Edit Faculty */}
+          <Dialog
+            open={showEditGroup}
+            onOpenChange={(open) => {
+              setShowEditGroup(open);
+              if (!open) setEditGroup(null);
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Faculty</DialogTitle>
+                <DialogDescription className="pr-28">
+                  Update the faculty details below
+                </DialogDescription>
+              </DialogHeader>
+
+              <form
+                key={editGroup?._id}
+                className="pr-28"
+                onSubmit={editGroupFn}
+              >
+                <Input
+                  name="groupCode"
+                  type="text"
+                  placeholder={"Faculty code"}
+                  defaultValue={editGroup?.code ?? ""}
+                  required
+                />
+                <Spacer size="sm" />
+
+                <Input
+                  name="groupName"
+                  type="text"
+                  placeholder={"Faculty name"}
+                  defaultValue={editGroup?.name ?? ""}
+                  required
+                />
+                <Spacer size="sm" />
+
+                <Input
+                  name="groupDescription"
+                  type="text"
+                  placeholder={"Brief description or identifier"}
+                  defaultValue={editGroup?.description ?? ""}
+                  required
+                />
+                <Spacer size="sm" />
+
+                <Button
+                  title={"Save Changes"}
+                  loading={loading === "editGroup"}
+                  variant={"fill"}
                 />
 
                 <Spacer size="md" />

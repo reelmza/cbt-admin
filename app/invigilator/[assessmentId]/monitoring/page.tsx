@@ -314,6 +314,26 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           );
         },
       );
+
+      socket.on(
+        "candidate-submitted",
+        ({
+          studentId,
+        }: {
+          studentId: string;
+          assessmentId: string;
+          timestamp: string;
+        }) => {
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === studentId ? { ...s, status: "submitted" } : s,
+            ),
+          );
+          setStats((prev) =>
+            prev ? { ...prev, submitted: prev.submitted + 1 } : prev,
+          );
+        },
+      );
     };
 
     initSocket();

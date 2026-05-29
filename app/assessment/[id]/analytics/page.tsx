@@ -3,8 +3,10 @@
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
+import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { toastConfig } from "@/utils/toastConfig";
+import { Download } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -81,6 +83,33 @@ const Page = ({ id }: { id: string }) => {
     return () => controller.abort();
   }, [session]);
 
+  const downloadPdf = async () => {
+    setLoading("downloadPdf");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.get(`/analytics/pass-rate/${id}/pdf`, {
+        responseType: "blob",
+      });
+
+      if (res.status === 200) {
+        const url = URL.createObjectURL(res.data);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `analytics-${id}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || error?.message,
+        toastConfig,
+      );
+      setLoading(null);
+    }
+  };
+
   const passRateCards = passRateData
     ? [
         { label: "Total Students", value: passRateData.total },
@@ -98,7 +127,22 @@ const Page = ({ id }: { id: string }) => {
       {passRateData && rankingData && (
         <>
           {/* Pass Rate Section */}
-          <div className="text-xl font-semibold">Pass Rate</div>
+          <div className="flex items-center justify-between">
+            <div className="text-xl font-semibold">Pass Rate</div>
+            <button
+              type="button"
+              onClick={downloadPdf}
+              disabled={loading === "downloadPdf"}
+              className="flex items-center gap-2 text-sm text-theme-gray hover:text-accent border border-border rounded-md px-3 py-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none transition-colors"
+            >
+              {loading === "downloadPdf" ? (
+                <Spinner className="size-4" />
+              ) : (
+                <Download size={14} />
+              )}
+              Download PDF
+            </button>
+          </div>
           <Spacer size="md" />
 
           <div className="grid grid-cols-12 gap-4">
