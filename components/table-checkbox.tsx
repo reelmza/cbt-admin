@@ -10,10 +10,11 @@ type CheckBoxType = {
   value?: number;
   isChecked?: boolean;
   tableData?: {
-    value: string | number;
+    value?: string | number;
     colSpan: string;
     color?: "warning" | "info" | "success" | "error";
     type?: "badge" | "button" | "link";
+    render?: () => React.ReactNode;
   }[][];
 };
 
