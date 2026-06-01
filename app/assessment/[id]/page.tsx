@@ -1216,7 +1216,7 @@ const Page = ({ id }: { id: string }) => {
                 <div className="text-sm text-theme-gray">Shuffle Questions</div>
                 <Spacer size="sm" />
                 <div className="flex items-center gap-2">
-                  {(["objective", "subjective", "theory"] as const).map(
+                  {(["multiple_choice", "subjective", "theory"] as const).map(
                     (section) => {
                       const active = (pageData.shuffleQuestions ?? []).includes(
                         section,
@@ -1725,9 +1725,7 @@ const Page = ({ id }: { id: string }) => {
                     : "border-theme-gray-light hover:border-accent/50"
                 }`}
                 onClick={() =>
-                  document
-                    .getElementById("bulk-unassign-file-input")
-                    ?.click()
+                  document.getElementById("bulk-unassign-file-input")?.click()
                 }
               >
                 <input

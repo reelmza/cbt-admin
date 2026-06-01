@@ -220,16 +220,19 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                         {ans.status !== "auto-marked" && (
                           <div
                             className={`text-xs border px-2 ${
-                              ans.markedBy && ans.score > 0
+                              ans.score > 0 && (ans.markedBy || ans.aiFeedback)
                                 ? "text-theme-success bg-emerald-50 border-emerald-200"
-                                : ans.markedBy && ans.score < 1
+                                : (ans.markedBy || ans.aiFeedback) &&
+                                    ans.score < 1
                                   ? "text-theme-warning bg-red-50 border-red-200"
                                   : "text-theme-gray bg-gray-100 border-gray-200"
                             }`}
                           >
-                            {ans.score > 0 && ans.markedBy
+                            {ans.aiFeedback && "AI Marked: "}
+                            {ans.score > 0 && (ans.markedBy || ans.aiFeedback)
                               ? "Correct"
-                              : ans.score < 1 && ans.markedBy
+                              : ans.score < 1 &&
+                                  (ans.markedBy || ans.aiFeedback)
                                 ? "Wrong"
                                 : "Not Marked"}
                           </div>
@@ -237,19 +240,11 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
 
                         {ans.status == "auto-marked" && (
                           <div
-                            className={`text-xs border px-2 text-theme-success bg-emerald-50 border-emerald-200 ${ans.score > 0 ? "text-theme-success bg-emerald-50 border-emerald-200" : "text-theme-warning bg-red-50 border-red-200"}
+                            className={`flex items-center text-xs border px-2 text-theme-success bg-emerald-50 border-emerald-200 ${ans.score > 0 ? "text-theme-success bg-emerald-50 border-emerald-200" : "text-theme-warning bg-red-50 border-red-200"}
                           `}
                           >
-                            auto-marked
-                          </div>
-                        )}
-
-                        {ans.status == "auto-marked" && (
-                          <div
-                            className={`text-xs border px-2 text-theme-success bg-emerald-50 border-emerald-200 ${ans.score > 0 ? "text-theme-success bg-emerald-50 border-emerald-200" : "text-theme-warning bg-red-50 border-red-200"}
-                          `}
-                          >
-                            {ans.score > 0 ? "Corect" : "Wrong"}
+                            <div className="mr-1">Auto Marked: </div>
+                            <div>{ans.score > 0 ? "Correct" : "Wrong"}</div>
                           </div>
                         )}
                       </div>

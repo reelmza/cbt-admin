@@ -5,3 +5,9 @@ export type Course = {
   description: string;
   createdAt: string;
 };
+
+export type CoursesPageMetaData = {
+  page: number;
+  pages: number;
+  coursesCount: number;
+};

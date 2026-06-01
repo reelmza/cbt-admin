@@ -17,20 +17,74 @@ import { attachHeaders, localAxios } from "@/lib/axios";
 
 import { Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { toastConfig } from "@/utils/toastConfig";
-import { Course } from "./courses.types";
+import { Course, CoursesPageMetaData } from "./courses.types";
 import Preload from "@/components/preload";
 
 const Page = () => {
   const [openAddCourse, setOpenAddCourse] = useState(false);
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<Course[] | null>(null);
-  const [filteredPageData, setFilteredPageData] = useState<Course[] | null>(
-    null
-  );
+  const [pageMetaData, setPageMetaData] = useState<CoursesPageMetaData | null>(null);
+  const [filterKeyword, setFilterKeyword] = useState("");
+
+  const fetchControllerRef = useRef<AbortController | null>(null);
+  const isMounted = useRef(false);
+
   const { data: session } = useSession();
+
+  const fetchCourses = async ({
+    keyword,
+    page,
+    loadingKey = "fetchCourses",
+  }: {
+    keyword: string;
+    page: number;
+    loadingKey?: string;
+  }) => {
+    fetchControllerRef.current?.abort();
+    const controller = new AbortController();
+    fetchControllerRef.current = controller;
+
+    setLoading(loadingKey);
+
+    const query = new URLSearchParams({ pageNumber: String(page) });
+    if (keyword) query.set("searchByKeyword", keyword);
+
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.get(`/admin/courses?${query.toString()}`, {
+        signal: controller.signal,
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        setPageData(res.data.data.courses);
+        setPageMetaData({
+          page: res.data.data.page,
+          pages: res.data.data.pages,
+          coursesCount: res.data.data.coursesCount,
+        });
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        setLoading("pageError");
+      }
+    }
+  };
+
+  const getPage = (dir: string) => {
+    if (!pageMetaData?.page) return;
+    const targetPage = dir === "next" ? pageMetaData.page + 1 : pageMetaData.page - 1;
+    fetchCourses({
+      keyword: filterKeyword,
+      page: targetPage,
+      loadingKey: dir === "next" ? "nextPage" : "prevPage",
+    });
+  };
 
   const addCourse = async (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -52,16 +106,8 @@ const Page = () => {
       if (res.status === 201) {
         setLoading(null);
         setOpenAddCourse(false);
-
-        setPageData((prev) => {
-          if (!prev) {
-            return [res.data.data];
-          }
-
-          return [...prev, res.data.data];
-        });
-
         toast.success("Course has been added successfully.", toastConfig);
+        fetchCourses({ keyword: filterKeyword, page: 1 });
       }
     } catch (error) {
       console.log(error);
@@ -69,27 +115,20 @@ const Page = () => {
     }
   };
 
-  const searchCourse = async (e: ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-
-    const val = e.target.value.toUpperCase();
-
-    if (val === "") {
-      setFilteredPageData(pageData);
+  // Debounced keyword search
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
       return;
     }
+    if (!session) return;
+    const timeout = setTimeout(() => {
+      fetchCourses({ keyword: filterKeyword, page: 1, loadingKey: "search" });
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [filterKeyword]);
 
-    const newData = pageData?.filter((dt) => dt.code.includes(val));
-
-    setFilteredPageData((prev) => {
-      if (newData) {
-        return newData;
-      }
-
-      return prev;
-    });
-  };
-
+  // Initial load
   useEffect(() => {
     if (!session) return;
     const controller = new AbortController();
@@ -97,14 +136,17 @@ const Page = () => {
     const getData = async () => {
       try {
         attachHeaders(session!.user.token);
-        const res = await localAxios.get("/admin/courses", {
+        const res = await localAxios.get("/admin/courses?pageNumber=1", {
           signal: controller.signal,
         });
 
-        if (res.status === 201) {
-          console.log(res.data.data.courses);
+        if (res.status === 200 || res.status === 201) {
           setPageData(res.data.data.courses);
-          setFilteredPageData(res.data.data.courses);
+          setPageMetaData({
+            page: res.data.data.page,
+            pages: res.data.data.pages,
+            coursesCount: res.data.data.coursesCount,
+          });
         }
         setLoading(null);
       } catch (error: any) {
@@ -131,8 +173,8 @@ const Page = () => {
             <div className="flex items-center justify-between">
               {/* Search bar */}
               <TableSearchBox
-                placeholder="Search an course"
-                onChange={searchCourse}
+                placeholder="Search by title, code or description"
+                onChange={(e) => setFilterKeyword(e.target.value)}
               />
 
               {/* Buttons */}
@@ -148,6 +190,29 @@ const Page = () => {
                 </div>
               </div>
             </div>
+            <Spacer size="md" />
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between w-4/10">
+              <button
+                className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
+                onClick={() => getPage("prev")}
+              >
+                <span>Previous</span>
+                {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
+              </button>
+              <div className="text-sm">
+                Page {pageMetaData?.page} of {pageMetaData?.pages}{" "}
+                {`(${pageMetaData?.coursesCount})`}
+              </div>
+              <button
+                className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
+                onClick={() => getPage("next")}
+              >
+                <span>Next</span>
+                {loading === "nextPage" ? <Spinner className="size-4" /> : ""}
+              </button>
+            </div>
 
             {/* Table */}
             <Table
@@ -155,12 +220,11 @@ const Page = () => {
                 { value: "Course Code", colSpan: "col-span-2" },
                 { value: "Course Title", colSpan: "col-span-3" },
                 { value: "Description", colSpan: "col-span-5" },
-
                 { value: "Created", colSpan: "col-span-2" },
               ]}
               tableData={
-                filteredPageData
-                  ? filteredPageData.map((item, key) => [
+                pageData
+                  ? pageData.map((item) => [
                       { value: item.code, colSpan: "col-span-2" },
                       { value: item.title, colSpan: "col-span-3" },
                       { value: item.description, colSpan: "col-span-5" },
