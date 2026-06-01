@@ -11,10 +11,11 @@ import TableSearchBox from "./table-searchbox";
 type TableType = {
   tableHeading: { value: string; colSpan: string }[];
   tableData: {
-    value: string | number;
+    value?: string | number;
     colSpan: string;
     color?: "warning" | "info" | "success" | "error";
     type?: "badge" | "button" | "link";
+    render?: () => React.ReactNode;
   }[][];
   showSearch?: boolean | undefined;
   showOptions?: boolean | undefined;
@@ -118,11 +119,14 @@ const Table = ({
                 ""
               )}
 
+              {/* Custom render */}
+              {rowCol.render ? rowCol.render() : null}
+
               {/* Unset Row Column Type */}
-              {rowCol.type === undefined ? rowCol.value : ""}
+              {!rowCol.render && rowCol.type === undefined ? rowCol.value : ""}
 
               {/* Badge Row Column Type */}
-              {rowCol.type === "badge" ? (
+              {!rowCol.render && rowCol.type === "badge" ? (
                 <span
                   className={`text-xs rounded-sm py-[1px] px-1.5 ${
                     rowCol.color === "warning"
@@ -140,7 +144,7 @@ const Table = ({
                 ""
               )}
 
-              {rowCol.type === "link" ? (
+              {!rowCol.render && rowCol.type === "link" ? (
                 <Link
                   href={`/${rowCol.value}`}
                   className="flex items-center justify-center gap-1 hover:text-theme-info"

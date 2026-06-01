@@ -3,8 +3,15 @@
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
-import { ArrowLeft, Radio } from "lucide-react";
+import { ArrowLeft, Radio, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useEffect, useRef, useState } from "react";
@@ -33,6 +40,12 @@ type MonitoringAssessment = {
   course: { title: string; code: string };
   stats: AssessmentStats;
   assignedStudents: AssignedStudent[];
+};
+
+type Violation = {
+  type: string;
+  timestamp: string;
+  [key: string]: any;
 };
 
 const StatCard = ({
@@ -77,6 +90,33 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
   const [progressMap, setProgressMap] = useState<
     Record<string, { answered: number; total: number }>
   >({});
+
+  // Violations modal state
+  const [violationsOpen, setViolationsOpen] = useState(false);
+  const [violationsStudent, setViolationsStudent] =
+    useState<AssignedStudent | null>(null);
+  const [violations, setViolations] = useState<Violation[]>([]);
+  const [violationsLoading, setViolationsLoading] = useState(false);
+
+  const openViolations = async (student: AssignedStudent) => {
+    setViolationsStudent(student);
+    setViolations([]);
+    setViolationsOpen(true);
+    setViolationsLoading(true);
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.get(
+        `/assessment/violations/${assessmentId}?studentId=${student.id}`,
+      );
+      if (res.status === 200 || res.status === 201) {
+        setViolations(res.data.data ?? res.data.violations ?? []);
+      }
+    } catch {
+      setViolations([]);
+    } finally {
+      setViolationsLoading(false);
+    }
+  };
 
   // Fetch initial assessment data
   useEffect(() => {
@@ -137,8 +177,6 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     if (socketRef.current) return;
     if (!session?.user?.id) return;
 
-    // Sentinel: block any concurrent run that passes the null check above
-    // before the real socket is assigned (async gap between fetch and io()).
     socketRef.current = true as any;
     let cancelled = false;
 
@@ -147,7 +185,6 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
       const { baseUrl } = await res.json();
       const socketUrl = new URL(baseUrl).origin;
 
-      // Cleanup ran before the async fetch resolved — abort
       if (cancelled) {
         socketRef.current = null;
         return;
@@ -166,7 +203,6 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
       socket.on("connect", () => {
         setConnected(true);
         socket.emit("monitor-assessment", assessmentId);
-        // socket.emit("join-user-room", session.user.id); // User._id
       });
 
       socket.on("disconnect", () => {
@@ -225,11 +261,6 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           timestamp: string;
         }) => {
           console.log(count, type, "alert for", studentId, "at", timestamp);
-          // setStudents((prev) =>
-          //   prev.map((s) =>
-          //     s.id === studentId ? { ...s, violationCount } : s,
-          //   ),
-          // );
         },
       );
 
@@ -432,17 +463,17 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           <Table
             tableHeading={[
               { value: "Full Name", colSpan: "col-span-3" },
-              { value: "Reg Number", colSpan: "col-span-3" },
+              { value: "Reg Number", colSpan: "col-span-2" },
               { value: "Started?", colSpan: "col-span-2" },
               { value: "Con.", colSpan: "col-span-1" },
               { value: "Progress", colSpan: "col-span-2" },
-              { value: "Violations", colSpan: "col-span-1" },
+              { value: "Violations", colSpan: "col-span-2" },
             ]}
             tableData={students.map((student) => {
               const progress = progressMap[student.id];
               return [
                 { value: student.fullName, colSpan: "col-span-3" },
-                { value: student.regNumber, colSpan: "col-span-3" },
+                { value: student.regNumber, colSpan: "col-span-2" },
                 {
                   value:
                     student.status === "in-progress" ? "yes" : student.status,
@@ -466,11 +497,19 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                   colSpan: "col-span-2",
                 },
                 {
-                  value: student.violationCount,
-                  colSpan: "col-span-1",
-                  ...(student.violationCount > 0
-                    ? { color: "error" as const }
-                    : {}),
+                  colSpan: "col-span-2",
+                  render: () => (
+                    <button
+                      onClick={() => openViolations(student)}
+                      className={`flex items-center gap-1.5 text-xs cursor-pointer transition-colors ${
+                        student.violationCount > 0
+                          ? "text-theme-error hover:opacity-70"
+                          : "text-theme-gray hover:text-accent"
+                      }`}
+                    >
+                      <span>({student.violationCount}) View Details</span>
+                    </button>
+                  ),
                 },
               ];
             })}
@@ -480,6 +519,55 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
           <Spacer size="xl" />
           <Spacer size="xl" />
+
+          {/* Violations Modal */}
+          <Dialog open={violationsOpen} onOpenChange={setViolationsOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Violation Details</DialogTitle>
+                {violationsStudent && (
+                  <p className="text-sm text-theme-gray pt-1">
+                    {violationsStudent.fullName} &mdash;{" "}
+                    {violationsStudent.regNumber}
+                  </p>
+                )}
+              </DialogHeader>
+
+              {violationsLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Spinner className="size-5" />
+                </div>
+              ) : violations.length === 0 ? (
+                <div className="py-8 text-center text-sm text-theme-gray">
+                  No violations recorded.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 max-h-96 overflow-y-auto pr-1">
+                  {violations.map((v, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start justify-between rounded-md border border-theme-gray-mid px-4 py-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert
+                          size={14}
+                          className="text-theme-error shrink-0 mt-0.5"
+                        />
+                        <span className="text-sm capitalize">
+                          {v.type?.replace(/-/g, " ")}
+                        </span>
+                      </div>
+                      <span className="text-xs text-theme-gray whitespace-nowrap ml-4">
+                        {v.timestamp
+                          ? new Date(v.timestamp).toLocaleTimeString()
+                          : "—"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </>
       )}
 
