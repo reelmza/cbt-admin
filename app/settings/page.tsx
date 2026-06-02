@@ -1,6 +1,7 @@
 "use client";
 
 import AppearanceSetting from "@/components/settings/AppearanceSetting";
+import BackupSetting from "@/components/settings/BackupSetting";
 import ExamSetting from "@/components/settings/ExamSetting";
 import GeneralSetting from "@/components/settings/GeneralSetting";
 import NotificationSetting from "@/components/settings/NotificationSetting";
@@ -14,7 +15,8 @@ type SettingKey =
   | "exams"
   | "appearance"
   | "security"
-  | "notifications";
+  | "notifications"
+  | "backup";
 
 const navItems: { key: SettingKey; label: string }[] = [
   { key: "general", label: "General" },
@@ -22,6 +24,7 @@ const navItems: { key: SettingKey; label: string }[] = [
   { key: "appearance", label: "Appearance" },
   { key: "security", label: "Security" },
   // { key: "notifications", label: "Notifications" },
+  { key: "backup", label: "Backup & Sync" },
 ];
 
 const contentMap: Record<SettingKey, React.ReactNode> = {
@@ -30,6 +33,7 @@ const contentMap: Record<SettingKey, React.ReactNode> = {
   appearance: <AppearanceSetting />,
   security: <SecuritySetting />,
   notifications: <NotificationSetting />,
+  backup: <BackupSetting />,
 };
 
 const Page = () => {

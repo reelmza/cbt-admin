@@ -43,9 +43,12 @@ type MonitoringAssessment = {
 };
 
 type Violation = {
-  type: string;
-  timestamp: string;
-  [key: string]: any;
+  _id: string;
+  violationType: string;
+  violationDetails: string;
+  isPardoned: boolean;
+  createdAt: string;
+  student?: { _id: string; fullName: string; regNumber: string; level: number };
 };
 
 const StatCard = ({
@@ -97,10 +100,46 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     useState<AssignedStudent | null>(null);
   const [violations, setViolations] = useState<Violation[]>([]);
   const [violationsLoading, setViolationsLoading] = useState(false);
+  const [pardoningIds, setPardoningIds] = useState<Set<string>>(new Set());
+  const [pardonCodes, setPardonCodes] = useState<Record<string, string>>({});
+
+  const pardonViolation = async (violationId: string) => {
+    setPardoningIds((prev) => new Set(prev).add(violationId));
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(
+        `/assessment/violations/${violationId}/pardon`,
+      );
+      if (res.status === 200 || res.status === 201) {
+        const code =
+          res.data.data?.pardonCode ??
+          res.data.pardonCode ??
+          res.data.data?.code ??
+          res.data.code ??
+          "—";
+        setPardonCodes((prev) => ({ ...prev, [violationId]: code }));
+        setViolations((prev) =>
+          prev.map((v) =>
+            v._id === violationId ? { ...v, isPardoned: true } : v,
+          ),
+        );
+      }
+    } catch {
+      // leave button available to retry
+    } finally {
+      setPardoningIds((prev) => {
+        const next = new Set(prev);
+        next.delete(violationId);
+        return next;
+      });
+    }
+  };
 
   const openViolations = async (student: AssignedStudent) => {
     setViolationsStudent(student);
     setViolations([]);
+    setPardonCodes({});
+    setPardoningIds(new Set());
     setViolationsOpen(true);
     setViolationsLoading(true);
     try {
@@ -247,20 +286,21 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
       socket.on(
         "candidate-alert",
-        ({
-          type,
-          socketId,
-          studentId,
-          count,
-          timestamp,
-        }: {
+        (data: {
           type: string;
           socketId: string;
           count: number;
           studentId: string;
           timestamp: string;
         }) => {
-          console.log(count, type, "alert for", studentId, "at", timestamp);
+          console.log(data);
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === data.studentId
+                ? { ...s, violationCount: s.violationCount + 1 }
+                : s,
+            ),
+          );
         },
       );
 
@@ -545,23 +585,52 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                 <div className="flex flex-col gap-2 max-h-96 overflow-y-auto pr-1">
                   {violations.map((v, i) => (
                     <div
-                      key={i}
-                      className="flex items-start justify-between rounded-md border border-theme-gray-mid px-4 py-3"
+                      key={v._id ?? i}
+                      className="flex flex-col gap-2 rounded-md border border-theme-gray-mid px-4 py-3"
                     >
-                      <div className="flex items-center gap-2">
-                        <ShieldAlert
-                          size={14}
-                          className="text-theme-error shrink-0 mt-0.5"
-                        />
-                        <span className="text-sm capitalize">
-                          {v.type?.replace(/-/g, " ")}
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShieldAlert
+                            size={14}
+                            className={`shrink-0 ${v.isPardoned ? "text-theme-gray" : "text-theme-error"}`}
+                          />
+                          <span className="text-sm capitalize">
+                            {v.violationType?.replace(/_/g, " ").toLowerCase()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 ml-4">
+                          <span className="text-xs text-theme-gray whitespace-nowrap">
+                            {v.createdAt
+                              ? new Date(v.createdAt).toLocaleTimeString()
+                              : "—"}
+                          </span>
+                          {!v.isPardoned ? (
+                            <button
+                              onClick={() => pardonViolation(v._id)}
+                              disabled={pardoningIds.has(v._id)}
+                              className="text-xs font-medium text-accent hover:opacity-70 disabled:opacity-40 transition-opacity whitespace-nowrap"
+                            >
+                              {pardoningIds.has(v._id)
+                                ? "Pardoning…"
+                                : "Pardon"}
+                            </button>
+                          ) : (
+                            <span className="text-xs text-theme-gray">
+                              pardoned
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-xs text-theme-gray whitespace-nowrap ml-4">
-                        {v.timestamp
-                          ? new Date(v.timestamp).toLocaleTimeString()
-                          : "—"}
-                      </span>
+                      {pardonCodes[v._id] && (
+                        <div className="flex items-center gap-2 bg-theme-gray-light rounded px-3 py-1.5">
+                          <span className="text-xs text-theme-gray">
+                            Pardon code:
+                          </span>
+                          <span className="text-xs font-mono font-semibold text-accent-dim">
+                            {pardonCodes[v._id]}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
