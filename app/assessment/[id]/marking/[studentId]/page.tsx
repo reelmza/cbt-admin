@@ -11,10 +11,12 @@ import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { toastConfig } from "@/utils/toastConfig";
 import Button from "@/components/button";
+import { useRouter } from "next/navigation";
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 const Page = ({ id, studentId }: { id: string; studentId: string }) => {
   const { data: session } = useSession();
+  const router = useRouter();
 
   // ─── State ─────────────────────────────────────────────────────────────────
   // loading uses a string key to track per-question spinner state
@@ -109,6 +111,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
 
       if (res.status == 200) {
         toast.success("Marking finalized successfully", toastConfig);
+        router.push(`/assessment/${id}/marking`);
       }
 
       setLoading(null);

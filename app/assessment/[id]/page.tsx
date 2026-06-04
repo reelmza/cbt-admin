@@ -514,7 +514,7 @@ const Page = ({ id }: { id: string }) => {
 
       if (res.status === 200 || res.status === 201) {
         toast.success("Assessment archived successfully", toastConfig);
-        // router.push("/assessment");
+        router.push("/assessment");
       }
 
       setLoading(null);
