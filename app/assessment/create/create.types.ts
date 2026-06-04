@@ -13,6 +13,7 @@ export type SectionType = {
     answerSlots: { slotNumber: number; possibleAnswers: string[] }[];
     expectedAnswer: string;
     correctAnswer: string;
+    correctAnswers: string[];
     image: string | null;
   }[];
 }[];

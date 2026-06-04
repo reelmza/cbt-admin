@@ -30,6 +30,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import {
   ArrowRight,
+  Check,
   Plus,
   RefreshCcw,
   RollerCoaster,
@@ -342,6 +343,19 @@ const Main = () => {
               />
             )}
 
+            {/* Multiple Select Questions */}
+            {activeSection && activeSection[0] === "multiple_select" && (
+              <QuestionForm
+                formType="multiple_select"
+                sectionParams={{ sections, setSections }}
+                questionParams={{ question, setQuestion }}
+                optionsParams={{ options, setOptions }}
+                correctAnswerParams={{ correctAnswer, setCorrectAnswer }}
+                activeSectionParams={{ activeSection, setActiveSection }}
+                qstImageParams={{ qstImage, setQstImage }}
+              />
+            )}
+
             {/* Theory Questions */}
             {activeSection && activeSection[0] === "theory" && (
               <QuestionForm
@@ -398,6 +412,13 @@ const Main = () => {
                                     setCorrectAnswer(qst.correctAnswer);
                                   }
 
+                                  if (section.type === "multiple_select") {
+                                    setOptions(qst.options.map((q) => q.text));
+                                    setCorrectAnswer(
+                                      qst.correctAnswers?.join(",") ?? null,
+                                    );
+                                  }
+
                                   if (section.type == "subjective") {
                                     setOptions(
                                       qst.answerSlots.map((item) =>
@@ -427,7 +448,11 @@ const Main = () => {
                               <button
                                 className="w-5/10 h-6 text-xs flex items-center gap-2 text-accent cursor-pointer leading-none"
                                 onClick={() => {
-                                  setCorrectAnswer("A"); // Works for obj only
+                                  setCorrectAnswer(
+                                    section.type === "multiple_select"
+                                      ? null
+                                      : "A",
+                                  );
                                   setQuestion("");
                                   setOptions([]);
                                   setQstImage(null);
@@ -731,7 +756,9 @@ const Main = () => {
               setActiveSection([target.sectionType.value, 0]);
               setQuestion("");
               setOptions([]);
-              setCorrectAnswer("A");
+              setCorrectAnswer(
+                target.sectionType.value === "multiple_select" ? null : "A",
+              );
               setQstImage(null);
             }}
           >
@@ -752,6 +779,7 @@ const Main = () => {
                 <SelectContent>
                   {[
                     { name: "Objective", type: "multiple_choice" },
+                    { name: "Multiple Select", type: "multiple_select" },
                     { name: "Subjective", type: "subjective" },
                     { name: "Theory", type: "theory" },
                   ].map((sect, key) => {
@@ -863,6 +891,21 @@ const QuestionForm = ({
         ...(qstImage && { image: qstImage }),
       };
 
+    // Arrange formdata for multiple select
+    if (formType === "multiple_select")
+      formatedQuestion = {
+        question: question,
+        type: "multiple_select",
+        score: targetSection?.defaultQuestionScore || 1,
+        options: options.map((item, key) => {
+          return { label: opt[`${key}`], text: item };
+        }),
+        correctAnswers: correctAnswer
+          ? correctAnswer.split(",").filter(Boolean)
+          : [],
+        ...(qstImage && { image: qstImage }),
+      };
+
     // Arrange formdata for subjective
     if (formType === "subjective")
       formatedQuestion = {
@@ -934,7 +977,7 @@ const QuestionForm = ({
 
     // Reset form only when questions are less than 60
     if (targetSection && targetSection.questions.length < 100) {
-      setCorrectAnswer("A");
+      setCorrectAnswer(formType === "multiple_select" ? null : "A");
       setQuestion("");
       setOptions([]);
       setActiveSection([formType, activeSection[1] + 1]);
@@ -960,7 +1003,7 @@ const QuestionForm = ({
 
     setQuestion("");
     setOptions([]);
-    setCorrectAnswer("A");
+    setCorrectAnswer(formType === "multiple_select" ? null : "A");
     setActiveSection([
       formType,
       sections!.find((sect) => sect.type === formType)!.questions.length - 1,
@@ -1116,6 +1159,46 @@ const QuestionForm = ({
             </div>
           )}
 
+        {/* Multiple Select Checkboxes */}
+        {activeSection &&
+          activeSection[0] === "multiple_select" &&
+          options.length > 0 && (
+            <div className="w-fit">
+              {options.map((_, key) => {
+                const opt: any = { 0: "A", 1: "B", 2: "C", 3: "D" };
+                const label = opt[`${key}`];
+                const selected = correctAnswer
+                  ? correctAnswer.split(",").includes(label)
+                  : false;
+                return (
+                  <div className="flex items-center h-10 mb-1" key={key}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = correctAnswer
+                          ? correctAnswer.split(",").filter(Boolean)
+                          : [];
+                        const updated = current.includes(label)
+                          ? current.filter((l) => l !== label)
+                          : [...current, label];
+                        setCorrectAnswer(
+                          updated.length ? updated.join(",") : null,
+                        );
+                      }}
+                      className={`size-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer ${
+                        selected
+                          ? "bg-accent border-accent text-white"
+                          : "border-theme-gray-mid"
+                      }`}
+                    >
+                      {selected && <Check size={10} />}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
         {/* Options Main */}
         <div className="grow">
           {formType !== "theory" &&
@@ -1128,12 +1211,14 @@ const QuestionForm = ({
                   {formType !== "theory" && (
                     <div
                       className={`h-full flex items-center text-sm font-semibold ${
-                        formType === "multiple_choice"
+                        formType === "multiple_choice" ||
+                        formType === "multiple_select"
                           ? "w-14 justify-center"
                           : "w-20"
                       }`}
                     >
-                      {formType === "multiple_choice"
+                      {formType === "multiple_choice" ||
+                      formType === "multiple_select"
                         ? objLabels[key]
                         : `Slot ` + (key + 1)}
                     </div>
@@ -1144,9 +1229,10 @@ const QuestionForm = ({
                     name={`option-${key + 1}`}
                     type={"text"}
                     placeholder={
-                      formType == "multiple_choice"
+                      formType === "multiple_choice" ||
+                      formType === "multiple_select"
                         ? "Enter an option"
-                        : formType == "subjective"
+                        : formType === "subjective"
                           ? "Ans 1, Ans 2, Ans 3"
                           : "Enter an answer"
                     }

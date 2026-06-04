@@ -214,7 +214,9 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                               ? "multiple choice"
                               : ans.question.type === "theory"
                                 ? "theory"
-                                : ans.question.type}
+                                : ans.question.type === "multiple_select"
+                                  ? "multiple select"
+                                  : ans.question.type}
                         </div>
                         {/* Marked Status for non auto marked*/}
                         {ans.status !== "auto-marked" && (
@@ -280,6 +282,15 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                       <div className="mb-1 text-sm">{ans?.selectedOption}</div>
                     )}
 
+                    {/* Multiple Select Answer */}
+                    {ans?.question?.type === "multiple_select" && (
+                      <div className="mb-1 text-sm">
+                        {ans?.selectedOptions?.length > 0
+                          ? ans.selectedOptions.join(", ")
+                          : "No answer selected"}
+                      </div>
+                    )}
+
                     {/* _________________________________________________ */}
                     {/* Expected Answer */}
                     <div className="text-theme-gray mb-1 text-sm border-t pt-2">
@@ -306,6 +317,21 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                         ))}
                       </div>
                     )}
+
+                    {/* Expected Answer Multiple Select */}
+                    {ans?.question?.type === "multiple_select" &&
+                      (ans?.question?.correctOptions?.length ?? 0) > 0 && (
+                        <div className="mb-1 text-sm">
+                          {ans.question.options.map((opt, optKey) => (
+                            <div
+                              key={optKey}
+                              className={`mb-1 ${ans.question.correctOptions!.includes(opt.label) ? "text-theme-success" : ""}`}
+                            >
+                              {opt.label}: {opt.text}
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                     {/* Expected Answer Subjective */}
                     {ans?.question?.answerSlots.length > 0 && (

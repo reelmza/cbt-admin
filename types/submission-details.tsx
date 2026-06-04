@@ -22,7 +22,7 @@ export interface AnswerSlot {
   _id: string;
 }
 
-export type QuestionType = "multiple_choice" | "subjective" | "theory";
+export type QuestionType = "multiple_choice" | "subjective" | "theory" | "multiple_select";
 
 export interface Question {
   id: string;
@@ -32,6 +32,7 @@ export interface Question {
   images: string[];
   options: QuestionOption[];
   correctAnswer: string | null;
+  correctOptions: string[] | null;
   answerSlots: AnswerSlot[];
   expectedAnswer: string | null;
   requiresManualMarking: boolean;
@@ -43,6 +44,7 @@ export interface Answer {
   answerId: string;
   question: Question;
   selectedOption: string | null;
+  selectedOptions: string[];
   subjectiveAnswers: {
     slotNumber: number;
     answer: string;

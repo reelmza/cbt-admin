@@ -1215,35 +1215,40 @@ const Page = ({ id }: { id: string }) => {
                 {/* Shuffle Questions */}
                 <div className="text-sm text-theme-gray">Shuffle Questions</div>
                 <Spacer size="sm" />
-                <div className="flex items-center gap-2">
-                  {(["multiple_choice", "subjective", "theory"] as const).map(
-                    (section) => {
-                      const active = (pageData.shuffleQuestions ?? []).includes(
-                        section,
-                      );
-                      return (
-                        <button
-                          key={section}
-                          type="button"
-                          disabled={loading === "toggleShuffle"}
-                          onClick={() => {
-                            const current = pageData.shuffleQuestions ?? [];
-                            const next = active
-                              ? current.filter((s) => s !== section)
-                              : [...current, section];
-                            updateShuffle(next);
-                          }}
-                          className={`cursor-pointer capitalize text-xs px-3 py-1.5 rounded-sm border transition-colors disabled:opacity-50 disabled:pointer-events-none ${
-                            active
-                              ? "bg-accent text-white border-accent"
-                              : "text-theme-gray border-border hover:border-accent/50"
-                          }`}
-                        >
-                          {section}
-                        </button>
-                      );
-                    },
-                  )}
+                <div className="flex items-center flex-wrap gap-2">
+                  {(
+                    [
+                      "multiple_choice",
+                      "multiple_select",
+                      "subjective",
+                      "theory",
+                    ] as const
+                  ).map((section) => {
+                    const active = (pageData.shuffleQuestions ?? []).includes(
+                      section,
+                    );
+                    return (
+                      <button
+                        key={section}
+                        type="button"
+                        disabled={loading === "toggleShuffle"}
+                        onClick={() => {
+                          const current = pageData.shuffleQuestions ?? [];
+                          const next = active
+                            ? current.filter((s) => s !== section)
+                            : [...current, section];
+                          updateShuffle(next);
+                        }}
+                        className={`cursor-pointer capitalize text-xs px-3 py-1.5 rounded-sm border transition-colors disabled:opacity-50 disabled:pointer-events-none ${
+                          active
+                            ? "bg-accent text-white border-accent"
+                            : "text-theme-gray border-border hover:border-accent/50"
+                        }`}
+                      >
+                        {section}
+                      </button>
+                    );
+                  })}
                 </div>
                 <Spacer size="md" />
 
