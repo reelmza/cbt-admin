@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   CircleQuestionMark,
+  KeyRound,
   Pencil,
   Trash2,
   User2,
@@ -47,6 +48,7 @@ const Page = ({ id }: { id: string }) => {
     false,
   );
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
 
   const removeAss = async (assId: string) => {
     const globalController = new AbortController();
@@ -124,6 +126,35 @@ const Page = ({ id }: { id: string }) => {
         console.log(error);
       }
 
+      setLoading(null);
+    }
+  };
+
+  const resetPassword = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    const target = e.target as typeof e.target & {
+      password: { value: string };
+    };
+
+    setLoading("resetPassword");
+    try {
+      attachHeaders(session!.user.token);
+      const res = await localAxios.patch(
+        `/student/reset-password/${encodeURIComponent(profile?.regNumber ?? "")}`,
+        { password: target.password.value },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success("Password reset successfully.", toastConfig);
+        setShowResetPasswordDialog(false);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Failed to reset password.",
+        toastConfig,
+      );
       setLoading(null);
     }
   };
@@ -249,6 +280,14 @@ const Page = ({ id }: { id: string }) => {
                 <Pencil size={13} />
                 Edit Profile
               </button>
+
+              <button
+                className="w-full flex items-center justify-center gap-1.5 text-xs text-theme-gray hover:text-accent border border-border rounded-md h-8 cursor-pointer transition-colors"
+                onClick={() => setShowResetPasswordDialog(true)}
+              >
+                <KeyRound size={13} />
+                Reset Password
+              </button>
             </div>
 
             {/* Right: Info grid */}
@@ -332,9 +371,7 @@ const Page = ({ id }: { id: string }) => {
                       {ex.status === "submitted" && (
                         <button
                           className="flex items-center gap-1 text-xs text-theme-gray hover:text-red-500 cursor-pointer"
-                          onClick={() =>
-                            setShowConfirmDialog(`sub-${ex._id}`)
-                          }
+                          onClick={() => setShowConfirmDialog(`sub-${ex._id}`)}
                         >
                           <Trash2 size={13} />
                           Remove Submission
@@ -343,9 +380,7 @@ const Page = ({ id }: { id: string }) => {
 
                       <button
                         className="flex items-center gap-1 text-xs text-theme-gray hover:text-red-500 cursor-pointer"
-                        onClick={() =>
-                          setShowConfirmDialog(`ass-${ex._id}`)
-                        }
+                        onClick={() => setShowConfirmDialog(`ass-${ex._id}`)}
                       >
                         <Trash2 size={13} />
                         Unassign
@@ -417,6 +452,37 @@ const Page = ({ id }: { id: string }) => {
                   loading={loading === "update"}
                   variant="fill"
                   icon={<ArrowRight size={16} />}
+                />
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog - Reset Password */}
+          <Dialog
+            open={showResetPasswordDialog}
+            onOpenChange={setShowResetPasswordDialog}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Reset Password</DialogTitle>
+                <DialogDescription>
+                  Set a new password for {profile?.fullName}.
+                </DialogDescription>
+              </DialogHeader>
+
+              <form className="flex flex-col gap-3" onSubmit={resetPassword}>
+                <Input
+                  name="password"
+                  type="password"
+                  placeholder="New Password"
+                  required
+                />
+                <Spacer size="sm" />
+                <Button
+                  title="Reset Password"
+                  loading={loading === "resetPassword"}
+                  variant="fill"
+                  icon={<KeyRound size={16} />}
                 />
               </form>
             </DialogContent>

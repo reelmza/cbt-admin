@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Roboto_Serif } from "next/font/google";
+import { Inter, Merriweather } from "next/font/google";
 
 import "./globals.css";
 import { Info } from "lucide-react";
@@ -12,9 +12,10 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-const robotoSerif = Roboto_Serif({
-  variable: "--font-roboto-serif",
+const merriweather = Merriweather({
+  variable: "--font-merriweather",
   subsets: ["latin"],
+  weight: ["300", "400", "700", "900"],
 });
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${robotoSerif.variable} antialiased`}>
+      <body className={`${inter.variable} ${merriweather.variable} antialiased`}>
         {/* Info text for smaller screens */}
         <div className="md:hidden h-full w-full bg-neutral-50 flex flex-col items-center justify-center">
           <Info size={32} className="text-accent-dim" />

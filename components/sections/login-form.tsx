@@ -2,7 +2,7 @@
 import Button from "@/components/button";
 import Input from "@/components/input";
 import Spacer from "@/components/spacer";
-import { Key, Mail, MoveRight } from "lucide-react";
+import { ArrowRight, Key, Mail } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -48,13 +48,8 @@ function LoginForm() {
   return (
     <div className="col-span-6 flex flex-col justify-center items-center">
       <div className="w-7/10 rounded-lg">
-        {/* School Name */}
-        <div className="text-sm font-sans font-semibold bg-accent-light text-accent-dim w-fit  rounded-full px-3 mb-5 py-1 leading-none">
-          EBSU, Ebonyi.
-        </div>
-
         {/* Form Heading */}
-        <div className="text-2xl font-bold mb-5 text-accent-dim">
+        <div className="text-2xl font-extrabold mb-5 text-accent-dim font-serif text-center">
           Login to your Account
         </div>
 
@@ -84,9 +79,9 @@ function LoginForm() {
           {/* Submit Button */}
           <div className="w-[100%]">
             <Button
-              title="Sign In"
+              title="Continue"
               loading={loading === "login"}
-              icon={<MoveRight size={20} strokeWidth={2} />}
+              icon={<ArrowRight size={20} strokeWidth={2} />}
               variant="fill"
             />
           </div>

@@ -11,7 +11,7 @@ interface SideBoxProps {
   schoolName?: string | null;
 }
 
-const SideBox = ({ schoolName }: SideBoxProps) => {
+const SideBox = () => {
   const [envVars, setEnvVars] = useState<{ schoolName: string } | null>(null);
 
   const schoolList: {
@@ -41,7 +41,7 @@ const SideBox = ({ schoolName }: SideBoxProps) => {
   }, []);
 
   return (
-    <div className="col-span-6 bg-accent-light flex flex-col items-center justify-center">
+    <div className="col-span-6 bg-neutral-50 flex flex-col items-center justify-center">
       {envVars && envVars?.schoolName ? (
         <Image
           src={schoolList[envVars?.schoolName.toLocaleLowerCase()]?.image}
@@ -63,14 +63,13 @@ const SideBox = ({ schoolName }: SideBoxProps) => {
       )}
       <Spacer size="lg" />
 
-      <div className="w-8/10 flex flex-col items-center text-accent-dim text-center">
-        <div className="text-3xl font-extrabold leading-tight text-accent-dim w-2/3">
+      <div className="w-8/10 flex flex-col items-center text-center">
+        <div className="text-3xl font-extrabold leading-tight text-accent-dim w-2/3 font-serif">
           {envVars
             ? schoolList[envVars?.schoolName?.toLowerCase()]?.name
             : "Oayastech CBT Exams Portal"}
         </div>
         <Spacer size="sm" />
-        <p className="text-lg">Examination Portal</p>
       </div>
     </div>
   );

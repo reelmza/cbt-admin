@@ -21,12 +21,12 @@ const schoolList: {
 } = {
   adsu: {
     image: adsuLogo,
-    shortName: "ADSU CBT",
-    fullName: "Adamawa State University, Mubi North.",
+    shortName: "ADSU Portal",
+    fullName: "Adamawa State University, Mubi, Adamawa State.",
   },
   ebsu: {
     image: ebsuLogo,
-    shortName: "EBSU CBT",
+    shortName: "EBSU Portal",
     fullName: "Ebonyi State University, Abakaliki.",
   },
 };
@@ -59,22 +59,24 @@ const SideBar = () => {
 
   return (
     <>
-      <div className="fixed left-0 flex flex-col w-2/10 h-full shrink-0 border-r border-neutral-200 bg-background py-5 px-5 font-sans">
+      <div className="fixed left-0 flex flex-col w-2/10 h-full shrink-0 border-r border-theme-gray-light bg-background py-5 px-5 font-sans">
+        {/* Logo */}
         <div className="h-fit">
           <div className="flex items-center gap-2">
             <Image
               src={school?.image ?? defaultLogo}
-              width={52}
               alt="School logo"
+              width={48}
               unoptimized
               className="shrink-0"
               loading="eager"
             />
-            <div className="grow text-xl text-accent">
-              <div className="leading-none  font-extrabold font-serif">
+
+            <div className="grow border-l pl-2">
+              <div className="leading-none font-bold font-serif text-accent-dim">
                 {school?.shortName ?? "CBT APP"}
               </div>
-              <div className="text-xs font-medium text-theme-gray">
+              <div className="text-xs text-theme-gray leading-tight">
                 {school?.fullName ?? "Oayastech CBT Exams Portal"}
               </div>
             </div>
@@ -91,8 +93,8 @@ const SideBar = () => {
                 href={item.route}
                 className={`h-10 flex items-center w-full gap-2 text-sm px-2 ${
                   path.includes(item.route)
-                    ? "bg-accent-light text-accent font-semibold hover:bg-accent-light/70"
-                    : "text-theme-gray hover:bg-theme-gray-light"
+                    ? "bg-accent-light/50 text-accent-dim hover:bg-accent-light/70"
+                    : "text-theme-gray hover:text-accent hover:bg-theme-gray-slight/50"
                 } rounded-xs animate-all duration-200 ease-in`}
               >
                 {item.icon}
