@@ -4,11 +4,12 @@ import Spacer from "@/components/spacer";
 import { CloudUpload, Notebook, UsersRound } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 const Page = () => {
   const router = useRouter();
+  const isMounted = useRef(false);
   const { data: session } = useSession();
-  console.log(session);
 
   const quickLinks = [
     {
@@ -32,6 +33,14 @@ const Page = () => {
       route: "/faculties",
     },
   ];
+
+  useEffect(() => {
+    if (!session) return;
+    if (isMounted.current) return;
+
+    isMounted.current = true;
+    console.log(session?.user);
+  }, [session]);
 
   return (
     <div className="grow min-h-full p-10 font-sans">
