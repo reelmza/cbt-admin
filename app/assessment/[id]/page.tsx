@@ -1284,7 +1284,7 @@ const Page = ({ id }: { id: string }) => {
               {/* Right Cards */}
               <div className="col-span-7 border rounded-md p-5">
                 {/* Assign students */}
-                <div className="text-sm">
+                <div className="text-sm text-theme-gray">
                   Assign to level, faculty and/or department
                 </div>
                 <Spacer size="sm" />
@@ -1389,7 +1389,7 @@ const Page = ({ id }: { id: string }) => {
                 <Spacer size="lg" />
 
                 {/* Assign to regNumber (STUDENT)*/}
-                <div className="text-sm">Assign to student</div>
+                <div className="text-sm text-theme-gray">Assign to student</div>
                 <Spacer size="sm" />
 
                 <form
@@ -1414,7 +1414,7 @@ const Page = ({ id }: { id: string }) => {
                 <Spacer size="lg" />
 
                 {/* Bulk assign / unassign students */}
-                <div className="text-sm">
+                <div className="text-sm text-theme-gray">
                   Bulk assign students (carryover / borrowed course)
                 </div>
                 <Spacer size="sm" />
@@ -1441,7 +1441,9 @@ const Page = ({ id }: { id: string }) => {
                 <Spacer size="lg" />
 
                 {/* Results and Entries Management*/}
-                <div className="text-sm">Results and Entries Management</div>
+                <div className="text-sm text-theme-gray">
+                  Results and Entries Management
+                </div>
                 <Spacer size="sm" />
 
                 {/* Generate Entries */}
