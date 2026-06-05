@@ -24,7 +24,7 @@ export const getAxios = async (): Promise<void> => {
       },
     );
   } else {
-    console.log("App was unable to get current origin address");
+    console.log("Unable to get Origin URL");
   }
 };
 

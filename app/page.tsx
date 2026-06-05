@@ -7,7 +7,7 @@ export default async function Page() {
 
   return (
     <div className="grid h-full w-full grid-cols-12 font-sans">
-      <SideBox schoolName={schoolName?.toLowerCase()} />
+      <SideBox />
       <LoginFormWrapper />
     </div>
   );
