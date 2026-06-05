@@ -6,6 +6,7 @@ type ButtonType = {
   loading: boolean;
   variant:
     | "fill"
+    | "ghost"
     | "outline"
     | "fillError"
     | "fillErrorOutline"
@@ -25,6 +26,10 @@ const Button = ({
 }: ButtonType) => {
   const buttonVariants = {
     fill: `flex items-center justify-center h-10 w-full font-medium rounded-xs leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm bg-accent hover:bg-accent/80 text-accent-light shadow shadow-accent-light/20 ${
+      loading ? "opacity-75 pointer-events-none" : ""
+    }`,
+
+    ghost: `flex items-center justify-center h-10 w-fit font-medium rounded-xs leading-0 gap-2 cursor-pointer animate-all duration-200 ease-in text-sm text-theme-gray bg-transparent shadow shadow-accent-light/20 ${
       loading ? "opacity-75 pointer-events-none" : ""
     }`,
 

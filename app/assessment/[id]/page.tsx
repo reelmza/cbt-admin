@@ -26,7 +26,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { X } from "lucide-react";
+import {
+  ChartLine,
+  Check,
+  Database,
+  FileText,
+  ListCheck,
+  MapPinCheckInside,
+  Printer,
+  Sheet,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import Preload from "@/components/preload";
 
@@ -1450,85 +1460,78 @@ const Page = ({ id }: { id: string }) => {
                 </div>
                 <Spacer size="lg" />
 
-                {/* Generate entries */}
-                <div className="text-sm">Results and Entries</div>
+                {/* Results and Entries Management*/}
+                <div className="text-sm">Results and Entries Management</div>
                 <Spacer size="sm" />
 
-                <div className="flex flex-wrap items-center-safe gap-4">
-                  {/* Generate Entries */}
-                  <div className="w-42">
-                    <Button
-                      type="button"
-                      title={"Generate Entries"}
-                      loading={loading == "generateAssEntries"}
-                      variant={"fill"}
-                      onClick={() => generateAssEntries()}
-                    />
+                {/* Generate Entries */}
+                <div className="border-b h-10 flex items-center text-sm">
+                  <button
+                    onClick={generateAssEntries}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    {loading === "generateAssEntries" ? (
+                      <Spinner className="size-4" />
+                    ) : (
+                      <Database size={14} />
+                    )}
+                    Generate Submissions (Scripts)
+                  </button>
+                </div>
+
+                {/* Mark Submissions */}
+                <div className="border-b h-12 flex items-center text-sm">
+                  <Link
+                    href={`/assessment/${id}/marking`}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Check size={16} />
+                    <span>View/Mark Submissions</span>
+                  </Link>
+                </div>
+
+                {/* Analytics*/}
+                <div className="border-b h-12 flex items-center text-sm">
+                  <Link
+                    href={`/assessment/${id}/analytics`}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <ChartLine size={16} />
+                    <span>View Analytics</span>
+                  </Link>
+                </div>
+
+                {/* Generate Results */}
+                <div className="border-b h-12 flex items-center justify-between text-sm gap-2">
+                  <div className="flex items-center gap-2">
+                    <Printer size={16} />
+                    <span>Generate Results</span>
                   </div>
 
-                  {/* Generate Result */}
-                  <div className="bg-accent rounded-xs flex items-center pl-4 h-10 overflow-hidden">
-                    <span className="text-white text-sm pr-4">
-                      Generate Results
-                    </span>
-
+                  <div className="flex items-center gap-x-5">
                     <button
-                      type="submit"
-                      className="cursor-pointer text-sm text-white h-full w-12 hover:bg-accent-dim font-semibold flex items-center justify-center gap-2 border-x border-accent-light/20"
                       onClick={() => generateAssResults("pdf")}
+                      className="h-full border-r pr-5 flex items-center gap-1 cursor-pointer text-theme-warning"
                     >
-                      {loading == "generateResults-pdf" ? (
+                      {loading === "generateResults-pdf" ? (
                         <Spinner className="size-4" />
                       ) : (
-                        "PDF"
+                        <FileText size={14} />
                       )}
+                      <span>*pdf</span>
                     </button>
 
                     <button
-                      type="submit"
-                      className="cursor-pointer text-sm text-white h-full w-12 hover:bg-accent-dim font-semibold flex items-center justify-center gap-2"
                       onClick={() => generateAssResults("csv")}
+                      className="flex items-center gap-1 cursor-pointer text-theme-success text-sm"
                     >
-                      {loading == "generateResults-csv" ? (
+                      {loading === "generateResults-csv" ? (
                         <Spinner className="size-4" />
                       ) : (
-                        "CSV"
+                        <Sheet size={14} />
                       )}
+                      <span>*xlsx</span>
                     </button>
-                  </div>
-
-                  {/* Mark Submissions */}
-                  <Link href={`/assessment/${id}/marking`} className="w-42">
-                    <Button
-                      type="button"
-                      title={"Mark Submissions"}
-                      loading={false}
-                      variant={"fill"}
-                    />
-                  </Link>
-
-                  {/* Analytics */}
-                  <Link href={`/assessment/${id}/analytics`} className="w-42">
-                    <Button
-                      type="button"
-                      title={"Analytics"}
-                      loading={false}
-                      variant={"fill"}
-                    />
-                  </Link>
-
-                  {/* Invigilator */}
-                  <div className="w-42">
-                    <Button
-                      type="button"
-                      title="Invigilator"
-                      loading={false}
-                      variant={"fill"}
-                      onClick={() => {
-                        setShowInvigilatorDialog(true);
-                        fetchAdmins();
-                      }}
-                    />
                   </div>
                 </div>
 
