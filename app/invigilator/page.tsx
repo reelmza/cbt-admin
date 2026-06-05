@@ -61,19 +61,6 @@ const StatCard = ({
   </div>
 );
 
-const InfoChip = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) => (
-  <div className="flex flex-col gap-0.5">
-    <span className="text-xs text-theme-gray">{label}</span>
-    <span className="text-sm font-medium text-accent-dim">{value}</span>
-  </div>
-);
-
 const assessmentStatusColor = (status: string) => {
   if (status === "published" || status === "ongoing")
     return "bg-theme-success/10 text-theme-succes";
@@ -113,9 +100,9 @@ const Page = () => {
 
         if (res.status === 200 || res.status === 201) {
           const raw = res.data.data;
-          const list: InvigilatorAssessment[] = Array.isArray(raw)
+          const list: InvigilatorAssessment[] = (Array.isArray(raw)
             ? raw
-            : [raw];
+            : [raw]).reverse();
           setPageData(list);
           if (list.length > 0) setSelected(list[0]);
         }
@@ -141,7 +128,7 @@ const Page = () => {
   }, [session]);
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full p-10 font-sans min-w-0 overflow-x-hidden">
       {pageData && (
         <>
           <div className="text-2xl font-bold text-accent-dim">
@@ -152,13 +139,12 @@ const Page = () => {
           {/* Assessment Tabs — only rendered when more than one */}
           {pageData.length > 1 && (
             <>
-              <div className="relative h-10 w-fit">
-                <div className="absolute bottom-0 w-full h-[1px] bg-theme-gray-light" />
-                <div className="absolute h-full top-0 left-0 w-fit flex items-center pr-4 z-20">
+              <div className="h-10 w-full overflow-x-auto border-b border-theme-gray-light">
+                <div className="h-full flex items-center pr-4 w-max">
                   {pageData.map((assessment, key) => (
                     <button
                       key={key}
-                      className={`flex items-center justify-center h-full text-sm ml-4 py-2 ${
+                      className={`flex items-center justify-center h-full text-sm ml-4 py-2 shrink-0 ${
                         selected?._id === assessment._id
                           ? "border-b-3 text-accent"
                           : "border-none text-theme-gray hover:text-accent"
@@ -167,13 +153,6 @@ const Page = () => {
                     >
                       {assessment.course?.code ?? assessment.title}
                     </button>
-                  ))}
-                </div>
-                <div className="opacity-0 h-full flex items-center pr-4">
-                  {pageData.map((assessment, key) => (
-                    <div className="ml-4 text-sm" key={key}>
-                      {assessment.course?.code ?? assessment.title}
-                    </div>
                   ))}
                 </div>
               </div>
