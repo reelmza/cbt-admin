@@ -960,7 +960,7 @@ const Page = ({ id }: { id: string }) => {
             {/* Top Cards*/}
             <div className="grid grid-cols-12 gap-4">
               {[
-                { title: "Vissibility", value: pageData.status },
+                { title: "Status", value: pageData.status },
 
                 {
                   title: "Questions",
@@ -1011,26 +1011,6 @@ const Page = ({ id }: { id: string }) => {
             <div className="grid grid-cols-12 gap-4">
               {/* Left Cards */}
               <div className="col-span-5 border rounded-md p-5">
-                {/* Test Vissibility */}
-                <div className="text-sm text-theme-gray">Test Vissibility</div>
-                <Spacer size="sm" />
-
-                <div className="flex items-center gap-4">
-                  <Select
-                    defaultValue={pageData.status}
-                    onValueChange={updateStatus}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Change Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="draft">Draft</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Spacer size="md" />
-
                 {/* Test Duration */}
                 <div className="text-sm text-theme-gray">
                   Test Duration (in minutes e.g 40 or 120)
