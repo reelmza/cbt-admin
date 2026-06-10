@@ -7,7 +7,7 @@ import Table from "@/components/table";
 import TableSearchBox from "@/components/table-searchbox";
 import { attachHeaders, localAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
-import { Plus } from "lucide-react";
+import { Archive, Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import Link from "next/link";
 import { ChangeEvent, useEffect, useState } from "react";
@@ -20,6 +20,7 @@ const Page = () => {
   const [filteredPageData, setFilteredPageData] = useState<
     AssesmentApiResponse[] | null
   >(null);
+  const [includeArchived, setIncludeArchived] = useState(false);
 
   const searchAss = async (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -47,14 +48,19 @@ const Page = () => {
     const controller = new AbortController();
 
     const getAssessments = async () => {
+      setLoading("page");
+      setPageData(null);
+      setFilteredPageData(null);
       try {
         attachHeaders(session!.user.token);
-        const res = await localAxios.get("/admin/assessments", {
+        const url = includeArchived
+          ? "/admin/assessments?include_archived=true"
+          : "/admin/assessments";
+        const res = await localAxios.get(url, {
           signal: controller.signal,
         });
 
         if (res.status === 201) {
-          console.log(res.data.data.assessments);
           setPageData(res.data.data.assessments);
           setFilteredPageData(res.data.data.assessments);
         }
@@ -68,12 +74,12 @@ const Page = () => {
       }
     };
 
-    !pageData && getAssessments();
+    getAssessments();
 
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session, includeArchived]);
 
   return (
     <div className="w-full h-full p-10 font-sans">
@@ -151,6 +157,18 @@ const Page = () => {
               onChange={searchAss}
             />
 
+            <div className="flex items-center gap-3">
+              <div className="w-36">
+                <Button
+                  title="Archived"
+                  loading={false}
+                  variant={includeArchived ? "fill" : "outline"}
+                  icon={<Archive size={16} />}
+                  type="button"
+                  onClick={() => setIncludeArchived((prev) => !prev)}
+                />
+              </div>
+
             <Link href="/assessment/create" className="block w-52">
               <Button
                 title={"Create an Assessment"}
@@ -159,6 +177,7 @@ const Page = () => {
                 icon={<Plus size={16} />}
               />
             </Link>
+            </div>
           </div>
 
           <Table
