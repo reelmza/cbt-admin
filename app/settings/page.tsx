@@ -2,6 +2,7 @@
 
 import AppearanceSetting from "@/components/settings/AppearanceSetting";
 import BackupSetting from "@/components/settings/BackupSetting";
+import DatabaseSetting from "@/components/settings/DatabaseSetting";
 import ExamSetting from "@/components/settings/ExamSetting";
 import GeneralSetting from "@/components/settings/GeneralSetting";
 import NotificationSetting from "@/components/settings/NotificationSetting";
@@ -16,7 +17,8 @@ type SettingKey =
   | "appearance"
   | "security"
   | "notifications"
-  | "backup";
+  | "backup"
+  | "database";
 
 const navItems: { key: SettingKey; label: string }[] = [
   { key: "general", label: "General" },
@@ -25,6 +27,7 @@ const navItems: { key: SettingKey; label: string }[] = [
   { key: "security", label: "Security" },
   // { key: "notifications", label: "Notifications" },
   { key: "backup", label: "Backup & Sync" },
+  { key: "database", label: "Database" },
 ];
 
 const contentMap: Record<SettingKey, React.ReactNode> = {
@@ -34,6 +37,7 @@ const contentMap: Record<SettingKey, React.ReactNode> = {
   security: <SecuritySetting />,
   notifications: <NotificationSetting />,
   backup: <BackupSetting />,
+  database: <DatabaseSetting />,
 };
 
 const Page = () => {

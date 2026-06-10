@@ -21,7 +21,7 @@ export const schooLogin: (
       },
     );
 
-    // console.log(targetUser);
+    console.log(targetUser);
 
     // Check if user exist
     if (targetUser.status === 422 || targetUser.status === 400) {
