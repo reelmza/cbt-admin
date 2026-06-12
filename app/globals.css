@@ -4,12 +4,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-
-
-  --accent-light: #f1f1ff;
-  --accent-mid: #d6d3e2;
-  --accent: #2c187b;
-  --accent-dim:#1b1661;
+  --accent-light: #d6d6d6;
+  --accent-mid: #cecece;
+  --accent: #292929;
+  --accent-dim:#0e0e0e;
 
   --theme-gray-light: #f0f0f0;
   --theme-gray-mid: #dfdfdf;
@@ -49,6 +47,22 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+/* Per-school accent ramps. Placeholder brand colors — adjust to each
+   institution's real palette. Selected via data-school on <html>. */
+[data-school="adsu"] {
+  --accent-light: #e9f5ee;
+  --accent-mid: #c1dfcd;
+  --accent: #134e2b;
+  --accent-dim: #103d24;
+}
+
+[data-school="ebsu"] {
+  --accent-light: #f1f1ff;
+  --accent-mid: #d6d3e2;
+  --accent: #2c187b;
+  --accent-dim:#1b1661;
 }
 
 @theme inline {

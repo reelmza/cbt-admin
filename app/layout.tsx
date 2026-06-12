@@ -30,7 +30,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      data-school={(process.env.SCHOOL_NAME || "default").toLowerCase()}
+    >
       <body className={`${inter.variable} ${merriweather.variable} antialiased`}>
         {/* Info text for smaller screens */}
         <div className="md:hidden h-full w-full bg-neutral-50 flex flex-col items-center justify-center">

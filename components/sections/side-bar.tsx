@@ -5,31 +5,10 @@ import { usePathname } from "next/navigation";
 import Spacer from "../spacer";
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
-import Image, { StaticImageData } from "next/image";
-import adsuLogo from "@/public/images/adsu-logo-auth.webp";
-import ebsuLogo from "@/public/images/ebsu-logo-auth.webp";
-import defaultLogo from "@/public/images/school-logo-auth.webp";
+import Image from "next/image";
 import getEnv from "@/lib/getEnv";
+import { getSchool } from "@/utils/schools";
 import { useEffect, useState } from "react";
-
-const schoolList: {
-  [key: string]: {
-    image: StaticImageData;
-    shortName: string;
-    fullName: string;
-  };
-} = {
-  adsu: {
-    image: adsuLogo,
-    shortName: "ADSU Portal",
-    fullName: "Adamawa State University, Mubi, Adamawa State.",
-  },
-  ebsu: {
-    image: ebsuLogo,
-    shortName: "EBSU Portal",
-    fullName: "Ebonyi State University, Abakaliki.",
-  },
-};
 
 const SideBar = () => {
   const path = usePathname();
@@ -53,9 +32,7 @@ const SideBar = () => {
     return null;
   }
 
-  const school = envVars?.schoolName
-    ? schoolList[envVars.schoolName.toLowerCase()]
-    : null;
+  const school = getSchool(envVars?.schoolName);
 
   return (
     <>
@@ -64,7 +41,7 @@ const SideBar = () => {
         <div className="h-fit">
           <div className="flex items-center gap-2">
             <Image
-              src={school?.image ?? defaultLogo}
+              src={school.image}
               alt="School logo"
               width={48}
               unoptimized
@@ -74,10 +51,10 @@ const SideBar = () => {
 
             <div className="grow border-l pl-2">
               <div className="leading-none font-bold font-serif text-accent-dim">
-                {school?.shortName ?? "CBT APP"}
+                {school.shortName}
               </div>
               <div className="text-xs text-theme-gray leading-tight">
-                {school?.fullName ?? "Oayastech CBT Exams Portal"}
+                {school.fullName}
               </div>
             </div>
           </div>

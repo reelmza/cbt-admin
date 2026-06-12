@@ -28,11 +28,11 @@ const Input = ({
     <div
       className={`w-full ${
         !size || size == "small" ? "h-10" : "12"
-      } ${extraClasses} flex border border-theme-gray-light rounded-md`}
+      } ${extraClasses} flex border border-accent-light rounded-md`}
     >
       {/* Input Icon */}
       {icon ? (
-        <div className="flex items-center justify-center h-full w-12 shrink-0 bg-theme-gray-light text-theme-gray rounded-l-md border-theme-gray-light border">
+        <div className="flex items-center justify-center h-full w-12 shrink-0 bg-accent-light text-theme-gray rounded-l-md border-accent-light border">
           {icon}
         </div>
       ) : (
