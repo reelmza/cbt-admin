@@ -2,30 +2,52 @@ import axios, { AxiosInstance } from "axios";
 
 export let localAxios: AxiosInstance;
 
+// export const getAxios = async (): Promise<void> => {
+//   const origin = typeof window !== "undefined" ? window.location.origin : "";
+//   if (origin) {
+//     console.log(origin);
+//     const res = await fetch(`${origin}/api/config`);
+//     const data = await res.json();
+
+//     localAxios = axios.create({
+//       baseURL: data.baseUrl,
+//       timeout: 120_000,
+//     });
+
+//     localAxios.interceptors.response.use(
+//       (response) => response,
+//       (error) => {
+//         if (error?.response?.status === 401) {
+//           window.dispatchEvent(new CustomEvent("session-expired"));
+//         }
+//         return Promise.reject(error);
+//       },
+//     );
+//   } else {
+//     console.log("Unable to get Origin URL");
+//   }
+// };
+
 export const getAxios = async (): Promise<void> => {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  if (origin) {
-    console.log(origin);
-    const res = await fetch(`${origin}/api/config`);
-    const data = await res.json();
+  const baseURL =
+    typeof window === "undefined"
+      ? (process.env.SERVER_BASEURL ?? "http://server:4000/api/v1")
+      : `http://${window.location.hostname}:4000/api/v1`;
 
-    localAxios = axios.create({
-      baseURL: data.baseUrl,
-      timeout: 120_000,
-    });
+  localAxios = axios.create({
+    baseURL: baseURL,
+    timeout: 120_000,
+  });
 
-    localAxios.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error?.response?.status === 401) {
-          window.dispatchEvent(new CustomEvent("session-expired"));
-        }
-        return Promise.reject(error);
-      },
-    );
-  } else {
-    console.log("Unable to get Origin URL");
-  }
+  localAxios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error?.response?.status === 401) {
+        window.dispatchEvent(new CustomEvent("session-expired"));
+      }
+      return Promise.reject(error);
+    },
+  );
 };
 
 getAxios();
