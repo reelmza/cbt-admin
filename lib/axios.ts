@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import { getApiUrl } from "./getApiURL";
 
 export let localAxios: AxiosInstance;
 
@@ -29,13 +30,13 @@ export let localAxios: AxiosInstance;
 // };
 
 export const getAxios = async (): Promise<void> => {
-  const baseURL =
-    typeof window === "undefined"
-      ? (process.env.SERVER_BASEURL ?? "http://server:4000/api/v1")
-      : `http://${window.location.hostname}:4000/api/v1`;
-
+  // const baseURL =
+  //   typeof window === "undefined"
+  //     ? (process.env.SERVER_BASEURL ?? "http://server:4000/api/v1")
+  //     : `http://${window.location.hostname}:4000/api/v1`;
+  console.log(getApiUrl());
   localAxios = axios.create({
-    baseURL: baseURL,
+    baseURL: getApiUrl(),
     timeout: 120_000,
   });
 
