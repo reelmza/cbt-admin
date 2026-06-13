@@ -7,7 +7,7 @@ export function getApiUrl(): string {
 
   // Cloud: standard ports (no port or 80/443) → nginx proxies /api/v1
   if (!port || port === "80" || port === "443") {
-    return `${protocol}//${hostname}/api/v1`;
+    return "https://womenlegacyacademy.com/api/v1/";
   }
 
   // Exam hall: frontend on port 3000/7000 → backend on port 4000
