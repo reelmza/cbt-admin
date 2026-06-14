@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, getAxios, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
 
@@ -71,7 +71,8 @@ const Page = () => {
 
     setLoading("bulkUpload");
     try {
-      const res = await localAxios.post("/import/students", formdata);
+      const api = await getAxios();
+      const res = await api.post("/import/students", formdata);
 
       console.log(res);
 
@@ -106,7 +107,8 @@ const Page = () => {
 
     setLoading("passUpload");
     try {
-      const res = await localAxios.post("/student/bulk-passport", formdata);
+      const api = await getAxios();
+      const res = await api.post("/student/bulk-passport", formdata);
       console.log(res);
       if (res.status == 200) {
         setLoading(null);
@@ -126,8 +128,9 @@ const Page = () => {
   const downloadTemplate = async () => {
     try {
       setLoading("downloadTemplate");
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.get("/import/template/students", {
+      const res = await api.get("/import/template/students", {
         responseType: "blob",
       });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -171,8 +174,9 @@ const Page = () => {
     if (subGroup) query.set("subGroup", subGroup);
 
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.get(`/student/all?${query.toString()}`, {
+      const res = await api.get(`/student/all?${query.toString()}`, {
         signal: controller.signal,
       });
 
@@ -240,17 +244,16 @@ const Page = () => {
     const controller = new AbortController();
 
     const getData = async () => {
-      if (!localAxios) return;
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
-
         // Get Students
-        const res = await localAxios.get("/student/all?pageNumber=1", {
+        const res = await api.get("/student/all?pageNumber=1", {
           signal: controller.signal,
         });
 
         // Get Groups (Faculties)
-        const groupRes = await localAxios.get("/school/groups", {
+        const groupRes = await api.get("/school/groups", {
           signal: controller.signal,
         });
 

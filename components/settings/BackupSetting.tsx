@@ -2,7 +2,7 @@
 
 import Button from "@/components/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { toastConfig } from "@/utils/toastConfig";
 import {
   AlertTriangle,
@@ -90,12 +90,13 @@ const BackupSetting = () => {
     const errors: Record<string, string> = {};
     const succeeded: string[] = [];
 
+    const api = await getAxios();
     attachHeaders(session!.user.token);
 
     await Promise.allSettled(
       [...selected].map(async (collection) => {
         try {
-          await localAxios.post(`${base}/${collection}`, {});
+          await api.post(`${base}/${collection}`, {});
           succeeded.push(collection);
         } catch (err: any) {
           errors[collection] =
@@ -134,8 +135,9 @@ const BackupSetting = () => {
         : "/config/admin/pull-all";
 
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.post(endpoint, {});
+      const res = await api.post(endpoint, {});
       const data = res.data;
 
       const errors: Record<string, string> = data.errors ?? {};

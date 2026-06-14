@@ -5,7 +5,7 @@ import PageNavigator from "@/components/sections/page-navigator";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import TableSearchBox from "@/components/table-searchbox";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { Archive, Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -52,11 +52,12 @@ const Page = () => {
       setPageData(null);
       setFilteredPageData(null);
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
         const url = includeArchived
           ? "/admin/assessments?include_archived=true"
           : "/admin/assessments";
-        const res = await localAxios.get(url, {
+        const res = await api.get(url, {
           signal: controller.signal,
         });
 

@@ -6,21 +6,10 @@ import Spacer from "../spacer";
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
-import getEnv from "@/lib/getEnv";
 import { getSchool } from "@/utils/schools";
-import { useEffect, useState } from "react";
 
-const SideBar = () => {
+const SideBar = ({ schoolName }: { schoolName?: string | null }) => {
   const path = usePathname();
-  const [envVars, setEnvVars] = useState<{ schoolName: string } | null>(null);
-
-  useEffect(() => {
-    const getVars = async () => {
-      const vars = await getEnv();
-      if (vars) setEnvVars(vars);
-    };
-    getVars();
-  }, []);
 
   // Hide sidebar on pre-auth pages
   if (
@@ -32,7 +21,7 @@ const SideBar = () => {
     return null;
   }
 
-  const school = getSchool(envVars?.schoolName);
+  const school = getSchool(schoolName);
 
   return (
     <>

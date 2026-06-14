@@ -1,0 +1,209 @@
+"use client";
+import Button from "@/components/button";
+import Input from "@/components/input";
+import Spacer from "@/components/spacer";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getAxios } from "@/lib/axios";
+
+import {
+  Book,
+  GraduationCap,
+  Key,
+  Mail,
+  MoveRight,
+  UserRound,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+
+const SignupForm = () => {
+  const router = useRouter();
+
+  // States
+  const [loading, setLoading] = useState<string | null>(null);
+
+  // Signup Logic
+  const createAdmin = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      name: { value: string };
+      email: { value: string };
+      faculty: { value: string };
+      department: { value: string };
+      role: { value: string };
+      password: { value: string };
+      confirmPassword: { value: string };
+    };
+
+    // Unmatching password
+    if (target.password.value !== target.confirmPassword.value) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    // Password too short
+    if (target.password.value.length < 6) {
+      toast.error("Passwords too short.");
+      return;
+    }
+
+    setLoading("createAdmin");
+    try {
+      const api = await getAxios();
+      const res = await api.post("/admin/create", {
+        fullName: target.name.value,
+        email: target.email.value,
+        password: target.password.value,
+        role: target.role.value,
+      });
+
+      if (res.status == 200) {
+        toast.success("Admin created successfully, please login.");
+        router.push("/");
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      console.log(error);
+
+      // Email already exist
+      if (error.status == 400) {
+        toast.error(error.response.data.message);
+      }
+
+      // Validation error from server
+      if (error.status === 422) {
+        toast.error(error.response.data.message);
+      }
+
+      // Some other unspecified error
+      if (!error.status) {
+        toast.error("An error occured, please try again.");
+      }
+
+      setLoading(null);
+    }
+  };
+
+  return (
+    <div className="col-span-6 flex flex-col justify-center items-center">
+      <div className="w-7/10 rounded-lg">
+        {/* Form Heading */}
+        <div className="text-2xl font-bold mb-5 text-accent-dim">
+          Create a admin account.
+        </div>
+
+        <form onSubmit={createAdmin} className="flex flex-wrap justify-between">
+          {/* Admin Full Name */}
+          <div className="w-[100%]">
+            <Input
+              name="name"
+              type="text"
+              placeholder="Full Name"
+              icon={<UserRound size={16} />}
+              required
+            />
+            <Spacer size="sm" />
+          </div>
+
+          {/* Admin Email */}
+          <div className="w-[100%]">
+            <Input
+              name="email"
+              type="text"
+              placeholder="E-mail address"
+              icon={<Mail size={16} />}
+              required
+            />
+            <Spacer size="sm" />
+          </div>
+
+          {/* Admin Faculty */}
+          <div className="w-[100%]">
+            <Input
+              name="faculty"
+              type="text"
+              placeholder="Faculty"
+              icon={<GraduationCap size={16} />}
+              required={false}
+            />
+            <Spacer size="sm" />
+          </div>
+
+          {/* Admin Department */}
+          <div className="w-[100%]">
+            <Input
+              name="department"
+              type="text"
+              placeholder="Department"
+              icon={<Book size={16} />}
+              required={false}
+            />
+            <Spacer size="sm" />
+          </div>
+
+          {/* Admin Role */}
+          <div className="w-[100%]">
+            <Select name="role">
+              <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Admin Role</SelectLabel>
+                  <SelectItem value="superadmin">Super Admin</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Spacer size="sm" />
+          </div>
+
+          {/* Password */}
+          <div className="w-[49%]">
+            <Input
+              name="password"
+              type="password"
+              placeholder="Enter password"
+              icon={<Key size={16} />}
+            />
+            <Spacer size="sm" />
+          </div>
+
+          {/* Confirm Password */}
+          <div className="w-[49%]">
+            <Input
+              name="confirmPassword"
+              type="password"
+              placeholder="Enter password again"
+              icon={<Key size={16} />}
+            />
+            <Spacer size="md" />
+          </div>
+
+          {/* Submit Button */}
+          <div className="w-[100%]">
+            <Button
+              title="Create admin account"
+              loading={loading === "createAdmin"}
+              icon={<MoveRight size={20} strokeWidth={2} />}
+              variant="fill"
+            />
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default SignupForm;

@@ -3,7 +3,7 @@
 import Button from "@/components/button";
 import Preload from "@/components/preload";
 import Table from "@/components/table";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { AssessmentSubmissionsResponse } from "@/types";
 import { toastConfig } from "@/utils/toastConfig";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -24,8 +24,9 @@ const Page = ({ id }: { id: string }) => {
 
     const getAssessments = async () => {
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
-        const res = await localAxios.get(`/assessment/submissions/${id}`, {
+        const res = await api.get(`/assessment/submissions/${id}`, {
           signal: controller.signal,
         });
 
@@ -57,8 +58,9 @@ const Page = ({ id }: { id: string }) => {
   const handleRemark = async () => {
     try {
       setLoading("handleMark");
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      await localAxios.post(`/assessment/remark-all/${id}`);
+      await api.post(`/assessment/remark-all/${id}`);
       toast.success("Remark triggered successfully.", toastConfig);
       setLoading(null);
     } catch (error: any) {

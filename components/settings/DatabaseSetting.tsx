@@ -2,7 +2,7 @@
 
 import Button from "@/components/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { toastConfig } from "@/utils/toastConfig";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
@@ -67,8 +67,9 @@ const DatabaseSetting = () => {
 
     setLoading(true);
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.delete("/config/clear-db", { data: body });
+      const res = await api.delete("/config/clear-db", { data: body });
       toast.success(
         res.data.message || "Collections cleared successfully.",
         toastConfig,

@@ -2,7 +2,7 @@
 
 import Spacer from "@/components/spacer";
 
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useCallback, useEffect, useState } from "react";
@@ -54,10 +54,11 @@ const Page = ({ id }: { id: string }) => {
     const globalController = new AbortController();
     setLoading("removeAss");
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
 
       // Get students assessments
-      const res = await localAxios.post(`/assessment/unassign/${assId}`, {
+      const res = await api.post(`/assessment/unassign/${assId}`, {
         signal: globalController.signal,
       });
 
@@ -91,10 +92,11 @@ const Page = ({ id }: { id: string }) => {
     const globalController = new AbortController();
     setLoading("removeSub");
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
 
       // Get students assessments
-      const res = await localAxios.post(
+      const res = await api.post(
         `/assessment/remove-submission/${assId}`,
         {
           signal: globalController.signal,
@@ -138,8 +140,9 @@ const Page = ({ id }: { id: string }) => {
 
     setLoading("resetPassword");
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.patch(
+      const res = await api.patch(
         `/student/reset-password/${encodeURIComponent(profile?.regNumber ?? "")}`,
         { password: target.password.value },
       );
@@ -173,9 +176,10 @@ const Page = ({ id }: { id: string }) => {
 
     setLoading("update");
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
 
-      const res = await localAxios.patch(`/student/update/${id}`, {
+      const res = await api.patch(`/student/update/${id}`, {
         fullName: target.fullName.value,
         email: target.email.value,
         phoneNumber: target.phoneNumber.value,
@@ -204,15 +208,16 @@ const Page = ({ id }: { id: string }) => {
 
     const getAssessments = async () => {
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
 
         // Get profile
-        const studentRes = await localAxios.get(`/student/profile/${id}`, {
+        const studentRes = await api.get(`/student/profile/${id}`, {
           signal: controller.signal,
         });
 
         // Get students assessments
-        const assRes = await localAxios.get(`/assessment/student/${id}`, {
+        const assRes = await api.get(`/assessment/student/${id}`, {
           signal: controller.signal,
         });
 

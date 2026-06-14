@@ -1,6 +1,6 @@
 Claude remember to consider these instructions for any action you do:
 
-1. Always use `localAxios` with `attachHeaders` for API calls, never raw fetch
+1. Always get an axios instance with `const api = await getAxios()` and use `attachHeaders` for API calls, never raw fetch or `localAxios`
 2. Use `toast` from sonner for all user feedback
 3. Don't add comments unless the why is non-obvious
 4. Prefer editing existing files over creating new ones

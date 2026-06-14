@@ -4,7 +4,7 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import Spacer from "@/components/spacer";
 import { Switch } from "@/components/ui/switch";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { toastConfig } from "@/utils/toastConfig";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
@@ -30,8 +30,9 @@ const SecuritySetting = () => {
 
     setLoading("changePassword");
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.patch("/user/change-password", {
+      const res = await api.patch("/user/change-password", {
         oldPassword: target.currentPassword.value,
         newPassword: target.newPassword.value,
       });

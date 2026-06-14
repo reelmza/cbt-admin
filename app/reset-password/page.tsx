@@ -6,11 +6,13 @@ import { Key, Lock, Mail, MoveRight, UserRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  const schoolName = process.env.SCHOOL_NAME || null;
+
   return (
     <div className="grid h-full w-full grid-cols-12 font-sans">
       {/* Side Box */}
-      <SideBox />
+      <SideBox schoolName={schoolName} />
 
       {/* Form Box */}
       <div className="col-span-6 flex flex-col justify-center items-center">

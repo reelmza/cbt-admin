@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
 
@@ -75,7 +75,8 @@ const Page = () => {
 
     setLoading("bulkUpload");
     try {
-      const res = await localAxios.post("/student/bulk-upload", formdata);
+      const api = await getAxios();
+      const res = await api.post("/student/bulk-upload", formdata);
 
       console.log(res);
 
@@ -109,7 +110,8 @@ const Page = () => {
 
     setLoading("createAdmin");
     try {
-      const res = await localAxios.post("/admin/create", {
+      const api = await getAxios();
+      const res = await api.post("/admin/create", {
         fullName: target.fullName.value,
         email: target.email.value,
         password: target.password.value,
@@ -144,7 +146,8 @@ const Page = () => {
 
     setLoading("passUpload");
     try {
-      const res = await localAxios.post("/student/bulk-passport", formdata);
+      const api = await getAxios();
+      const res = await api.post("/student/bulk-passport", formdata);
       console.log(res);
       if (res.status == 200) {
         setLoading(null);
@@ -167,10 +170,11 @@ const Page = () => {
 
     const getData = async () => {
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
 
         // Get Students
-        const res = await localAxios.get("/admin/all?pageNumber=1", {
+        const res = await api.get("/admin/all?pageNumber=1", {
           signal: controller.signal,
         });
 

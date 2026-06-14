@@ -3,7 +3,7 @@ import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import TableSearchBox from "@/components/table-searchbox";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { SessionProvider, useSession } from "next-auth/react";
 import { ChangeEvent, useEffect, useState } from "react";
@@ -46,8 +46,9 @@ const Page = () => {
 
     const getArchives = async () => {
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
-        const res = await localAxios.get("/admin/archives", {
+        const res = await api.get("/admin/archives", {
           signal: controller.signal,
         });
 

@@ -4,7 +4,7 @@ import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { toastConfig } from "@/utils/toastConfig";
 import { Download } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -50,13 +50,14 @@ const Page = ({ id }: { id: string }) => {
 
     const getData = async () => {
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
 
         const [passRateRes, rankingRes] = await Promise.all([
-          localAxios.get(`/analytics/pass-rate/${id}`, {
+          api.get(`/analytics/pass-rate/${id}`, {
             signal: controller.signal,
           }),
-          localAxios.get(`/analytics/ranking/${id}`, {
+          api.get(`/analytics/ranking/${id}`, {
             signal: controller.signal,
           }),
         ]);
@@ -86,8 +87,9 @@ const Page = ({ id }: { id: string }) => {
   const downloadPdf = async () => {
     setLoading("downloadPdf");
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.get(`/analytics/pass-rate/${id}/pdf`, {
+      const res = await api.get(`/analytics/pass-rate/${id}/pdf`, {
         responseType: "blob",
       });
 

@@ -6,6 +6,8 @@ import { Info } from "lucide-react";
 import SideBar from "@/components/sections/side-bar";
 import { Toaster } from "@/components/ui/sonner";
 import SessionExpiredOverlay from "@/components/session-expired-overlay";
+import { getSchool } from "@/utils/schools";
+import { fetchSchoolName } from "@/lib/getSchoolName";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -18,23 +20,27 @@ const merriweather = Merriweather({
   weight: ["300", "400", "700", "900"],
 });
 
-export const metadata: Metadata = {
-  title: "CBT V2",
-  description:
-    "An offline CBT web application for conducting and managing exams in Nigerian tertiary institutions.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const school = getSchool(await fetchSchoolName());
+  return {
+    title: school.name,
+    description:
+      "An offline CBT web application for conducting and managing exams in Nigerian tertiary institutions.",
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const schoolName = await fetchSchoolName();
+
   return (
-    <html
-      lang="en"
-      data-school={(process.env.SCHOOL_NAME || "default").toLowerCase()}
-    >
-      <body className={`${inter.variable} ${merriweather.variable} antialiased`}>
+    <html lang="en" data-school={(schoolName || "default").toLowerCase()}>
+      <body
+        className={`${inter.variable} ${merriweather.variable} antialiased`}
+      >
         {/* Info text for smaller screens */}
         <div className="md:hidden h-full w-full bg-neutral-50 flex flex-col items-center justify-center">
           <Info size={32} className="text-accent-dim" />
@@ -46,7 +52,7 @@ export default function RootLayout({
 
         {/* Show app only on desktop */}
         <div className="hidden md:flex items-center justify-center h-full w-full">
-          <SideBar />
+          <SideBar schoolName={schoolName} />
           {children}
         </div>
 

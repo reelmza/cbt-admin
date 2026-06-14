@@ -2,7 +2,7 @@
 
 import Preload from "@/components/preload";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { SubmissionDetailResponse } from "@/types";
 import { Check, Stars, X } from "lucide-react";
@@ -38,8 +38,9 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
         ? setLoading(`pass-markQuestion-${questionId}`)
         : setLoading(`fail-markQuestion-${questionId}`);
 
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.patch(
+      const res = await api.patch(
         `/assessment/mark-question/${pageData?.submissionId}/${questionId}`,
         { score: score, type: "pass" },
         {
@@ -83,8 +84,9 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
   const aiMark = async () => {
     try {
       setLoading("aiMark");
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      await localAxios.post(`/assessment/ai-mark/${id}/${studentId}`);
+      await api.post(`/assessment/ai-mark/${id}/${studentId}`);
       toast.success("AI marking completed successfully", toastConfig);
       setLoading(null);
     } catch (error: any) {
@@ -102,8 +104,9 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
     try {
       setLoading("finalizeMarking");
 
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.patch(
+      const res = await api.patch(
         `/assessment/finalize-marking/${pageData?.submissionId}`,
         {},
         { signal: controller.signal },
@@ -128,8 +131,9 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
 
     const getAssessments = async () => {
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
-        const res = await localAxios.get(
+        const res = await api.get(
           `/assessment/submissions/${id}/${studentId}`,
           {
             signal: controller.signal,

@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import {
   ArrowRight,
   Check,
@@ -110,7 +110,8 @@ const Main = () => {
     });
 
     try {
-      const res = await localAxios.post(`/school/create-assessment`, formData);
+      const api = await getAxios();
+      const res = await api.post(`/school/create-assessment`, formData);
       if (res.status === 200 || res.status === 201) {
         router.push("/assessment");
       }
@@ -223,10 +224,11 @@ const Main = () => {
 
     const getData = async () => {
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
         const [coursesRes, configRes] = await Promise.all([
-          localAxios.get("/admin/courses", { signal: controller.signal }),
-          localAxios.get("/config/school", { signal: controller.signal }),
+          api.get("/admin/courses", { signal: controller.signal }),
+          api.get("/config/school", { signal: controller.signal }),
         ]);
 
         if (coursesRes.status === 201) {
@@ -854,7 +856,8 @@ const QuestionForm = ({
     formData.append("file", file, "passport.zip");
 
     try {
-      const res = await localAxios.post("/utility/file-upload", formData);
+      const api = await getAxios();
+      const res = await api.post("/utility/file-upload", formData);
       if (res.status == 200 || res.status == 201) {
         console.log(res.data.data.url);
         return res.data.data.url;

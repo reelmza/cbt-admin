@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { ArrowLeft, Radio, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -106,8 +106,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
   const pardonViolation = async (violationId: string) => {
     setPardoningIds((prev) => new Set(prev).add(violationId));
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.patch(
+      const res = await api.patch(
         `/assessment/violations/${violationId}/pardon`,
       );
       if (res.status === 200 || res.status === 201) {
@@ -143,8 +144,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     setViolationsOpen(true);
     setViolationsLoading(true);
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.get(
+      const res = await api.get(
         `/assessment/violations/${assessmentId}?studentId=${student.id}`,
       );
       if (res.status === 200 || res.status === 201) {
@@ -164,8 +166,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
     const getData = async () => {
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
-        const res = await localAxios.get(
+        const res = await api.get(
           "/assessment/my-invigilator-assessments",
           { signal: controller.signal },
         );

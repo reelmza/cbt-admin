@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { attachHeaders, localAxios } from "@/lib/axios";
+import { attachHeaders, getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
 import { Pencil, Plus } from "lucide-react";
@@ -38,7 +38,8 @@ const Page = () => {
 
     setLoading("addGroup");
     try {
-      const res = await localAxios.post("admin/create-group", {
+      const api = await getAxios();
+      const res = await api.post("admin/create-group", {
         code: target.groupCode.value,
         name: target.groupName.value,
         description: target.groupDescription.value,
@@ -72,8 +73,9 @@ const Page = () => {
 
     setLoading("editGroup");
     try {
+      const api = await getAxios();
       attachHeaders(session!.user.token);
-      const res = await localAxios.patch(`/school/group/${editGroup._id}`, {
+      const res = await api.patch(`/school/group/${editGroup._id}`, {
         code: target.groupCode.value,
         name: target.groupName.value,
         description: target.groupDescription.value,
@@ -105,8 +107,9 @@ const Page = () => {
 
     const getGroups = async () => {
       try {
+        const api = await getAxios();
         attachHeaders(session!.user.token);
-        const res = await localAxios.get("/admin/groups", {
+        const res = await api.get("/admin/groups", {
           signal: controller.signal,
         });
 

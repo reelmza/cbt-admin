@@ -1,37 +1,27 @@
 import { User } from "next-auth";
+import { getAxios } from "./axios";
 
 export const schooLogin: (
   credentials: Partial<Record<"email" | "password" | "loginClient", unknown>>,
   user: any,
 ) => Promise<User | null> = async (credentials, user) => {
   try {
+    const api = await getAxios();
     // Get user from database
-    const targetUser = await fetch(
-      `${process.env.SERVER_BASEURL}/admin/login`,
-
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: credentials.email,
-          password: credentials.password,
-        }),
-      },
-    );
-
-    console.log(targetUser);
+    const res = await api.post(`${process.env.SERVER_API_URL}/admin/login`, {
+      email: credentials.email,
+      password: credentials.password,
+    });
 
     // Check if user exist
-    if (targetUser.status === 422 || targetUser.status === 400) {
+    if (res.status === 422 || res.status === 400) {
       return user;
     }
 
     // Parse user response body
-    const res = await targetUser.json();
-    user = { ...res.data.user };
-    console.log(res);
+
+    user = { ...res.data.data.user };
+    console.log(res.data);
 
     if (!user) {
       return null;
