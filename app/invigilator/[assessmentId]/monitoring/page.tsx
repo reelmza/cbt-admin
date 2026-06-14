@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { ArrowLeft, Radio, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -107,7 +107,6 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     setPardoningIds((prev) => new Set(prev).add(violationId));
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/assessment/violations/${violationId}/pardon`,
       );
@@ -145,7 +144,6 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     setViolationsLoading(true);
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.get(
         `/assessment/violations/${assessmentId}?studentId=${student.id}`,
       );
@@ -167,7 +165,6 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     const getData = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
         const res = await api.get(
           "/assessment/my-invigilator-assessments",
           { signal: controller.signal },

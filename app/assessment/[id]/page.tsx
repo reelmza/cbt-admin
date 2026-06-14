@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useEffect, useState } from "react";
 import { PageDataType } from "./id.types";
@@ -65,7 +65,6 @@ const Page = ({ id }: { id: string }) => {
   const fetchAdmins = async () => {
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.get("/admin/all");
       if (res.status === 200) {
         setAdmins(res.data.data.data);
@@ -84,7 +83,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("assignInvigilator");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.post(
         `/admin/assign-invigilator/${id}`,
         { userId: selectedAdminId },
@@ -114,7 +112,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading(`removeInvigilator-${adminId}`);
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.delete(
         `/admin/remove-invigilator/${id}/${adminId}`,
         { signal: globalController.signal },
@@ -150,7 +147,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("updateStatus");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/admin/update-assessment/${id}`,
         { status: val },
@@ -188,7 +184,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("updateDuration");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/admin/update-assessment/${id}`,
         { timeLimit: Number(target.duration.value) },
@@ -230,7 +225,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("updateStartDate");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/admin/update-assessment/${id}`,
         { startDate: new Date(target.startDate.value).toISOString() },
@@ -269,7 +263,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("updateDueDate");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/admin/update-assessment/${id}`,
         { dueDate: new Date(target.dueDate.value).toISOString() },
@@ -309,7 +302,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("updateTotalMarks");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/admin/update-assessment/${id}`,
         { totalMarks: Number(target.totalMarks.value) },
@@ -346,7 +338,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("updatePassMark");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/admin/update-assessment/${id}`,
         { passmark: Number(target.passmark.value) },
@@ -378,7 +369,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("authorizeAss");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(`/assessment/authorize/${id}`, {
         signal: globalController.signal,
       });
@@ -408,7 +398,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("endAssessment");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(`/assessment/end/${id}`, {
         signal: globalController.signal,
       });
@@ -438,7 +427,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("restartAss");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(`/assessment/reset-status/${id}`, {
         signal: globalController.signal,
       });
@@ -471,7 +459,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("toggleShuffle");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/assessment/update-assessment/${id}`,
         { shuffleQuestions: sections },
@@ -501,7 +488,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("toggleBrowserRestriction");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/assessment/update-assessment/${id}`,
         { allowBrowserRestriction: val },
@@ -532,7 +518,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("archiveAss");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.post(`/admin/archive/${id}`, {
         signal: globalController.signal,
       });
@@ -560,7 +545,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("deleteAss");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.delete(`/assessment/delete/${id}`, {
         signal: globalController.signal,
       });
@@ -605,7 +589,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("assignToFaculty");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.post(
         `/assessment/${target.action.value}/${id}`,
         {
@@ -650,7 +633,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("assignToStudent");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
 
       const studentRes = await api.get(`/student/all`, {
         params: { searchByKeyword: target.regNumber.value },
@@ -696,7 +678,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("downloadAssignTemplate");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.get("/import/template/assign-students", {
         responseType: "blob",
         signal: globalController.signal,
@@ -734,7 +715,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("bulkAssignStudents");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const formData = new FormData();
       formData.append("file", bulkAssignFile);
 
@@ -767,7 +747,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("downloadUnassignTemplate");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.get("/import/template/unassign-students", {
         responseType: "blob",
         signal: globalController.signal,
@@ -805,7 +784,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("bulkUnassignStudents");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const formData = new FormData();
       formData.append("file", bulkUnassignFile);
 
@@ -838,7 +816,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("generateAssEntries");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.get(
         `/assessment/export-submission/${id}`,
 
@@ -875,7 +852,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading(`generateResults-${output}`);
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.get(
         `/assessment/export-result/${id}`,
 
@@ -924,7 +900,6 @@ const Page = ({ id }: { id: string }) => {
     const getAssessments = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
         const res = await api.get(`/admin/assessment/${id}`, {
           signal: controller.signal,
         });

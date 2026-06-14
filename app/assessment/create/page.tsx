@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import {
   ArrowRight,
   Check,
@@ -225,7 +225,6 @@ const Main = () => {
     const getData = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
         const [coursesRes, configRes] = await Promise.all([
           api.get("/admin/courses", { signal: controller.signal }),
           api.get("/config/school", { signal: controller.signal }),

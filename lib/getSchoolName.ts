@@ -1,20 +1,18 @@
 import { headers } from "next/headers";
 
-// Server-side read of the runtime school identity from /api/config.
-// Used during SSR so the school logo/name/theme render correctly on first paint
-// (no flicker) and reflect the per-deployment runtime config rather than a
-// build-time value. Deduped by React request memoization across consumers.
+// Server-side read of the runtime school identity.
+//
+// We read process.env directly rather than HTTP-fetching /api/config: a
+// server-side self-fetch via the public host fails under Docker port-mapping
+// (e.g. inside the container nothing listens on the published port like :7000,
+// so the request is refused and the theme falls back to "default"). The server
+// already has the env at runtime — /api/config exists only for the client bundle,
+// which can't read server env.
+//
+// Touching headers() opts this into dynamic (per-request) rendering, so the value
+// is read at runtime in the container instead of being baked as "default" during
+// `next build`, where SCHOOL_NAME is unset.
 export async function fetchSchoolName(): Promise<string | null> {
-  try {
-    const headerList = await headers();
-    const host = headerList.get("host");
-    const protocol = headerList.get("x-forwarded-proto") ?? "http";
-    const res = await fetch(`${protocol}://${host}/api/config`, {
-      cache: "no-store",
-    });
-    const { schoolName } = await res.json();
-    return schoolName ?? null;
-  } catch {
-    return null;
-  }
+  await headers();
+  return process.env.SCHOOL_NAME ?? null;
 }

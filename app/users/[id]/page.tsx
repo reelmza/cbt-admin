@@ -2,7 +2,7 @@
 
 import Spacer from "@/components/spacer";
 
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useCallback, useEffect, useState } from "react";
@@ -55,7 +55,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("removeAss");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
 
       // Get students assessments
       const res = await api.post(`/assessment/unassign/${assId}`, {
@@ -93,7 +92,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("removeSub");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
 
       // Get students assessments
       const res = await api.post(
@@ -141,7 +139,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("resetPassword");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/student/reset-password/${encodeURIComponent(profile?.regNumber ?? "")}`,
         { password: target.password.value },
@@ -177,7 +174,6 @@ const Page = ({ id }: { id: string }) => {
     setLoading("update");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
 
       const res = await api.patch(`/student/update/${id}`, {
         fullName: target.fullName.value,
@@ -209,7 +205,6 @@ const Page = ({ id }: { id: string }) => {
     const getAssessments = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
 
         // Get profile
         const studentRes = await api.get(`/student/profile/${id}`, {

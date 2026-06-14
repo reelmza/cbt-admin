@@ -3,7 +3,7 @@
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { Radio } from "lucide-react";
 import Link from "next/link";
@@ -93,7 +93,6 @@ const Page = () => {
     const getData = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
         const res = await api.get(
           "/assessment/my-invigilator-assessments",
           { signal: controller.signal },

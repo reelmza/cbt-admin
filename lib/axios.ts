@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from "axios";
 
-// export let localAxios: AxiosInstance;
 let clientPromise: Promise<AxiosInstance> | null = null;
 
 // Server-side: process.env is read at runtime in Node, so it's already per-environment
@@ -21,6 +20,21 @@ function createClientInstance(): Promise<AxiosInstance> {
     const { clientApiUrl } = await res.json();
 
     const instance = axios.create({ baseURL: clientApiUrl, timeout: 120_000 });
+
+    // Inject the NextAuth token at dispatch time so every request carries the
+    // current token, with no per-call header wiring. Dynamically imported to keep
+    // next-auth/react out of the server bundle (getAxios is also used server-side).
+    // broadcast: false is critical — the default getSession() broadcasts a session
+    // event that makes SessionProvider refetch and update state, re-running every
+    // [session] effect and looping requests endlessly.
+    instance.interceptors.request.use(async (config) => {
+      const { getSession } = await import("next-auth/react");
+      const session = await getSession({ broadcast: false });
+      const token = session?.user?.token;
+      if (token) config.headers.set("Authorization", `Bearer ${token}`);
+      return config;
+    });
+
     instance.interceptors.response.use(
       (r) => r,
       (error) => {
@@ -41,52 +55,3 @@ export function getAxios(): Promise<AxiosInstance> {
     ? Promise.resolve(createServerInstance())
     : createClientInstance();
 }
-// export const getAxios = async (): Promise<void> => {
-//   const origin = typeof window !== "undefined" ? window.location.origin : "";
-//   if (origin) {
-//     console.log(origin);
-//     const res = await fetch(`${origin}/api/config`);
-//     const data = await res.json();
-
-//     localAxios = axios.create({
-//       baseURL: data.baseUrl,
-//       timeout: 120_000,
-//     });
-
-//     localAxios.interceptors.response.use(
-//       (response) => response,
-//       (error) => {
-//         if (error?.response?.status === 401) {
-//           window.dispatchEvent(new CustomEvent("session-expired"));
-//         }
-//         return Promise.reject(error);
-//       },
-//     );
-//   } else {
-//     console.log(
-//       origin,
-//       "No origin found, skipping axios configuration for this instance",
-//     );
-//   }
-// };
-
-// getAxios();
-
-// Helper to attach headers dynamically
-// export const attachHeaders = (token?: string, contentType?: string) => {
-//   if (token && localAxios)
-//     localAxios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-//   if (contentType && localAxios)
-//     localAxios.defaults.headers.common["Content-Type"] = contentType;
-// };
-
-export const attachHeaders = (token?: string, contentType?: string) => {
-  if (token && clientPromise)
-    clientPromise.then((instance) => {
-      instance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    });
-  if (contentType && clientPromise)
-    clientPromise.then((instance) => {
-      instance.defaults.headers.common["Content-Type"] = contentType;
-    });
-};

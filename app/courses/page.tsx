@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import Input from "@/components/input";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 
 import { Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
@@ -55,7 +55,6 @@ const Page = () => {
 
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.get(`/admin/courses?${query.toString()}`, {
         signal: controller.signal,
       });
@@ -138,7 +137,6 @@ const Page = () => {
     const getData = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
         const res = await api.get("/admin/courses?pageNumber=1", {
           signal: controller.signal,
         });

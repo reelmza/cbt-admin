@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
 import { Pencil, Plus } from "lucide-react";
@@ -84,7 +84,6 @@ const Page = () => {
     setLoading("editSubGroup");
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/school/subgroup/${editSubGroup._id}`,
         {
@@ -123,7 +122,6 @@ const Page = () => {
     const getGroups = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
         const res = await api.get("/admin/groups", {
           signal: controller.signal,
         });

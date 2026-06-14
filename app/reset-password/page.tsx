@@ -5,9 +5,10 @@ import Spacer from "@/components/spacer";
 import { Key, Lock, Mail, MoveRight, UserRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { fetchSchoolName } from "@/lib/getSchoolName";
 
 export default async function Home() {
-  const schoolName = process.env.SCHOOL_NAME || null;
+  const schoolName = await fetchSchoolName();
 
   return (
     <div className="grid h-full w-full grid-cols-12 font-sans">

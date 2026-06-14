@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
 
@@ -171,7 +171,6 @@ const Page = () => {
     const getData = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
 
         // Get Students
         const res = await api.get("/admin/all?pageNumber=1", {

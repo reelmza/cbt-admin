@@ -2,7 +2,7 @@
 
 import Preload from "@/components/preload";
 import { Spinner } from "@/components/ui/spinner";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { SubmissionDetailResponse } from "@/types";
 import { Check, Stars, X } from "lucide-react";
@@ -39,7 +39,6 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
         : setLoading(`fail-markQuestion-${questionId}`);
 
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/assessment/mark-question/${pageData?.submissionId}/${questionId}`,
         { score: score, type: "pass" },
@@ -85,7 +84,6 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
     try {
       setLoading("aiMark");
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       await api.post(`/assessment/ai-mark/${id}/${studentId}`);
       toast.success("AI marking completed successfully", toastConfig);
       setLoading(null);
@@ -105,7 +103,6 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
       setLoading("finalizeMarking");
 
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.patch(
         `/assessment/finalize-marking/${pageData?.submissionId}`,
         {},
@@ -132,7 +129,6 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
     const getAssessments = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
         const res = await api.get(
           `/assessment/submissions/${id}/${studentId}`,
           {

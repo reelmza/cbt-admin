@@ -4,7 +4,7 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { toastConfig } from "@/utils/toastConfig";
 import { ImagePlus, X } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -36,7 +36,6 @@ const GeneralSetting = () => {
     const getData = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
         const res = await api.get("/config/school", {
           signal: controller.signal,
         });
@@ -90,7 +89,6 @@ const GeneralSetting = () => {
     if (logoFile) formData.append("logo", logoFile);
 
     setLoading("institution");
-    attachHeaders(session!.user.token);
     try {
       const api = await getAxios();
       const res = await api.patch("/config/school", formData);
@@ -116,7 +114,6 @@ const GeneralSetting = () => {
     formData.append("academicYear", target.term.value);
 
     setLoading("session");
-    attachHeaders(session!.user.token);
     try {
       const api = await getAxios();
       const res = await api.patch("/config/school", formData);

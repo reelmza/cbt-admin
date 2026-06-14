@@ -2,7 +2,7 @@
 
 import Button from "@/components/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { toastConfig } from "@/utils/toastConfig";
 import {
   AlertTriangle,
@@ -11,7 +11,6 @@ import {
   CloudUpload,
   XCircle,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -63,7 +62,6 @@ const labelOf = (id: string) =>
   COLLECTIONS.find((c) => c.id === id)?.label ?? id;
 
 const BackupSetting = () => {
-  const { data: session } = useSession();
   const [selected, setSelected] = useState<Set<CollectionKey>>(new Set());
   const [loading, setLoading] = useState<LoadingState>(null);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
@@ -91,7 +89,6 @@ const BackupSetting = () => {
     const succeeded: string[] = [];
 
     const api = await getAxios();
-    attachHeaders(session!.user.token);
 
     await Promise.allSettled(
       [...selected].map(async (collection) => {
@@ -136,7 +133,6 @@ const BackupSetting = () => {
 
     try {
       const api = await getAxios();
-      attachHeaders(session!.user.token);
       const res = await api.post(endpoint, {});
       const data = res.data;
 

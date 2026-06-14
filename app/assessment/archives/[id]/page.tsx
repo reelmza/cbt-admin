@@ -2,7 +2,7 @@
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
-import { attachHeaders, getAxios } from "@/lib/axios";
+import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -49,7 +49,6 @@ const Page = ({ id }: { id: string }) => {
     const getArchive = async () => {
       try {
         const api = await getAxios();
-        attachHeaders(session!.user.token);
         const res = await api.get(`/admin/archive/${id}`, {
           signal: controller.signal,
         });
