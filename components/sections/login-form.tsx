@@ -8,6 +8,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+const TOAST_POS = { position: "bottom-left" } as const;
+
+// Looked up most-specific-first: a custom `code` from authorize(), then the
+// Auth.js error type, then a generic fallback.
+const LOGIN_ERRORS: Record<string, string> = {
+  invalid_credentials: "Incorrect details provided.",
+  CredentialsSignin: "Incorrect details provided.",
+  server_unavailable: "We couldn't reach the server. Please try again shortly.",
+  Configuration: "We couldn't reach the server. Please try again shortly.",
+};
+
 function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -21,26 +32,32 @@ function LoginForm() {
     };
 
     setLoading("login");
-    const res = await signIn("credentials", {
-      email: target.email.value,
-      password: target.password.value,
-      loginClient: "school",
-      redirect: false,
-    });
+    try {
+      const res = await signIn("credentials", {
+        email: target.email.value,
+        password: target.password.value,
+        loginClient: "school",
+        redirect: false,
+      });
 
-    if (!res!.error) {
-      toast.success("Login successfull.", { position: "bottom-left" });
+      if (res?.error) {
+        const code = (res as { code?: string }).code;
+        const message =
+          (code && LOGIN_ERRORS[code]) ||
+          LOGIN_ERRORS[res.error] ||
+          "Unable to sign in. Please try again.";
+        toast.error(message, TOAST_POS);
+        return;
+      }
+
+      toast.success("Login successful.", TOAST_POS);
       router.push("/dashboard");
-      setLoading(null);
-    }
-
-    if (res!.error === "CredentialsSignin") {
-      toast.error("Incorrect details provided.", { position: "bottom-left" });
-      setLoading(null);
-    }
-
-    if (res!.error === "Configuration") {
-      toast.error("An error occured, try again.", { position: "bottom-left" });
+    } catch {
+      toast.error(
+        "Network error. Check your connection and try again.",
+        TOAST_POS,
+      );
+    } finally {
       setLoading(null);
     }
   };

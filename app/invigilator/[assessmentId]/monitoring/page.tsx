@@ -165,10 +165,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     const getData = async () => {
       try {
         const api = await getAxios();
-        const res = await api.get(
-          "/assessment/my-invigilator-assessments",
-          { signal: controller.signal },
-        );
+        const res = await api.get("/assessment/my-invigilator-assessments", {
+          signal: controller.signal,
+        });
 
         if (res.status === 200 || res.status === 201) {
           const raw = res.data.data;
@@ -221,8 +220,8 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
     const initSocket = async () => {
       const res = await fetch(`${window.location.origin}/api/config`);
-      const { baseUrl } = await res.json();
-      const socketUrl = new URL(baseUrl).origin;
+      const { clientApiUrl } = await res.json();
+      const socketUrl = new URL(clientApiUrl).origin;
 
       if (cancelled) {
         socketRef.current = null;
