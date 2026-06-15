@@ -65,6 +65,14 @@
   --accent-dim:#1b1661;
 }
 
+[data-school="uhr"] {
+  --accent-light: #f1f1ff;
+  --accent-mid: #d6d3e2;
+  --accent: #3f2d88;
+  --accent-dim:#1b1661;
+}
+
+
 @theme inline {
   /* Colors */
   --color-background: var(--background);
