@@ -52,6 +52,11 @@ import { toastConfig } from "@/utils/toastConfig";
 import { toast } from "sonner";
 import Image from "next/image";
 
+const TERM_VALUES: Record<string, string> = {
+  First: "1",
+  Second: "2",
+};
+
 const Main = () => {
   const { data: session } = useSession();
   const router = useRouter();
@@ -580,37 +585,43 @@ const Main = () => {
                 </Select>
                 <Spacer size="sm" />
 
-                {/* Session and term */}
+                {/* Semester and Year*/}
                 <div className="flex items-center justify-between gap-2">
-                  {/* Session */}
-                  <Select
-                    name="session"
-                    defaultValue={schoolConfig?.academicSession}
-                  >
+                  {/* Year */}
+                  <Select name="session" defaultValue={""}>
                     <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
                       <SelectValue placeholder="Select a session" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectLabel>Select Session</SelectLabel>
-                        <SelectItem value={schoolConfig?.academicSession || ""}>
-                          {schoolConfig?.academicSession}
-                        </SelectItem>
+                        <SelectLabel>Select Year</SelectLabel>
+                        {schoolConfig?.academicSession && (
+                          <SelectItem value={schoolConfig.academicSession}>
+                            {schoolConfig.academicSession}
+                          </SelectItem>
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
 
-                  {/* Term */}
-                  <Select name="term" defaultValue={"2"}>
+                  {/* Semester */}
+                  <Select name="term" defaultValue={""}>
                     <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
                       <SelectValue placeholder="Select a term" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectLabel>Select Term</SelectLabel>
-                        <SelectItem value={"2"}>
-                          {schoolConfig?.academicYear}
-                        </SelectItem>
+                        <SelectLabel>Select Semester</SelectLabel>
+                        {schoolConfig?.academicYear && (
+                          <SelectItem
+                            value={
+                              TERM_VALUES[schoolConfig.academicYear] ??
+                              schoolConfig.academicYear
+                            }
+                          >
+                            {schoolConfig.academicYear}
+                          </SelectItem>
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -1332,6 +1343,7 @@ const QuestionForm = ({
               height={320}
               width={320}
               alt="Question image"
+              unoptimized
             />
           </div>
         </DialogContent>

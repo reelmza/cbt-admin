@@ -4,6 +4,15 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getAxios } from "@/lib/axios";
 import { toastConfig } from "@/utils/toastConfig";
 import { ImagePlus, X } from "lucide-react";
@@ -250,12 +259,18 @@ const GeneralSetting = () => {
               <div className="text-xs text-theme-gray mb-1">
                 Current Semester / Term
               </div>
-              <Input
-                name="term"
-                type="text"
-                placeholder="e.g. First Semester"
-                defaultValue={pageData.academicYear}
-              />
+              <Select name="term" defaultValue={pageData.academicYear || ""}>
+                <SelectTrigger className="w-full min-h-10 shadow-none">
+                  <SelectValue placeholder="Select a semester" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Select Semester</SelectLabel>
+                    <SelectItem value="First">First</SelectItem>
+                    <SelectItem value="Second">Second</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <Spacer size="md" />
 
               <div className="w-40">
