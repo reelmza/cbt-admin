@@ -177,7 +177,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
               }`}</div>
             </div>
             <div
-              className={`w-36 ${!process.env.NEXT_PUBLIC_ISLOCAL ? "pointer-events-none opacity-50 select-none" : ""}`}
+              className={`w-36 ${process.env.NEXT_PUBLIC_ISLOCAL === "0" ? "pointer-events-none opacity-50 select-none" : ""}`}
             >
               <Button
                 title="AI Marking"
@@ -187,7 +187,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
                 onClick={aiMark}
                 type="button"
               />
-              {process.env.NEXT_PUBLIC_ISLOCAL && (
+              {process.env.NEXT_PUBLIC_ISLOCAL === "1" && (
                 <div className="mt-1 text-xs text-theme-gray text-center w-full italic">
                   On cloud only
                 </div>
