@@ -224,7 +224,7 @@ const Main = () => {
   }
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getData = async () => {
@@ -256,7 +256,7 @@ const Main = () => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
   return (
     <div className="w-full h-full flex p-10 font-sans">

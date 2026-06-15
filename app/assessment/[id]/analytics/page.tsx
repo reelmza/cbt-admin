@@ -45,7 +45,7 @@ const Page = ({ id }: { id: string }) => {
   const [rankingData, setRankingData] = useState<RankingData | null>(null);
 
   useEffect(() => {
-    if (!session || !id) return;
+    if (!session?.user?.id || !id) return;
     const controller = new AbortController();
 
     const getData = async () => {
@@ -81,7 +81,7 @@ const Page = ({ id }: { id: string }) => {
     getData();
 
     return () => controller.abort();
-  }, [session]);
+  }, [session?.user?.id]);
 
   const downloadPdf = async () => {
     setLoading("downloadPdf");

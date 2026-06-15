@@ -165,7 +165,7 @@ const Page = () => {
   };
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getData = async () => {
@@ -201,7 +201,7 @@ const Page = () => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
   return (
     <div className="w-full h-full p-10 font-sans">

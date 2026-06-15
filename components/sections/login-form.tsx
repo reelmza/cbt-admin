@@ -52,6 +52,7 @@ function LoginForm() {
 
       toast.success("Login successful.", TOAST_POS);
       router.push("/dashboard");
+      router.refresh();
     } catch {
       toast.error(
         "Network error. Check your connection and try again.",

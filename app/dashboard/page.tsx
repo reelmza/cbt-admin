@@ -35,12 +35,12 @@ const Page = () => {
   ];
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     if (isMounted.current) return;
 
     isMounted.current = true;
     console.log(session?.user);
-  }, [session]);
+  }, [session?.user?.id]);
 
   return (
     <div className="grow min-h-full p-10 font-sans">

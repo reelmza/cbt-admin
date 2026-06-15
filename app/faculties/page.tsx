@@ -17,9 +17,11 @@ import { Pencil, Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useRole } from "@/lib/useRole";
 
 const Page = () => {
   const { data: session } = useSession();
+  const { isSuperadmin } = useRole();
 
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showEditGroup, setShowEditGroup] = useState(false);
@@ -101,7 +103,7 @@ const Page = () => {
   };
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getGroups = async () => {
@@ -129,7 +131,7 @@ const Page = () => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
   return (
     <div className="w-full h-full p-10 font-sans">
@@ -137,15 +139,17 @@ const Page = () => {
         <>
           <div className="flex items-center justify-between">
             <div className="w-10"></div>
-            <div className="block w-52">
-              <Button
-                title={"Create Faculty"}
-                loading={false}
-                variant={"fill"}
-                icon={<Plus size={16} />}
-                onClick={() => setShowCreateGroup(true)}
-              />
-            </div>
+            {isSuperadmin && (
+              <div className="block w-52">
+                <Button
+                  title={"Create Faculty"}
+                  loading={false}
+                  variant={"fill"}
+                  icon={<Plus size={16} />}
+                  onClick={() => setShowCreateGroup(true)}
+                />
+              </div>
+            )}
           </div>
 
           <Spacer size="lg" />
@@ -158,7 +162,7 @@ const Page = () => {
               { label: "Description", span: "col-span-3" },
               { label: "Depts.", span: "col-span-1" },
               { label: "Created", span: "col-span-2" },
-              { label: "", span: "col-span-1" },
+              ...(isSuperadmin ? [{ label: "", span: "col-span-1" }] : []),
             ].map((col, i, arr) => (
               <div
                 key={i}
@@ -190,18 +194,20 @@ const Page = () => {
               <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-2">
                 {prettyDate(item.createdAt.split("T")[0])}
               </div>
-              <div className="h-full flex items-center pl-2 col-span-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditGroup(item);
-                    setShowEditGroup(true);
-                  }}
-                  className="text-theme-gray hover:text-accent cursor-pointer"
-                >
-                  <Pencil size={14} />
-                </button>
-              </div>
+              {isSuperadmin && (
+                <div className="h-full flex items-center pl-2 col-span-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditGroup(item);
+                      setShowEditGroup(true);
+                    }}
+                    className="text-theme-gray hover:text-accent cursor-pointer"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
 

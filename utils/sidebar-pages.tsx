@@ -23,6 +23,8 @@ type SideBarStructure = {
   name: string;
   route: string;
   icon: JSX.Element;
+  // Restrict visibility to these roles; omit to show for everyone.
+  roles?: string[];
 };
 
 type SideBarPageType = {
@@ -30,6 +32,8 @@ type SideBarPageType = {
   route: string;
   icon: JSX.Element;
   children?: SideBarStructure[];
+  // Restrict visibility to these roles; omit to show for everyone.
+  roles?: string[];
 };
 export const sideBarPages: SideBarPageType[] = [
   {
@@ -78,6 +82,7 @@ export const sideBarPages: SideBarPageType[] = [
         name: "Archived",
         route: "/assessment/archives",
         icon: <Clock size={16} />,
+        roles: ["superadmin"],
       },
     ],
   },
@@ -100,10 +105,12 @@ export const sideBarPages: SideBarPageType[] = [
     name: "Invigilator",
     route: "/invigilator",
     icon: <ScanEye size={18} />,
+    roles: ["invigilator", "superadmin"],
   },
   {
     name: "Settings",
     route: "/settings",
     icon: <Cog size={18} />,
+    roles: ["superadmin"],
   },
 ];

@@ -8,7 +8,13 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { getSchool } from "@/utils/schools";
 
-const SideBar = ({ schoolName }: { schoolName?: string | null }) => {
+const SideBar = ({
+  schoolName,
+  role,
+}: {
+  schoolName?: string | null;
+  role?: string | null;
+}) => {
   const path = usePathname();
 
   // Hide sidebar on pre-auth pages
@@ -22,6 +28,11 @@ const SideBar = ({ schoolName }: { schoolName?: string | null }) => {
   }
 
   const school = getSchool(schoolName);
+
+  const canView = (roles?: string[]) =>
+    !roles || (role != null && roles.includes(role));
+
+  const visiblePages = sideBarPages.filter((item) => canView(item.roles));
 
   return (
     <>
@@ -52,7 +63,7 @@ const SideBar = ({ schoolName }: { schoolName?: string | null }) => {
 
         {/* Sidebar Links */}
         <ul className="grow flex flex-col gap-y-2 w-full">
-          {sideBarPages.map((item, key) => (
+          {visiblePages.map((item, key) => (
             <li key={key} className="w-full h-fit">
               {/* Main Link */}
               <Link
@@ -70,7 +81,9 @@ const SideBar = ({ schoolName }: { schoolName?: string | null }) => {
               {/* Link Children */}
               {path.includes(item.route) && item.children ? (
                 <div className="pl-8 mt-4 flex flex-col">
-                  {item.children.map((itemChild, key) => (
+                  {item.children
+                    .filter((itemChild) => canView(itemChild.roles))
+                    .map((itemChild, key) => (
                     <Link
                       href={itemChild.route}
                       key={key}

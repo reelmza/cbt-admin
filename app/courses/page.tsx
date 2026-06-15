@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { toastConfig } from "@/utils/toastConfig";
 import { Course, CoursesPageMetaData } from "./courses.types";
 import Preload from "@/components/preload";
+import { useRole } from "@/lib/useRole";
 
 const Page = () => {
   const [openAddCourse, setOpenAddCourse] = useState(false);
@@ -34,6 +35,7 @@ const Page = () => {
   const isMounted = useRef(false);
 
   const { data: session } = useSession();
+  const { isSuperadmin } = useRole();
 
   const fetchCourses = async ({
     keyword,
@@ -122,7 +124,7 @@ const Page = () => {
       isMounted.current = true;
       return;
     }
-    if (!session) return;
+    if (!session?.user?.id) return;
     const timeout = setTimeout(() => {
       fetchCourses({ keyword: filterKeyword, page: 1, loadingKey: "search" });
     }, 350);
@@ -131,7 +133,7 @@ const Page = () => {
 
   // Initial load
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getData = async () => {
@@ -163,7 +165,7 @@ const Page = () => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
   return (
     <div className="w-full h-full p-10 font-sans">
@@ -179,17 +181,19 @@ const Page = () => {
               />
 
               {/* Buttons */}
-              <div>
-                <div className="w-52">
-                  <Button
-                    title="Add a course"
-                    icon={<Plus size={16} strokeWidth={2.5} />}
-                    variant="fill"
-                    loading={false}
-                    onClick={() => setOpenAddCourse((prev) => !prev)}
-                  />
+              {isSuperadmin && (
+                <div>
+                  <div className="w-52">
+                    <Button
+                      title="Add a course"
+                      icon={<Plus size={16} strokeWidth={2.5} />}
+                      variant="fill"
+                      loading={false}
+                      onClick={() => setOpenAddCourse((prev) => !prev)}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             <Spacer size="md" />
 

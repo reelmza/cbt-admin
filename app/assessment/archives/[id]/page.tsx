@@ -43,7 +43,7 @@ const Page = ({ id }: { id: string }) => {
   const [pageData, setPageData] = useState<ArchiveDetail | null>(null);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getArchive = async () => {
@@ -84,7 +84,7 @@ const Page = ({ id }: { id: string }) => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
   return (
     <div className="w-full h-full p-10 font-sans">

@@ -12,10 +12,16 @@ import { SessionProvider, useSession } from "next-auth/react";
 import Link from "next/link";
 import { ChangeEvent, useEffect, useState } from "react";
 import Image from "next/image";
+import { useRole } from "@/lib/useRole";
 
 const Page = () => {
   const [loading, setLoading] = useState<string | null>("page");
   const { data: session } = useSession();
+  const { isSuperadmin, isAdmin } = useRole();
+
+  const canViewRow = (item: AssesmentApiResponse) =>
+    isSuperadmin || (isAdmin && session?.user?.id === item.createdBy);
+  const showActionsColumn = isSuperadmin || isAdmin;
   const [pageData, setPageData] = useState<AssesmentApiResponse[] | null>(null);
   const [filteredPageData, setFilteredPageData] = useState<
     AssesmentApiResponse[] | null
@@ -44,7 +50,7 @@ const Page = () => {
   };
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getAssessments = async () => {
@@ -79,7 +85,7 @@ const Page = () => {
     return () => {
       controller.abort();
     };
-  }, [session, includeArchived]);
+  }, [session?.user?.id, includeArchived]);
 
   return (
     <div className="w-full h-full p-10 font-sans">
@@ -158,25 +164,29 @@ const Page = () => {
             />
 
             <div className="flex items-center gap-3">
-              <div className="w-36">
-                <Button
-                  title="Archived"
-                  loading={false}
-                  variant={includeArchived ? "fill" : "outline"}
-                  icon={<Archive size={16} />}
-                  type="button"
-                  onClick={() => setIncludeArchived((prev) => !prev)}
-                />
-              </div>
+              {isSuperadmin && (
+                <div className="w-36">
+                  <Button
+                    title="Archived"
+                    loading={false}
+                    variant={includeArchived ? "fill" : "outline"}
+                    icon={<Archive size={16} />}
+                    type="button"
+                    onClick={() => setIncludeArchived((prev) => !prev)}
+                  />
+                </div>
+              )}
 
-            <Link href="/assessment/create" className="block w-52">
-              <Button
-                title={"Create an Assessment"}
-                loading={false}
-                variant={"fill"}
-                icon={<Plus size={16} />}
-              />
-            </Link>
+              {(isSuperadmin || isAdmin) && (
+                <Link href="/assessment/create" className="block w-52">
+                  <Button
+                    title={"Create an Assessment"}
+                    loading={false}
+                    variant={"fill"}
+                    icon={<Plus size={16} />}
+                  />
+                </Link>
+              )}
             </div>
           </div>
 
@@ -189,7 +199,9 @@ const Page = () => {
               { value: "Students", colSpan: "col-span-1" },
               { value: "Marks", colSpan: "col-span-1" },
               { value: "Status", colSpan: "col-span-1" },
-              { value: "Actions", colSpan: "col-span-1" },
+              ...(showActionsColumn
+                ? [{ value: "Actions", colSpan: "col-span-1" }]
+                : []),
             ]}
             tableData={
               filteredPageData
@@ -229,11 +241,17 @@ const Page = () => {
                           : "success"
                       }`,
                     },
-                    {
-                      value: `assessment/${item._id}`,
-                      colSpan: "col-span-1",
-                      type: "link",
-                    },
+                    ...(showActionsColumn
+                      ? [
+                          canViewRow(item)
+                            ? {
+                                value: `assessment/${item._id}`,
+                                colSpan: "col-span-1",
+                                type: "link" as const,
+                              }
+                            : { value: "", colSpan: "col-span-1" },
+                        ]
+                      : []),
                   ])
                 : []
             }

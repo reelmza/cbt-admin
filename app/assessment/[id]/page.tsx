@@ -39,10 +39,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Preload from "@/components/preload";
+import { useRole } from "@/lib/useRole";
 
 const Page = ({ id }: { id: string }) => {
   const router = useRouter();
   const { data: session } = useSession();
+  const { isSuperadmin, isAdmin } = useRole();
 
   const [loading, setLoading] = useState<string | null>("page");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -894,7 +896,7 @@ const Page = ({ id }: { id: string }) => {
   };
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getAssessments = async () => {
@@ -941,7 +943,10 @@ const Page = ({ id }: { id: string }) => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
+
+  const canControl =
+    isSuperadmin || (isAdmin && session?.user?.id === pageData?.createdBy);
 
   return (
     <div className="w-full h-full p-10 font-sans">
@@ -1008,7 +1013,12 @@ const Page = ({ id }: { id: string }) => {
             <Spacer size="lg" />
 
             {/* Control Cards*/}
-            <div className="grid grid-cols-12 gap-4">
+            <div
+              className={`grid grid-cols-12 gap-4 ${
+                canControl ? "" : "opacity-50 pointer-events-none select-none"
+              }`}
+              aria-disabled={!canControl}
+            >
               {/* Left Cards */}
               <div className="col-span-5 border rounded-md p-5">
                 {/* Test Duration */}

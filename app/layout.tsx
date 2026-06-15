@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import SessionExpiredOverlay from "@/components/session-expired-overlay";
 import { getSchool } from "@/utils/schools";
 import { fetchSchoolName } from "@/lib/getSchoolName";
+import { auth } from "@/auth";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,6 +36,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const schoolName = await fetchSchoolName();
+  const session = await auth();
 
   return (
     <html lang="en" data-school={(schoolName || "default").toLowerCase()}>
@@ -52,7 +54,7 @@ export default async function RootLayout({
 
         {/* Show app only on desktop */}
         <div className="hidden md:flex items-center justify-center h-full w-full">
-          <SideBar schoolName={schoolName} />
+          <SideBar schoolName={schoolName} role={session?.user?.role} />
           {children}
         </div>
 

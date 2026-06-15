@@ -199,7 +199,7 @@ const Page = ({ id }: { id: string }) => {
   };
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getAssessments = async () => {
@@ -235,7 +235,7 @@ const Page = ({ id }: { id: string }) => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
   return (
     <div className="w-full h-full p-10 font-sans">

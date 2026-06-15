@@ -13,4 +13,5 @@ type AssesmentApiResponse = {
   sections: [{ questions: [] }];
   endReason: string | null;
   authorizedToStart: boolean;
+  createdBy: string;
 };

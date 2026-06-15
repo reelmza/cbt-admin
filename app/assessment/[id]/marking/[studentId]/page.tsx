@@ -123,7 +123,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
 
   // ─── Fetch Submission ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getAssessments = async () => {
@@ -155,7 +155,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (

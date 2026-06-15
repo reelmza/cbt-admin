@@ -31,6 +31,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PageMetaData, User } from "./users.types";
 import Preload from "@/components/preload";
+import { useRole } from "@/lib/useRole";
 
 const Page = () => {
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
@@ -54,6 +55,7 @@ const Page = () => {
   const isMounted = useRef(false);
 
   const { data: session } = useSession();
+  const { isSuperadmin } = useRole();
 
   const bulkUpload = async (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -223,7 +225,7 @@ const Page = () => {
       isMounted.current = true;
       return;
     }
-    if (!session) return;
+    if (!session?.user?.id) return;
     const timeout = setTimeout(() => {
       fetchStudents({
         keyword: filterKeyword,
@@ -238,7 +240,7 @@ const Page = () => {
   }, [filterKeyword]);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getData = async () => {
@@ -279,7 +281,7 @@ const Page = () => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
   return (
     <div className="w-full h-full p-10 font-sans">
@@ -288,7 +290,9 @@ const Page = () => {
           <PageNavigator
             navList={[
               { name: "Students", route: "/users" },
-              { name: "Administrators", route: "/users/staff" },
+              ...(isSuperadmin
+                ? [{ name: "Administrators", route: "/users/staff" }]
+                : []),
             ]}
           />
           <Spacer size="lg" />
@@ -302,29 +306,31 @@ const Page = () => {
             />
 
             {/* Buttons */}
-            <div className="flex items-center gap-4">
-              {/* Bulk Upload Students */}
-              <div className="w-52">
-                <Button
-                  title="Bulk Upload Students"
-                  icon={<CloudUpload size={16} strokeWidth={2.5} />}
-                  variant="fill"
-                  loading={false}
-                  onClick={() => setOpenBulkUpload((prev) => !prev)}
-                />
-              </div>
+            {isSuperadmin && (
+              <div className="flex items-center gap-4">
+                {/* Bulk Upload Students */}
+                <div className="w-52">
+                  <Button
+                    title="Bulk Upload Students"
+                    icon={<CloudUpload size={16} strokeWidth={2.5} />}
+                    variant="fill"
+                    loading={false}
+                    onClick={() => setOpenBulkUpload((prev) => !prev)}
+                  />
+                </div>
 
-              {/* Bulk Upload Passports */}
-              <div className="w-52">
-                <Button
-                  title="Bulk Upload Passports"
-                  icon={<User2 size={16} strokeWidth={2.5} />}
-                  variant="fill"
-                  loading={false}
-                  onClick={() => setOpenPassUpload((prev) => !prev)}
-                />
+                {/* Bulk Upload Passports */}
+                <div className="w-52">
+                  <Button
+                    title="Bulk Upload Passports"
+                    icon={<User2 size={16} strokeWidth={2.5} />}
+                    variant="fill"
+                    loading={false}
+                    onClick={() => setOpenPassUpload((prev) => !prev)}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <Spacer size="md" />
 
@@ -463,7 +469,9 @@ const Page = () => {
               { value: "Level", colSpan: "col-span-1" },
               { value: "Phone Number", colSpan: "col-span-2" },
               { value: "Enrolled", colSpan: "col-span-2" },
-              { value: "", colSpan: "col-span-1" },
+              ...(isSuperadmin
+                ? [{ value: "", colSpan: "col-span-1" }]
+                : []),
             ]}
             tableData={
               filteredPageData
@@ -476,11 +484,15 @@ const Page = () => {
                       value: prettyDate(item?.createdAt.split("T")[0]) || "-",
                       colSpan: "col-span-2",
                     },
-                    {
-                      value: `users/${item._id}`,
-                      colSpan: "col-span-1",
-                      type: "link",
-                    },
+                    ...(isSuperadmin
+                      ? [
+                          {
+                            value: `users/${item._id}`,
+                            colSpan: "col-span-1",
+                            type: "link" as const,
+                          },
+                        ]
+                      : []),
                   ])
                 : []
             }

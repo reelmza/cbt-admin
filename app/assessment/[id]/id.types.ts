@@ -15,4 +15,5 @@ export type PageDataType = {
   allowBrowserRestriction: boolean;
   passmark: number;
   invigilators: string[];
+  createdBy: string;
 };

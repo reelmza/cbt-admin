@@ -19,7 +19,7 @@ const Page = ({ id }: { id: string }) => {
     useState<AssessmentSubmissionsResponse | null>(null);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     const controller = new AbortController();
 
     const getAssessments = async () => {
@@ -52,7 +52,7 @@ const Page = ({ id }: { id: string }) => {
     return () => {
       controller.abort();
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
   const handleRemark = async () => {
     try {
