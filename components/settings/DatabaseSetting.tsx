@@ -16,7 +16,10 @@ type CollectionKey =
   | "subGroups"
   | "admins";
 
-type ClearResult = Record<string, number>;
+type ClearResult = {
+  counts: Record<string, number>;
+  message?: string;
+};
 
 const RESULT_LABELS: Record<string, string> = {
   submissionDrafts: "Submission Drafts",
@@ -94,16 +97,17 @@ const DatabaseSetting = () => {
       const res = await api.delete("/config/clear-db", { data: body });
 
       const counts = Object.fromEntries(
-        Object.entries(res.data ?? {}).filter(
+        Object.entries(res.data?.data ?? {}).filter(
           ([, v]) => typeof v === "number",
         ),
-      ) as ClearResult;
+      ) as Record<string, number>;
 
       const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
 
-      setResult(counts);
+      setResult({ counts, message: res.data?.message });
       toast.success(
-        `${total.toLocaleString()} record${total === 1 ? "" : "s"} deleted across ${Object.keys(counts).length} collection${Object.keys(counts).length === 1 ? "" : "s"}.`,
+        res.data?.message ||
+          `${total.toLocaleString()} record${total === 1 ? "" : "s"} deleted across ${Object.keys(counts).length} collection${Object.keys(counts).length === 1 ? "" : "s"}.`,
         toastConfig,
       );
       setSelected(new Set());
@@ -168,21 +172,27 @@ const DatabaseSetting = () => {
             </div>
             <span className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
               <Trash2 size={12} />
-              {Object.values(result)
+              {Object.values(result.counts)
                 .reduce((sum, n) => sum + n, 0)
                 .toLocaleString()}{" "}
               total deleted
             </span>
           </div>
 
+          {result.message && (
+            <div className="px-4 py-3 text-xs text-theme-gray border-b bg-muted/20">
+              {result.message}
+            </div>
+          )}
+
           <div className="p-4">
-            {Object.keys(result).length === 0 ? (
+            {Object.keys(result.counts).length === 0 ? (
               <div className="text-xs text-theme-gray">
                 No records were deleted.
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
-                {Object.entries(result).map(([key, count]) => (
+                {Object.entries(result.counts).map(([key, count]) => (
                   <div
                     key={key}
                     className="flex items-center justify-between text-xs rounded-md bg-muted/30 px-3 py-2"
