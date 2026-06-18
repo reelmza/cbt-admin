@@ -12,6 +12,7 @@ import {
   Monitor,
   NotebookPen,
   NotepadText,
+  ScrollText,
   Shield,
   UserRound,
   UsersRound,
@@ -106,6 +107,12 @@ export const sideBarPages: SideBarPageType[] = [
     route: "/invigilator",
     icon: <ScanEye size={18} />,
     roles: ["invigilator", "superadmin"],
+  },
+  {
+    name: "Audit Logs",
+    route: "/audit-logs",
+    icon: <ScrollText size={18} />,
+    roles: ["superadmin"],
   },
   {
     name: "Settings",
