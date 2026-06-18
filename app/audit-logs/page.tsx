@@ -65,6 +65,7 @@ const Page = () => {
   const fetchControllerRef = useRef<AbortController | null>(null);
 
   const { data: session } = useSession();
+  const isSuperadmin = session?.user?.role === "superadmin";
 
   const fetchLogs = async ({
     action,
@@ -120,9 +121,21 @@ const Page = () => {
   };
 
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || !isSuperadmin) return;
     !logs && fetchLogs({ action: "", page: 1, loadingKey: "page" });
   }, [session?.user?.id]);
+
+  if (!session) return null;
+
+  if (!isSuperadmin) {
+    return (
+      <Preload
+        loading="pageError"
+        pageData={false}
+        errorMessage="Access Denied$You are not authorized to view audit logs"
+      />
+    );
+  }
 
   return (
     <div className="w-full h-full p-10 font-sans">
