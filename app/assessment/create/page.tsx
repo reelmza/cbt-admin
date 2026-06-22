@@ -699,6 +699,15 @@ const Main = () => {
                   variant={"fill"}
                   icon={<Plus size={20} />}
                 />
+                <Spacer size="sm" />
+                <Button
+                  title={"Cancel"}
+                  loading={false}
+                  variant={"outline"}
+                  type={"button"}
+                  icon={<X size={20} />}
+                  onClick={() => router.push("/assessment")}
+                />
                 <Spacer size="md" />
               </form>
             ) : (
