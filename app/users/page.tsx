@@ -68,8 +68,8 @@ const Page = () => {
 
     var formdata = new FormData();
     formdata.append("file", target.bulkUpload.files[0]);
-    // formdata.append("group", target.group.value);
-    // formdata.append("subGroup", target.subGroup.value);
+    formdata.append("group", target.group.value);
+    formdata.append("subGroup", target.subGroup.value);
 
     setLoading("bulkUpload");
     try {
@@ -469,9 +469,7 @@ const Page = () => {
               { value: "Level", colSpan: "col-span-1" },
               { value: "Phone Number", colSpan: "col-span-2" },
               { value: "Enrolled", colSpan: "col-span-2" },
-              ...(isSuperadmin
-                ? [{ value: "", colSpan: "col-span-1" }]
-                : []),
+              ...(isSuperadmin ? [{ value: "", colSpan: "col-span-1" }] : []),
             ]}
             tableData={
               filteredPageData
