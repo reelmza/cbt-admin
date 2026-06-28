@@ -72,6 +72,13 @@
   --accent-dim:#1b1661;
 }
 
+[data-school="ijbcoe"] {
+  --accent-light: #f0eef9;
+  --accent-mid: #cfc8e3;
+  --accent: #2b1570;
+  --accent-dim:#1c0e4d;
+}
+
 
 @theme inline {
   /* Colors */

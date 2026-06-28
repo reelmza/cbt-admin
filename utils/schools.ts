@@ -1,6 +1,8 @@
 import { StaticImageData } from "next/image";
 import adsuLogo from "@/public/images/adsu-logo-auth.webp";
 import ebsuLogo from "@/public/images/ebsu-logo-auth.webp";
+import ijbcoeLogo from "@/public/images/ijbcoe-logo-auth.webp";
+
 import defaultLogo from "@/public/images/school-logo-auth.webp";
 import uhrLogo from "@/public/images/uhr-logo.webp";
 
@@ -23,6 +25,12 @@ export const schools: Record<string, School> = {
     shortName: "EBSU Portal",
     fullName: "Ebonyi State University, Abakaliki.",
     name: "Ebonyi State University, Abakaliki",
+  },
+  ijbcoe: {
+    image: ijbcoeLogo,
+    shortName: "IJBCOE Portal",
+    fullName: "Isaac Jasper Boro College of Education, Sagbama",
+    name: "Isaac Jasper Boro College of Education",
   },
   uhr: {
     image: uhrLogo,
