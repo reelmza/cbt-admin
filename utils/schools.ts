@@ -5,6 +5,7 @@ import ijbcoeLogo from "@/public/images/ijbcoe-logo-auth.webp";
 
 import defaultLogo from "@/public/images/school-logo-auth.webp";
 import uhrLogo from "@/public/images/uhr-logo.webp";
+import zingLogo from "@/public/images/zing-logo.png";
 
 export type School = {
   image: StaticImageData;
@@ -31,6 +32,12 @@ export const schools: Record<string, School> = {
     shortName: "IJBCOE Portal",
     fullName: "Isaac Jasper Boro College of Education, Sagbama",
     name: "Isaac Jasper Boro College of Education",
+  },
+  zing: {
+    image: zingLogo,
+    shortName: "COE Zing",
+    fullName: "Federal College of Education, Zing.",
+    name: "Federal College of Education, Zing.",
   },
   uhr: {
     image: uhrLogo,

@@ -74,9 +74,16 @@
 
 [data-school="ijbcoe"] {
   --accent-light: #f0eef9;
-  --accent-mid: #cfc8e3;
+  --accent-mid: #ffffff;
   --accent: #2b1570;
   --accent-dim:#1c0e4d;
+}
+
+[data-school="zing"] {
+  --accent-light: #e6f5ec;
+  --accent-mid: #b3ddc4;
+  --accent: #00913f;
+  --accent-dim:#00692e;
 }
 
 
