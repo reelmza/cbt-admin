@@ -14,7 +14,7 @@ export type SectionType = {
     expectedAnswer: string;
     correctAnswer: string;
     correctAnswers: string[];
-    image: string | null;
+    image: string;
   }[];
 }[];
 
@@ -53,8 +53,8 @@ export type QuestionFormType = {
   };
 
   qstImageParams: {
-    qstImage: string | null;
-    setQstImage: Dispatch<SetStateAction<string | null>>;
+    qstImage: string[];
+    setQstImage: Dispatch<SetStateAction<string[]>>;
   };
 
   activeSectionParams: {

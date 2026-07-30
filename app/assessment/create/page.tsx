@@ -31,15 +31,15 @@ import { getAxios } from "@/lib/axios";
 import {
   ArrowRight,
   Check,
+  Pencil,
   Plus,
   RefreshCcw,
-  RollerCoaster,
   Trash2Icon,
   UploadCloud,
   X,
 } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   QuestionFormType,
   AssessmentType,
@@ -57,6 +57,9 @@ const TERM_VALUES: Record<string, string> = {
   Second: "2",
 };
 
+// Per-image cap; a question holds at most 2 images, so 1MB in total
+const MAX_IMAGE_SIZE = 500 * 1024;
+
 const Main = () => {
   const { data: session } = useSession();
   const router = useRouter();
@@ -64,6 +67,7 @@ const Main = () => {
   // Modal States
   const [showDetailModal, setShowDetailModal] = useState(true);
   const [showSectionsModal, setShowSectionsModal] = useState(false);
+  const [editSectionType, setEditSectionType] = useState<string | null>(null);
 
   // Main Page States
   const [loading, setLoading] = useState<string | null>("page");
@@ -85,7 +89,21 @@ const Main = () => {
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>("A");
-  const [qstImage, setQstImage] = useState<string | null>(null);
+  const [qstImage, setQstImage] = useState<string[]>([]);
+
+  // Start date drives the minimum selectable due date
+  const [startDate, setStartDate] = useState("");
+
+  // Today (local) as YYYY-MM-DD, the earliest allowed start date
+  const today = new Date().toLocaleDateString("en-CA");
+
+  // Live total marks: sum of every question's score across all sections
+  const totalMarks =
+    sections?.reduce(
+      (sum, sect) =>
+        sum + sect.questions.reduce((secSum, qst) => secSum + qst.score, 0),
+      0,
+    ) ?? 0;
 
   // Delete a section
   const deleteSection = (type: String) => {
@@ -99,17 +117,68 @@ const Main = () => {
     setCorrectAnswer("A");
   };
 
+  // Update a section's title and per-question score
+  const editSectionFn = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    if (!editSectionType) return;
+
+    const target = e.target as typeof e.target & {
+      sectionTitle: { value: string };
+      score: { value: string };
+    };
+
+    const newScore = Number(target.score.value);
+
+    setSections((prev) =>
+      prev
+        ? prev.map((sect) =>
+            sect.type === editSectionType
+              ? {
+                  ...sect,
+                  title: target.sectionTitle.value,
+                  defaultQuestionScore: newScore,
+                  questions: sect.questions.map((qst) => ({
+                    ...qst,
+                    score: newScore,
+                  })),
+                }
+              : sect,
+          )
+        : prev,
+    );
+
+    setEditSectionType(null);
+    toast.success("Section updated", toastConfig);
+  };
+
   // Submit assessment
   const submitAss = async () => {
-    setLoading("submitAss");
-    let formData = {
-      ...assDetails,
-      timeLimit: 30, //deault 30 min
-    };
     if (!sections) return;
 
+    // Drop sections that have no questions before submitting
+    const nonEmptySections = sections.filter(
+      (sect) => sect.questions.length > 0,
+    );
+
+    // An assessment must contain at least one question
+    if (nonEmptySections.length === 0) {
+      toast.error(
+        "Add at least one question before submitting the assessment.",
+        toastConfig,
+      );
+      return;
+    }
+
+    setLoading("submitAss");
+
+    let formData = {
+      ...assDetails,
+      totalMarks,
+      timeLimit: 30, //deault 30 min
+    };
+
     // @ts-expect-error Remove defaultQuestionScore property that is not in the database schema and causes error upon upload.
-    formData.sections = sections.map((sect) => {
+    formData.sections = nonEmptySections.map((sect) => {
       const { defaultQuestionScore, ...formatedSect } = sect;
       return formatedSect;
     });
@@ -129,8 +198,6 @@ const Main = () => {
 
   // Helper function
   function formatCsvRowToQuestion(row: CsvRow): any {
-    const OPTION_LABELS = ["A", "B", "C", "D"];
-
     return {
       question: row.question.trim(),
       type: "multiple_choice",
@@ -292,7 +359,7 @@ const Main = () => {
 
                   <div className="text-sm flex">
                     <div className="font-semibold mr-1">Total Marks:</div>
-                    <div>{assDetails?.totalMarks}</div>
+                    <div>{totalMarks}</div>
                   </div>
                 </div>
               </div>
@@ -391,7 +458,7 @@ const Main = () => {
                           onClick={() => {
                             setOptions([]);
                             setQuestion("");
-                            setQstImage(null);
+                            setQstImage([]);
 
                             setActiveSection([
                               section.type,
@@ -400,7 +467,20 @@ const Main = () => {
                           }}
                           className="cursor-pointer"
                         >
-                          <div className="text-sm">{section.title}</div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditSectionType(section.type);
+                              }}
+                              className="text-theme-gray hover:text-accent cursor-pointer"
+                            >
+                              <Pencil size={12} />
+                            </span>
+                            <div className="text-sm">{section.title}</div>
+                          </div>
                         </AccordionTrigger>
                         <AccordionContent>
                           <div className="flex flex-wrap gap-2 overflow-y-scroll max-h-[50vh]">
@@ -437,7 +517,9 @@ const Main = () => {
                                     setOptions([qst.expectedAnswer]);
                                   }
 
-                                  setQstImage(qst.image);
+                                  setQstImage(
+                                    qst.image ? qst.image.split(",") : [],
+                                  );
                                   setQuestion(qst.question);
                                   setActiveSection([section.type, qstkey]);
                                 }}
@@ -461,7 +543,7 @@ const Main = () => {
                                   );
                                   setQuestion("");
                                   setOptions([]);
-                                  setQstImage(null);
+                                  setQstImage([]);
                                   setActiveSection([
                                     section.type,
                                     section.questions.length + 1,
@@ -505,7 +587,7 @@ const Main = () => {
                 type="button"
                 onClick={submitAss}
               >
-                <span>Submit Assessment</span>
+                <span>Create Assessment</span>
                 {loading !== "submitAss" ? (
                   <ArrowRight size={12} />
                 ) : (
@@ -545,9 +627,28 @@ const Main = () => {
                     startDate: { value: string };
                     dueDate: { value: string };
                     instruction: { value: string };
-                    totalMarks: { value: string };
                     status: { value: string };
                   };
+
+                  if (target.startDate.value < today) {
+                    toast.error(
+                      "Start date cannot be earlier than today.",
+                      toastConfig,
+                    );
+                    return;
+                  }
+
+                  if (
+                    new Date(target.dueDate.value) <
+                    new Date(target.startDate.value)
+                  ) {
+                    toast.error(
+                      "Due date cannot be earlier than the start date.",
+                      toastConfig,
+                    );
+                    return;
+                  }
+
                   setAssDetails({
                     title: courses.find(
                       (item) => item._id == target.courseId.value,
@@ -559,7 +660,7 @@ const Main = () => {
                     dueDate: new Date(target.dueDate.value).toISOString(),
                     instruction: target.instruction.value,
                     status: target.status.value,
-                    totalMarks: Number(target.totalMarks.value),
+                    totalMarks: 0,
                     sections: [],
                   });
 
@@ -639,54 +740,47 @@ const Main = () => {
                 </div>
                 <Spacer size="sm" />
 
-                {/* Total Marks and status */}
-                <div className="flex items-center justify-between gap-2">
-                  {/* Total Marks */}
-                  <Input
-                    name="totalMarks"
-                    type="number"
-                    placeholder="Total Marks"
-                    required
-                  />
-
-                  {/* Status */}
-                  <Select name="status" required>
-                    <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
-                      <SelectValue placeholder="Select a status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Select Term</SelectLabel>
-                        <SelectItem value="published">Publish Now</SelectItem>
-                        <SelectItem value="draft">Save Draft</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Status */}
+                <Select name="status" required>
+                  <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+                    <SelectValue placeholder="Select a status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Select Term</SelectLabel>
+                      <SelectItem value="published">Publish Now</SelectItem>
+                      <SelectItem value="draft">Save Draft</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
                 <Spacer size="sm" />
 
-                {/* Dates */}
-                <div className="flex items-center justify-between gap-2">
+                {/* Start & Due Date */}
+                <div className="flex items-end justify-between gap-2">
                   {/* Start */}
                   <div className="w-full">
                     <span className="text-xs text-theme-gray">Start</span>
                     <input
                       type="date"
                       name="startDate"
+                      value={startDate}
+                      min={today}
+                      onChange={(e) => setStartDate(e.target.value)}
                       className="h-10 border rounded-md border-accent-light text-theme-gray text-sm w-full px-2 outline-none"
                       placeholder="Start Date"
                       required
                     />
                   </div>
 
-                  {/* End */}
+                  {/* Due Date */}
                   <div className="w-full">
-                    <span className="text-xs text-theme-gray">End</span>
+                    <span className="text-xs text-theme-gray">Due Date</span>
                     <input
                       type="date"
                       name="dueDate"
+                      min={startDate || undefined}
                       className="h-10 border rounded-md border-accent-light text-theme-gray text-sm w-full px-2 outline-none"
-                      placeholder="Start Date"
+                      placeholder="Due Date"
                       required
                     />
                   </div>
@@ -780,7 +874,7 @@ const Main = () => {
               setCorrectAnswer(
                 target.sectionType.value === "multiple_select" ? null : "A",
               );
-              setQstImage(null);
+              setQstImage([]);
             }}
           >
             {/* Section Title */}
@@ -848,6 +942,57 @@ const Main = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog - Edit Section */}
+      <Dialog
+        open={!!editSectionType}
+        onOpenChange={(open) => !open && setEditSectionType(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Section</DialogTitle>
+            <DialogDescription>
+              Update the section name and the score for each of its questions
+            </DialogDescription>
+          </DialogHeader>
+
+          {(() => {
+            const target = sections?.find((s) => s.type === editSectionType);
+            if (!target) return null;
+
+            return (
+              <form key={editSectionType} onSubmit={editSectionFn}>
+                {/* Section Title */}
+                <Input
+                  name={"sectionTitle"}
+                  type={"text"}
+                  placeholder={"Section Title"}
+                  defaultValue={target.title}
+                  required
+                />
+                <Spacer size="sm" />
+
+                {/* Each Question's Score */}
+                <Input
+                  name="score"
+                  type="number"
+                  placeholder="Each Question's Score"
+                  defaultValue={String(target.defaultQuestionScore)}
+                  required
+                />
+                <Spacer size="md" />
+
+                <Button
+                  title={"Save Changes"}
+                  loading={false}
+                  variant={"fill"}
+                />
+                <Spacer size="md" />
+              </form>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -910,7 +1055,7 @@ const QuestionForm = ({
           return { label: opt[`${key}`], text: item };
         }),
         correctAnswer: correctAnswer as string,
-        ...(qstImage && { image: qstImage }),
+        ...(qstImage.length > 0 && { image: qstImage.join(",") }),
       };
 
     // Arrange formdata for multiple select
@@ -925,7 +1070,7 @@ const QuestionForm = ({
         correctAnswers: correctAnswer
           ? correctAnswer.split(",").filter(Boolean)
           : [],
-        ...(qstImage && { image: qstImage }),
+        ...(qstImage.length > 0 && { image: qstImage.join(",") }),
       };
 
     // Arrange formdata for subjective
@@ -937,7 +1082,7 @@ const QuestionForm = ({
         answerSlots: options.map((item, key) => {
           return { slotNumber: key + 1, possibleAnswers: item.split(",") };
         }),
-        ...(qstImage && { image: qstImage }),
+        ...(qstImage.length > 0 && { image: qstImage.join(",") }),
       };
 
     // Arrange formdata for subjective
@@ -948,7 +1093,7 @@ const QuestionForm = ({
         score: targetSection?.defaultQuestionScore || 1,
         expectedAnswer: options[0],
         requiresManualMarking: true,
-        ...(qstImage && { image: qstImage }),
+        ...(qstImage.length > 0 && { image: qstImage.join(",") }),
       };
 
     // Check if update is the correct action to execute
@@ -1003,7 +1148,7 @@ const QuestionForm = ({
       setQuestion("");
       setOptions([]);
       setActiveSection([formType, activeSection[1] + 1]);
-      setQstImage(null);
+      setQstImage([]);
     }
   };
 
@@ -1095,27 +1240,35 @@ const QuestionForm = ({
           )}
         </div>
 
-        {/* Image Upload/ */}
-        <div className="relative overflow-hidden flexs items-center gap-2 cursor-pointer text-accent bg-accent-light h-7 rounded-md">
-          {qstImage ? (
-            <div className="flex items-center gap-2 pl-2 h-full">
+        {/* Image Upload - up to 2 images per question */}
+        <div className="flex items-center gap-2">
+          {qstImage.map((img, key) => (
+            <div
+              key={img}
+              className="flex items-center gap-2 pl-2 h-7 rounded-md overflow-hidden text-accent bg-accent-light"
+            >
               <button
-                className="text-sm"
+                className="text-sm cursor-pointer"
                 onClick={() => setShowImagePreview(true)}
                 type="button"
               >
-                View Image
+                Image {key + 1}
               </button>
 
               <button
                 className="w-5 flex items-center justify-center h-full bg-accent text-accent-light cursor-pointer"
-                onClick={() => setQstImage(null)}
+                type="button"
+                onClick={() =>
+                  setQstImage((prev) => prev.filter((_, i) => i !== key))
+                }
               >
                 <X size={12} />
               </button>
             </div>
-          ) : (
-            <div className="flex items-center gap-2 px-2">
+          ))}
+
+          {qstImage.length < 2 && (
+            <div className="relative overflow-hidden flex items-center gap-2 px-2 cursor-pointer text-accent bg-accent-light h-7 rounded-md">
               <UploadCloud size={16} />
               <div className="text-accent text-sm">Upload Image</div>
               <input
@@ -1124,8 +1277,22 @@ const QuestionForm = ({
                 className="absolute -left-30 opacity-0 cursor-pointer"
                 accept=".jpeg,.png,.jpg"
                 onChange={async (e) => {
-                  if (!e.target.files) return;
-                  const URI = await imageToDataUri(e.target.files[0]);
+                  const input = e.target;
+                  const file = input.files?.[0];
+                  if (!file) return;
+
+                  // Let the same file be picked again after a rejected upload
+                  input.value = "";
+
+                  if (file.size > MAX_IMAGE_SIZE) {
+                    toast.error(
+                      "Each image must be 500KB or less",
+                      toastConfig,
+                    );
+                    return;
+                  }
+
+                  const URI = await imageToDataUri(file);
 
                   if (!URI) {
                     toast.error(
@@ -1135,7 +1302,7 @@ const QuestionForm = ({
                     return;
                   }
 
-                  setQstImage(URI);
+                  setQstImage((prev) => [...prev, URI]);
                 }}
               />
             </div>
@@ -1340,20 +1507,28 @@ const QuestionForm = ({
       <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Preview Image</DialogTitle>
+            <DialogTitle>
+              Preview Image{qstImage.length > 1 ? "s" : ""}
+            </DialogTitle>
             <DialogDescription>
-              This is the image that will be displayed to the student
+              {qstImage.length > 1
+                ? "These are the images that will be displayed to the student"
+                : "This is the image that will be displayed to the student"}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="w-full flex items-center justify-center">
-            <Image
-              src={qstImage ? qstImage : ""}
-              height={320}
-              width={320}
-              alt="Question image"
-              unoptimized
-            />
+          <div className="w-full flex flex-wrap items-center justify-center gap-3">
+            {qstImage.map((img, key) => (
+              <Image
+                key={img}
+                src={img}
+                height={320}
+                width={320}
+                alt={`Question image ${key + 1}`}
+                className="h-auto w-auto max-h-80 object-contain"
+                unoptimized
+              />
+            ))}
           </div>
         </DialogContent>
       </Dialog>

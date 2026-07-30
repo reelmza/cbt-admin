@@ -720,11 +720,9 @@ const Page = ({ id }: { id: string }) => {
       const formData = new FormData();
       formData.append("file", bulkAssignFile);
 
-      const res = await api.post(
-        `/import/assign-students/${id}`,
-        formData,
-        { signal: globalController.signal },
-      );
+      const res = await api.post(`/import/assign-students/${id}`, formData, {
+        signal: globalController.signal,
+      });
 
       if (res.status === 200 || res.status === 201) {
         toast.success(res.data.message, toastConfig);
@@ -789,11 +787,9 @@ const Page = ({ id }: { id: string }) => {
       const formData = new FormData();
       formData.append("file", bulkUnassignFile);
 
-      const res = await api.post(
-        `/import/unassign-students/${id}`,
-        formData,
-        { signal: globalController.signal },
-      );
+      const res = await api.post(`/import/unassign-students/${id}`, formData, {
+        signal: globalController.signal,
+      });
 
       if (res.status === 200 || res.status === 201) {
         toast.success(res.data.message, toastConfig);

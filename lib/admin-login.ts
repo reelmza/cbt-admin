@@ -19,8 +19,8 @@ export const schooLogin: (
   let res;
   try {
     res = await api.post(`${process.env.SERVER_API_URL}/admin/login`, {
-      email: credentials.email,
-      password: credentials.password,
+      email: (credentials.email as string)?.trim(),
+      password: (credentials.password as string)?.trim(),
     });
   } catch (e: any) {
     // axios throws on non-2xx: a 4xx is the server rejecting the credentials,

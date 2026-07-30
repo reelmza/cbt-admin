@@ -80,28 +80,21 @@ const Page = () => {
     const target = e.target as typeof e.target & {
       groupCode: { value: string };
       groupName: { value: string };
-      groupDescription: { value: string };
     };
 
     setLoading("editSubGroup");
     try {
       const api = await getAxios();
-      const res = await api.patch(
-        `/school/subgroup/${editSubGroup._id}`,
-        {
-          code: target.groupCode.value,
-          name: target.groupName.value,
-          description: target.groupDescription.value,
-        },
-      );
+      const res = await api.patch(`/school/subgroup/${editSubGroup._id}`, {
+        code: target.groupCode.value,
+        name: target.groupName.value,
+      });
 
       if (res.status === 200 || res.status === 201) {
         setPageData((prev) =>
           prev
             ? prev.map((sg) =>
-                sg._id === editSubGroup._id
-                  ? { ...sg, ...res.data.data }
-                  : sg,
+                sg._id === editSubGroup._id ? { ...sg, ...res.data.data } : sg,
               )
             : prev,
         );
@@ -181,9 +174,8 @@ const Page = () => {
             {[
               { label: "Code", span: "col-span-2" },
               { label: "Department Name", span: "col-span-3" },
-              { label: "Description", span: "col-span-2" },
               { label: "Faculty", span: "col-span-3" },
-              { label: "Created", span: "col-span-1" },
+              { label: "Created", span: "col-span-3" },
               ...(isSuperadmin ? [{ label: "", span: "col-span-1" }] : []),
             ].map((col, i, arr) => (
               <div
@@ -207,13 +199,10 @@ const Page = () => {
               <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-3">
                 {item.name}
               </div>
-              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-2">
-                {item.description || "-"}
-              </div>
               <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-3">
                 {rawData?.find((grp) => grp._id === item.group)?.name || ""}
               </div>
-              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-1">
+              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-3">
                 {prettyDate(item.createdAt.split("T")[0])}
               </div>
               {isSuperadmin && (

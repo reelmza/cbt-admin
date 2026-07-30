@@ -123,6 +123,16 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
             v._id === violationId ? { ...v, isPardoned: true } : v,
           ),
         );
+        // A pardon removes one unpardoned violation from this student's count
+        if (violationsStudent) {
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === violationsStudent.id
+                ? { ...s, violationCount: Math.max(0, s.violationCount - 1) }
+                : s,
+            ),
+          );
+        }
       }
     } catch {
       // leave button available to retry
@@ -490,7 +500,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
               />
               <StatCard
                 label="Locked"
-                value={stats.locked}
+                value={students.reduce((sum, s) => sum + s.violationCount, 0)}
                 accent="text-theme-error"
               />
             </div>

@@ -5,7 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { SubmissionDetailResponse } from "@/types";
-import { Check, Stars, X } from "lucide-react";
+import { ArrowLeft, Check, MoveLeft, MoveRight, Stars, X } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -164,18 +164,31 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
         <>
           {/* Sticky header — student info */}
           <div className="flex items-center justify-between fixed top-0 pt-5 pb-5 right-0 w-8/10 bg-white px-8">
-            <div className="flex flex-col justify-end">
-              <div className="leading-none text-xl font-bold">
-                Mark Assessment
+            <div className="flex items-start">
+              <div className="flex gap-4">
+                <button
+                  className="h-fit cursor-pointer"
+                  onClick={() => router.back()}
+                >
+                  <MoveLeft size={20} />
+                </button>
+                <div>
+                  <div className="leading-none text-xl font-bold mb-1">
+                    Mark Assessment
+                  </div>
+                  <div className="flex gap-2 text-sm">
+                    <div>
+                      {`${pageData?.student?.fullName} | ${pageData?.student?.regNo} | ${
+                        pageData?.submittedAt
+                          ? prettyDate(pageData?.submittedAt)
+                          : ""
+                      }`}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-sm">
-                {pageData?.student?.fullName}
-                {` (${pageData?.student?.regNo})`}
-              </div>
-              <div className="text-sm">{`Submitted on ${
-                pageData?.submittedAt ? prettyDate(pageData?.submittedAt) : ""
-              }`}</div>
             </div>
+
             <div
               className={`w-36 ${process.env.NEXT_PUBLIC_ISLOCAL === "0" ? "pointer-events-none opacity-50 select-none" : ""}`}
             >

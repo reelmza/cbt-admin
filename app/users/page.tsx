@@ -82,7 +82,13 @@ const Page = () => {
         setLoading(null);
         setOpenBulkUpload(false);
         toast.success(res.data.message);
-        // window.location.reload();
+        fetchStudents({
+          keyword: filterKeyword,
+          level: filterLevel,
+          group: filterGroupId,
+          subGroup: filterSubGroupId,
+          page: 1,
+        });
       }
     } catch (error: any) {
       console.log(error);
@@ -114,7 +120,7 @@ const Page = () => {
       console.log(res);
       if (res.status == 200) {
         setLoading(null);
-        setOpenBulkUpload(false);
+        setOpenPassUpload(false);
         toast.success(res.data.message);
       }
     } catch (error: any) {
@@ -261,7 +267,7 @@ const Page = () => {
           setGroups(groupRes.data.data);
           setPageData(res.data.data.data);
           setFilteredPageData(res.data.data.data);
-          setPageMetaData((prev) => {
+          setPageMetaData(() => {
             const { data, ...dataToKeep } = res.data.data;
             return dataToKeep;
           });
@@ -473,7 +479,7 @@ const Page = () => {
             ]}
             tableData={
               filteredPageData
-                ? filteredPageData.map((item, key) => [
+                ? filteredPageData.map((item) => [
                     { value: item?.fullName, colSpan: "col-span-4" },
                     { value: item?.regNumber, colSpan: "col-span-2" },
                     { value: item?.level, colSpan: "col-span-1" },
@@ -497,6 +503,33 @@ const Page = () => {
             showSearch={false}
             showOptions={false}
           />
+          {(pageMetaData?.totalItems ?? 0) > 10 && (
+            <>
+              <Spacer size="sm" />
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between w-4/10">
+                <button
+                  className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
+                  onClick={() => getPage("prev")}
+                >
+                  <span>Previous</span>
+                  {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
+                </button>
+                <div className="text-sm">
+                  Page {pageMetaData?.page} of {pageMetaData?.pages}{" "}
+                  {`(${pageMetaData?.totalItems})`}
+                </div>
+                <button
+                  className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
+                  onClick={() => getPage("next")}
+                >
+                  <span>Next</span>
+                  {loading === "nextPage" ? <Spinner className="size-4" /> : ""}
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Spacing */}
           <Spacer size="xl" />
