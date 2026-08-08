@@ -15,7 +15,7 @@ import Input from "@/components/input";
 import { Spinner } from "@/components/ui/spinner";
 import { getAxios } from "@/lib/axios";
 
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +26,8 @@ import { useRole } from "@/lib/useRole";
 
 const Page = () => {
   const [openAddCourse, setOpenAddCourse] = useState(false);
+  // Holds the course being edited; doubles as the edit dialog's open state
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<Course[] | null>(null);
   const [pageMetaData, setPageMetaData] = useState<CoursesPageMetaData | null>(null);
@@ -114,6 +116,42 @@ const Page = () => {
       }
     } catch (error) {
       console.log(error);
+      setLoading(null);
+    }
+  };
+
+  const updateCourse = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    if (!editingCourse) return;
+
+    const target = e.target as typeof e.target & {
+      courseCode: { value: string };
+      courseTitle: { value: string };
+      courseDescription: { value: string };
+    };
+
+    setLoading("updateCourse");
+    try {
+      const api = await getAxios();
+      const res = await api.patch(`/admin/course/${editingCourse._id}`, {
+        code: target.courseCode.value,
+        title: target.courseTitle.value,
+        description: target.courseDescription.value,
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        setLoading(null);
+        setEditingCourse(null);
+        toast.success("Course has been updated successfully.", toastConfig);
+        // Stay on the page being viewed rather than jumping back to the first
+        fetchCourses({
+          keyword: filterKeyword,
+          page: pageMetaData?.page ?? 1,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Unable to update the course, please retry.", toastConfig);
       setLoading(null);
     }
   };
@@ -224,19 +262,43 @@ const Page = () => {
               tableHeading={[
                 { value: "Course Code", colSpan: "col-span-2" },
                 { value: "Course Title", colSpan: "col-span-3" },
-                { value: "Description", colSpan: "col-span-5" },
+                { value: "Description", colSpan: isSuperadmin ? "col-span-4" : "col-span-5" },
                 { value: "Created", colSpan: "col-span-2" },
+                ...(isSuperadmin
+                  ? [{ value: "", colSpan: "col-span-1" }]
+                  : []),
               ]}
               tableData={
                 pageData
                   ? pageData.map((item) => [
                       { value: item.code, colSpan: "col-span-2" },
                       { value: item.title, colSpan: "col-span-3" },
-                      { value: item.description, colSpan: "col-span-5" },
+                      {
+                        value: item.description,
+                        colSpan: isSuperadmin ? "col-span-4" : "col-span-5",
+                      },
                       {
                         value: item.createdAt.split("T")[0],
                         colSpan: "col-span-2",
                       },
+                      ...(isSuperadmin
+                        ? [
+                            {
+                              colSpan: "col-span-1",
+                              render: () => (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingCourse(item)}
+                                  title="Edit course"
+                                  className="flex items-center gap-1 text-theme-gray hover:text-accent cursor-pointer"
+                                >
+                                  <Pencil size={14} />
+                                  <span>Edit</span>
+                                </button>
+                              ),
+                            },
+                          ]
+                        : []),
                     ])
                   : []
               }
@@ -290,6 +352,69 @@ const Page = () => {
 
                   <Spacer size="md" />
                 </form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Edit Course */}
+            <Dialog
+              open={!!editingCourse}
+              onOpenChange={(open) => !open && setEditingCourse(null)}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit course</DialogTitle>
+                  <DialogDescription className="pr-28">
+                    Update the code, title or description of this course.
+                  </DialogDescription>
+                </DialogHeader>
+
+                {editingCourse && (
+                  // Keyed so the inputs reseed when a different course is picked
+                  <form
+                    key={editingCourse._id}
+                    className="pr-28"
+                    onSubmit={updateCourse}
+                  >
+                    {/* Course Code */}
+                    <Input
+                      name="courseCode"
+                      type="text"
+                      placeholder={"Enter course code"}
+                      defaultValue={editingCourse.code}
+                      required
+                    />
+                    <Spacer size="sm" />
+
+                    {/* Course title */}
+                    <Input
+                      name="courseTitle"
+                      type="text"
+                      placeholder={"Enter course title"}
+                      defaultValue={editingCourse.title}
+                      required
+                    />
+                    <Spacer size="sm" />
+
+                    {/* Course Description */}
+                    <Input
+                      name="courseDescription"
+                      type="text"
+                      placeholder={"Enter bief description"}
+                      defaultValue={editingCourse.description}
+                      required
+                    />
+                    <Spacer size="sm" />
+
+                    <Button
+                      title={"Save changes"}
+                      loading={loading === "updateCourse"}
+                      variant={"fill"}
+                      icon={<Pencil size={20} />}
+                    />
+
+                    <Spacer size="md" />
+                  </form>
+                )}
               </DialogContent>
             </Dialog>
           </>
