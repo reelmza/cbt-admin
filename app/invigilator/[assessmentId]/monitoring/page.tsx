@@ -9,6 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { getAxios } from "@/lib/axios";
 import { ArrowLeft, Radio, ShieldAlert } from "lucide-react";
@@ -50,6 +57,99 @@ type Violation = {
   createdAt: string;
   student?: { _id: string; fullName: string; regNumber: string; level: number };
 };
+
+type ViolationFilter = { isPardoned: string; violationType: string };
+
+const EMPTY_FILTER: ViolationFilter = { isPardoned: "", violationType: "" };
+
+// Values accepted by the violationType query parameter. These are the raw
+// UPPER_SNAKE tokens the student client reports (e.g. "COPY"), not the human
+// labels — the integration guide lists the labels, which do not match.
+const VIOLATION_TYPES = [
+  { value: "TAB_SWITCH", label: "Tab Switch" },
+  { value: "WINDOW_BLUR", label: "Window Focus Lost" },
+  { value: "COPY", label: "Copy Attempt" },
+  { value: "CUT", label: "Cut Attempt" },
+  { value: "PASTE", label: "Paste Attempt" },
+  { value: "RIGHT_CLICK", label: "Right Click" },
+  { value: "KEYBOARD_SHORTCUT", label: "Suspicious Shortcut" },
+  { value: "FULLSCREEN_EXIT", label: "Fullscreen Exit" },
+  { value: "PHYSICAL_MALPRACTICE", label: "Physical Malpractice" },
+];
+
+// Builds the violations query. studentId is passed for the modal, where every
+// request stays pinned to one student regardless of the other filters.
+const violationQuery = (filter: ViolationFilter, studentId?: string) => {
+  const query = new URLSearchParams();
+  if (studentId) query.set("studentId", studentId);
+  if (filter.isPardoned) query.set("isPardoned", filter.isPardoned);
+  if (filter.violationType) query.set("violationType", filter.violationType);
+  return query.toString();
+};
+
+const isFilterActive = (filter: ViolationFilter) =>
+  Boolean(filter.isPardoned || filter.violationType);
+
+const ViolationFilters = ({
+  filter,
+  onChange,
+  loading,
+}: {
+  filter: ViolationFilter;
+  onChange: (next: ViolationFilter) => void;
+  loading?: boolean;
+}) => (
+  <div className="flex items-center gap-2">
+    {/* Pardon status */}
+    <Select
+      value={filter.isPardoned || "all"}
+      onValueChange={(val) =>
+        onChange({ ...filter, isPardoned: val === "all" ? "" : val })
+      }
+    >
+      <SelectTrigger className="w-40 h-9 text-sm">
+        <SelectValue placeholder="All Violations" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">All Violations</SelectItem>
+        <SelectItem value="true">Pardoned</SelectItem>
+        <SelectItem value="false">Unpardoned</SelectItem>
+      </SelectContent>
+    </Select>
+
+    {/* Violation type */}
+    <Select
+      value={filter.violationType || "all"}
+      onValueChange={(val) =>
+        onChange({ ...filter, violationType: val === "all" ? "" : val })
+      }
+    >
+      <SelectTrigger className="w-48 h-9 text-sm">
+        <SelectValue placeholder="All Types" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">All Types</SelectItem>
+        {VIOLATION_TYPES.map((type) => (
+          <SelectItem key={type.value} value={type.value}>
+            {type.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+
+    {loading && <Spinner className="size-4 text-theme-gray" />}
+
+    {isFilterActive(filter) && (
+      <button
+        type="button"
+        onClick={() => onChange(EMPTY_FILTER)}
+        className="text-sm text-theme-gray hover:text-accent cursor-pointer underline underline-offset-2"
+      >
+        Clear
+      </button>
+    )}
+  </div>
+);
 
 const StatCard = ({
   label,
@@ -94,14 +194,110 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     Record<string, { answered: number; total: number }>
   >({});
 
+  // Roster-level violation filters
+  const [rosterFilter, setRosterFilter] =
+    useState<ViolationFilter>(EMPTY_FILTER);
+  const [rosterFilterLoading, setRosterFilterLoading] = useState(false);
+  // Matching violations per student id; null means no filter is applied and
+  // the roster shows every student with its live count.
+  const [filteredCounts, setFilteredCounts] = useState<Record<
+    string,
+    number
+  > | null>(null);
+  const rosterFilterControllerRef = useRef<AbortController | null>(null);
+
+  // Students holding at least one unpardoned violation — that is what locks
+  // the student's UI. The server's violationCount includes pardoned ones, so
+  // a student whose violations were all pardoned would otherwise still count.
+  const [lockedStudentIds, setLockedStudentIds] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const refreshLockedStudents = async (signal?: AbortSignal) => {
+    try {
+      const api = await getAxios();
+      const res = await api.get(
+        `/assessment/violations/${assessmentId}?${violationQuery({
+          isPardoned: "false",
+          violationType: "",
+        })}`,
+        signal ? { signal } : undefined,
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        const list: Violation[] = res.data.data ?? res.data.violations ?? [];
+        setLockedStudentIds(
+          new Set(
+            list
+              .map((violation) => violation.student?._id)
+              .filter((id): id is string => Boolean(id)),
+          ),
+        );
+      }
+    } catch {
+      // Keep the previous tally rather than flashing a wrong number
+    }
+  };
+
   // Violations modal state
   const [violationsOpen, setViolationsOpen] = useState(false);
   const [violationsStudent, setViolationsStudent] =
     useState<AssignedStudent | null>(null);
   const [violations, setViolations] = useState<Violation[]>([]);
   const [violationsLoading, setViolationsLoading] = useState(false);
+  const [modalFilter, setModalFilter] = useState<ViolationFilter>(EMPTY_FILTER);
   const [pardoningIds, setPardoningIds] = useState<Set<string>>(new Set());
   const [pardonCodes, setPardonCodes] = useState<Record<string, string>>({});
+
+  // Roster view: students with no matching violation drop out, and the
+  // Violations column reports the filtered tally instead of the live one.
+  const visibleStudents = filteredCounts
+    ? students
+        .filter((student) => (filteredCounts[student.id] ?? 0) > 0)
+        .map((student) => ({
+          ...student,
+          violationCount: filteredCounts[student.id],
+        }))
+    : students;
+
+  const applyRosterFilter = async (filter: ViolationFilter) => {
+    setRosterFilter(filter);
+
+    if (!isFilterActive(filter)) {
+      rosterFilterControllerRef.current?.abort();
+      setFilteredCounts(null);
+      setRosterFilterLoading(false);
+      return;
+    }
+
+    rosterFilterControllerRef.current?.abort();
+    const controller = new AbortController();
+    rosterFilterControllerRef.current = controller;
+
+    setRosterFilterLoading(true);
+    try {
+      const api = await getAxios();
+      const res = await api.get(
+        `/assessment/violations/${assessmentId}?${violationQuery(filter)}`,
+        { signal: controller.signal },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        const list: Violation[] = res.data.data ?? res.data.violations ?? [];
+        const counts: Record<string, number> = {};
+        for (const violation of list) {
+          const studentId = violation.student?._id;
+          if (!studentId) continue;
+          counts[studentId] = (counts[studentId] ?? 0) + 1;
+        }
+        setFilteredCounts(counts);
+      }
+    } catch (error: any) {
+      if (error?.name !== "CanceledError") setFilteredCounts({});
+    } finally {
+      if (!controller.signal.aborted) setRosterFilterLoading(false);
+    }
+  };
 
   const pardonViolation = async (violationId: string) => {
     setPardoningIds((prev) => new Set(prev).add(violationId));
@@ -133,6 +329,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
             ),
           );
         }
+        // The student may still hold other unpardoned violations, so re-derive
+        // the locked tally from the server rather than guessing locally
+        refreshLockedStudents();
       }
     } catch {
       // leave button available to retry
@@ -145,17 +344,20 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     }
   };
 
-  const openViolations = async (student: AssignedStudent) => {
-    setViolationsStudent(student);
-    setViolations([]);
-    setPardonCodes({});
-    setPardoningIds(new Set());
-    setViolationsOpen(true);
+  // studentId is always pinned, so every modal request stays scoped to the
+  // student whose row was clicked no matter which filters are set.
+  const fetchStudentViolations = async (
+    studentId: string,
+    filter: ViolationFilter,
+  ) => {
     setViolationsLoading(true);
     try {
       const api = await getAxios();
       const res = await api.get(
-        `/assessment/violations/${assessmentId}?studentId=${student.id}`,
+        `/assessment/violations/${assessmentId}?${violationQuery(
+          filter,
+          studentId,
+        )}`,
       );
       if (res.status === 200 || res.status === 201) {
         setViolations(res.data.data ?? res.data.violations ?? []);
@@ -166,6 +368,29 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
       setViolationsLoading(false);
     }
   };
+
+  const applyModalFilter = (filter: ViolationFilter) => {
+    setModalFilter(filter);
+    if (violationsStudent) fetchStudentViolations(violationsStudent.id, filter);
+  };
+
+  const openViolations = (student: AssignedStudent) => {
+    setViolationsStudent(student);
+    setViolations([]);
+    setPardonCodes({});
+    setPardoningIds(new Set());
+    // Each student opens on an unfiltered view
+    setModalFilter(EMPTY_FILTER);
+    setViolationsOpen(true);
+    fetchStudentViolations(student.id, EMPTY_FILTER);
+  };
+
+  useEffect(() => {
+    if (!session?.user.token) return;
+    const controller = new AbortController();
+    refreshLockedStudents(controller.signal);
+    return () => controller.abort();
+  }, [session?.user.token, assessmentId]);
 
   // Fetch initial assessment data
   useEffect(() => {
@@ -310,6 +535,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                 : s,
             ),
           );
+          // A fresh violation is by definition unpardoned, so this student is
+          // now locked
+          setLockedStudentIds((prev) => new Set(prev).add(data.studentId));
         },
       );
 
@@ -500,13 +728,28 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
               />
               <StatCard
                 label="Locked"
-                value={students.reduce((sum, s) => sum + s.violationCount, 0)}
+                value={lockedStudentIds.size}
                 accent="text-theme-error"
               />
             </div>
           )}
 
           <Spacer size="xl" />
+
+          {/* Roster violation filters */}
+          <div className="flex items-center justify-between">
+            <ViolationFilters
+              filter={rosterFilter}
+              onChange={applyRosterFilter}
+              loading={rosterFilterLoading}
+            />
+            {filteredCounts && (
+              <div className="text-sm text-theme-gray">
+                {visibleStudents.length} of {students.length} students match
+              </div>
+            )}
+          </div>
+          <Spacer size="md" />
 
           {/* Student Table */}
           <Table
@@ -518,7 +761,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
               { value: "Progress", colSpan: "col-span-2" },
               { value: "Violations", colSpan: "col-span-2" },
             ]}
-            tableData={students.map((student) => {
+            tableData={visibleStudents.map((student) => {
               const progress = progressMap[student.id];
               return [
                 { value: student.fullName, colSpan: "col-span-3" },
@@ -550,8 +793,10 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                   render: () => (
                     <button
                       onClick={() => openViolations(student)}
+                      // Red flags a locked student, so it tracks unpardoned
+                      // violations rather than the pardon-inclusive count
                       className={`flex items-center gap-1.5 text-xs cursor-pointer transition-colors ${
-                        student.violationCount > 0
+                        lockedStudentIds.has(student.id)
                           ? "text-theme-error hover:opacity-70"
                           : "text-theme-gray hover:text-accent"
                       }`}
@@ -565,6 +810,12 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
             showSearch={false}
             showOptions={false}
           />
+
+          {filteredCounts && visibleStudents.length === 0 && (
+            <div className="border-b border-theme-gray-mid py-8 text-center text-sm text-theme-gray">
+              No students have violations matching these filters.
+            </div>
+          )}
 
           <Spacer size="xl" />
           <Spacer size="xl" />
@@ -582,13 +833,21 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                 )}
               </DialogHeader>
 
+              {/* Same filters as the roster, scoped to this student */}
+              <ViolationFilters
+                filter={modalFilter}
+                onChange={applyModalFilter}
+              />
+
               {violationsLoading ? (
                 <div className="flex items-center justify-center py-10">
                   <Spinner className="size-5" />
                 </div>
               ) : violations.length === 0 ? (
                 <div className="py-8 text-center text-sm text-theme-gray">
-                  No violations recorded.
+                  {isFilterActive(modalFilter)
+                    ? "No violations match these filters."
+                    : "No violations recorded."}
                 </div>
               ) : (
                 <div className="flex flex-col gap-2 max-h-96 overflow-y-auto pr-1">
