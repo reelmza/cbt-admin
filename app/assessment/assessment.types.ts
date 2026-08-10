@@ -9,6 +9,7 @@ type AssesmentApiResponse = {
   dueDate: string;
   totalMarks: number;
   status: string;
+  session?: string;
   students: [];
   sections: [{ questions: [] }];
   endReason: string | null;

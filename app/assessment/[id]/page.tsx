@@ -11,7 +11,13 @@ import {
 } from "@/components/ui/select";
 import { getAxios } from "@/lib/axios";
 import { SessionProvider, useSession } from "next-auth/react";
-import { use, useEffect, useState } from "react";
+import {
+  use,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { PageDataType } from "./id.types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -31,6 +37,7 @@ import {
   Check,
   Database,
   FileText,
+  Layers,
   ListCheck,
   MapPinCheckInside,
   Printer,
@@ -40,6 +47,170 @@ import {
 import Link from "next/link";
 import Preload from "@/components/preload";
 import { useRole } from "@/lib/useRole";
+
+type ExportFilter = {
+  group: string;
+  subGroup: string;
+  level: string;
+  status: string;
+};
+
+const EMPTY_EXPORT_FILTER: ExportFilter = {
+  group: "",
+  subGroup: "",
+  level: "",
+  status: "",
+};
+
+type ResultBreakdown = {
+  assessment: {
+    id: string;
+    title: string;
+    totalQuestions: number;
+    totalPossibleScore: number;
+  };
+  results: {
+    sn: number;
+    student: {
+      id: string;
+      fullName: string;
+      regNo: string;
+      level: string;
+    };
+    scores: {
+      objective: number;
+      subjective: number;
+      theory: number;
+      total: number;
+    };
+    sectionScores: { title: string; score: number; maxScore: number }[];
+    percentage: number;
+  }[];
+};
+
+const LEVELS = ["100", "200", "300", "400", "500"];
+
+const SUBMISSION_STATUSES = [
+  { value: "submitted", label: "Submitted" },
+  { value: "in-progress", label: "In Progress" },
+  { value: "locked", label: "Locked" },
+  { value: "disconnected", label: "Disconnected" },
+];
+
+// Only the filters the user actually set are sent, so an untouched dialog
+// produces the same request the buttons made before there were filters
+const exportParams = (filter: ExportFilter) =>
+  Object.fromEntries(Object.entries(filter).filter(([, value]) => value));
+
+const ExportFilters = ({
+  filter,
+  setFilter,
+  groups,
+}: {
+  filter: ExportFilter;
+  setFilter: Dispatch<SetStateAction<ExportFilter>>;
+  groups: GroupType[] | null;
+}) => (
+  <>
+    {/* Faculty */}
+    <Select
+      value={filter.group || "all"}
+      onValueChange={(val) =>
+        // Departments belong to a faculty, so changing the faculty drops any
+        // department picked under the previous one
+        setFilter((prev) => ({
+          ...prev,
+          group: val === "all" ? "" : val,
+          subGroup: "",
+        }))
+      }
+    >
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select Faculty" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">All faculties</SelectItem>
+        {groups
+          ? groups.map((grp) => (
+              <SelectItem value={grp._id} key={grp._id}>
+                {grp.name}
+              </SelectItem>
+            ))
+          : ""}
+      </SelectContent>
+    </Select>
+    <Spacer size="sm" />
+
+    {/* Department */}
+    <Select
+      value={filter.subGroup || "all"}
+      onValueChange={(val) =>
+        setFilter((prev) => ({ ...prev, subGroup: val === "all" ? "" : val }))
+      }
+      disabled={!filter.group}
+    >
+      <SelectTrigger className="w-full">
+        <SelectValue
+          placeholder={
+            filter.group ? "Select Department" : "Select a faculty first"
+          }
+        />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">All departments</SelectItem>
+        {groups
+          ?.find((grp) => grp._id === filter.group)
+          ?.subGroups.map((sub) => (
+            <SelectItem value={sub._id} key={sub._id}>
+              {sub.name}
+            </SelectItem>
+          ))}
+      </SelectContent>
+    </Select>
+    <Spacer size="sm" />
+
+    {/* Level */}
+    <Select
+      value={filter.level || "all"}
+      onValueChange={(val) =>
+        setFilter((prev) => ({ ...prev, level: val === "all" ? "" : val }))
+      }
+    >
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select Level" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">All levels</SelectItem>
+        {LEVELS.map((level) => (
+          <SelectItem value={level} key={level}>
+            {level}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+    <Spacer size="sm" />
+
+    {/* Status */}
+    <Select
+      value={filter.status || "all"}
+      onValueChange={(val) =>
+        setFilter((prev) => ({ ...prev, status: val === "all" ? "" : val }))
+      }
+    >
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select Status" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">All statuses</SelectItem>
+        {SUBMISSION_STATUSES.map((item) => (
+          <SelectItem value={item.value} key={item.value}>
+            {item.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </>
+);
 
 const Page = ({ id }: { id: string }) => {
   const router = useRouter();
@@ -61,6 +232,15 @@ const Page = ({ id }: { id: string }) => {
     { _id: string; fullName: string }[] | null
   >(null);
   const [selectedAdminId, setSelectedAdminId] = useState<string>("");
+  const [showExportEntriesDialog, setShowExportEntriesDialog] = useState(false);
+  const [entriesFilter, setEntriesFilter] =
+    useState<ExportFilter>(EMPTY_EXPORT_FILTER);
+  // Holds the chosen output format; doubles as the results dialog's open state
+  const [resultsFormat, setResultsFormat] = useState<string | null>(null);
+  const [resultsFilter, setResultsFilter] =
+    useState<ExportFilter>(EMPTY_EXPORT_FILTER);
+  // Fetched on demand; doubles as the breakdown dialog's open state
+  const [breakdown, setBreakdown] = useState<ResultBreakdown | null>(null);
   const globalController = new AbortController();
 
   // Fetch all admins for invigilator dropdown
@@ -818,6 +998,7 @@ const Page = ({ id }: { id: string }) => {
         `/assessment/export-submission/${id}`,
 
         {
+          params: exportParams(entriesFilter),
           responseType: "blob",
           signal: globalController.signal,
         },
@@ -834,12 +1015,18 @@ const Page = ({ id }: { id: string }) => {
         a.click();
 
         URL.revokeObjectURL(url);
+        setShowExportEntriesDialog(false);
       }
 
       setLoading(null);
     } catch (error: any) {
       if (error.name !== "CanceledError") {
-        setLoading("pageError");
+        // The dialog stays open on failure so the filter can be adjusted
+        toast.error(
+          "Unable to generate submissions, please retry.",
+          toastConfig,
+        );
+        setLoading(null);
         console.log(error);
       }
     }
@@ -856,6 +1043,7 @@ const Page = ({ id }: { id: string }) => {
         {
           params: {
             fileType: output,
+            ...exportParams(resultsFilter),
           },
           responseType: "blob",
           signal: globalController.signal,
@@ -873,6 +1061,7 @@ const Page = ({ id }: { id: string }) => {
         a.click();
 
         URL.revokeObjectURL(url);
+        setResultsFormat(null);
       }
 
       if (res.status === 400) {
@@ -885,8 +1074,36 @@ const Page = ({ id }: { id: string }) => {
       setLoading(null);
     } catch (error: any) {
       if (error.name !== "CanceledError") {
-        setLoading("pageError");
+        // The dialog stays open on failure so the filter can be adjusted
+        toast.error("Unable to generate results, please retry.", toastConfig);
+        setLoading(null);
         console.log(error);
+      }
+    }
+  };
+
+  // Fetch the per-student result breakdown
+  const fetchResultBreakdown = async () => {
+    setLoading("resultBreakdown");
+    try {
+      const api = await getAxios();
+      const res = await api.get(`/assessment/assessment-results/${id}`, {
+        signal: globalController.signal,
+      });
+
+      if (res.status === 200) {
+        setBreakdown(res.data.data);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      if (error.name !== "CanceledError") {
+        toast.error(
+          error?.response?.data?.message ||
+            "Unable to load the result breakdown, please retry.",
+          toastConfig,
+        );
+        setLoading(null);
       }
     }
   };
@@ -943,6 +1160,18 @@ const Page = ({ id }: { id: string }) => {
 
   const canControl =
     isSuperadmin || (isAdmin && session?.user?.id === pageData?.createdBy);
+
+  // Sections are per assessment, but a student who skipped one may be missing
+  // it, so the columns come from the union across every result
+  const sectionTitles = breakdown
+    ? [
+        ...new Set(
+          breakdown.results.flatMap(
+            (item) => item.sectionScores?.map((sec) => sec.title) ?? [],
+          ),
+        ),
+      ]
+    : [];
 
   return (
     <div className="w-full h-full p-10 font-sans">
@@ -1455,7 +1684,11 @@ const Page = ({ id }: { id: string }) => {
                 {/* Generate Entries */}
                 <div className="border-b h-10 flex items-center text-sm">
                   <button
-                    onClick={generateAssEntries}
+                    type="button"
+                    onClick={() => {
+                      setEntriesFilter(EMPTY_EXPORT_FILTER);
+                      setShowExportEntriesDialog(true);
+                    }}
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     {loading === "generateAssEntries" ? (
@@ -1478,6 +1711,22 @@ const Page = ({ id }: { id: string }) => {
                   </Link>
                 </div>
 
+                {/* Result Breakdown */}
+                <div className="border-b h-12 flex items-center text-sm">
+                  <button
+                    type="button"
+                    onClick={fetchResultBreakdown}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    {loading === "resultBreakdown" ? (
+                      <Spinner className="size-4" />
+                    ) : (
+                      <Layers size={16} />
+                    )}
+                    <span>Result Breakdown</span>
+                  </button>
+                </div>
+
                 {/* Analytics*/}
                 <div className="border-b h-12 flex items-center text-sm">
                   <Link
@@ -1498,7 +1747,11 @@ const Page = ({ id }: { id: string }) => {
 
                   <div className="flex items-center gap-x-5">
                     <button
-                      onClick={() => generateAssResults("pdf")}
+                      type="button"
+                      onClick={() => {
+                        setResultsFilter(EMPTY_EXPORT_FILTER);
+                        setResultsFormat("pdf");
+                      }}
                       className="h-full border-r pr-5 flex items-center gap-1 cursor-pointer text-theme-warning"
                     >
                       {loading === "generateResults-pdf" ? (
@@ -1510,7 +1763,11 @@ const Page = ({ id }: { id: string }) => {
                     </button>
 
                     <button
-                      onClick={() => generateAssResults("csv")}
+                      type="button"
+                      onClick={() => {
+                        setResultsFilter(EMPTY_EXPORT_FILTER);
+                        setResultsFormat("csv");
+                      }}
                       className="flex items-center gap-1 cursor-pointer text-theme-success text-sm"
                     >
                       {loading === "generateResults-csv" ? (
@@ -1775,6 +2032,200 @@ const Page = ({ id }: { id: string }) => {
                     : "Download template"}
                 </button>
               </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog - Export Submissions */}
+          <Dialog
+            open={showExportEntriesDialog}
+            onOpenChange={setShowExportEntriesDialog}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Generate Submissions</DialogTitle>
+                <DialogDescription>
+                  Narrow the scripts down before downloading. Leave a filter on
+                  "All" to include every student.
+                </DialogDescription>
+              </DialogHeader>
+
+              <Spacer size="sm" />
+
+              <ExportFilters
+                filter={entriesFilter}
+                setFilter={setEntriesFilter}
+                groups={groups}
+              />
+              <Spacer size="md" />
+
+              <Button
+                type="button"
+                title="Download Scripts"
+                loading={loading === "generateAssEntries"}
+                variant="fill"
+                icon={<Database size={18} />}
+                onClick={generateAssEntries}
+              />
+
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  className="text-xs text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer"
+                  onClick={() => setEntriesFilter(EMPTY_EXPORT_FILTER)}
+                >
+                  Clear filters
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog - Export Results */}
+          <Dialog
+            open={!!resultsFormat}
+            onOpenChange={(open) => !open && setResultsFormat(null)}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  Generate Results ({resultsFormat === "pdf" ? "PDF" : "Excel"})
+                </DialogTitle>
+                <DialogDescription>
+                  Narrow the results down before downloading. Leave a filter on
+                  "All" to include every student.
+                </DialogDescription>
+              </DialogHeader>
+
+              <Spacer size="sm" />
+
+              <ExportFilters
+                filter={resultsFilter}
+                setFilter={setResultsFilter}
+                groups={groups}
+              />
+              <Spacer size="md" />
+
+              <Button
+                type="button"
+                title={
+                  resultsFormat === "pdf" ? "Download PDF" : "Download Excel"
+                }
+                loading={loading === `generateResults-${resultsFormat}`}
+                variant="fill"
+                icon={
+                  resultsFormat === "pdf" ? (
+                    <FileText size={18} />
+                  ) : (
+                    <Sheet size={18} />
+                  )
+                }
+                onClick={() =>
+                  resultsFormat && generateAssResults(resultsFormat)
+                }
+              />
+
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  className="text-xs text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer"
+                  onClick={() => setResultsFilter(EMPTY_EXPORT_FILTER)}
+                >
+                  Clear filters
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog - Result Breakdown */}
+          <Dialog
+            open={!!breakdown}
+            onOpenChange={(open) => !open && setBreakdown(null)}
+          >
+            <DialogContent className="sm:max-w-5xl">
+              <DialogHeader>
+                <DialogTitle>Result Breakdown</DialogTitle>
+                <DialogDescription>
+                  {breakdown?.assessment.title} — {breakdown?.results.length}{" "}
+                  submitted{" "}
+                  {breakdown?.results.length === 1 ? "student" : "students"},{" "}
+                  {breakdown?.assessment.totalQuestions} questions,{" "}
+                  {breakdown?.assessment.totalPossibleScore} marks obtainable.
+                </DialogDescription>
+              </DialogHeader>
+
+              <Spacer size="sm" />
+
+              {breakdown?.results.length ? (
+                <div className="max-h-[60vh] overflow-auto rounded-xs border border-theme-gray-mid">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-accent-light text-accent">
+                      <tr className="h-10 font-medium">
+                        <th className="px-2 whitespace-nowrap">S/N</th>
+                        <th className="px-2 whitespace-nowrap">Student</th>
+                        <th className="px-2 whitespace-nowrap">Level</th>
+                        <th className="px-2 whitespace-nowrap">Objective</th>
+                        <th className="px-2 whitespace-nowrap">Subjective</th>
+                        <th className="px-2 whitespace-nowrap">Theory</th>
+                        {sectionTitles.map((title) => (
+                          <th className="px-2 whitespace-nowrap" key={title}>
+                            {title}
+                          </th>
+                        ))}
+                        <th className="px-2 whitespace-nowrap">Total</th>
+                        <th className="px-2 whitespace-nowrap">%</th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="text-theme-gray">
+                      {breakdown.results.map((item) => (
+                        <tr
+                          className="h-12 border-b border-theme-gray-mid last:border-b-0 hover:bg-theme-gray-light/20"
+                          key={item.student.id}
+                        >
+                          <td className="px-2">{item.sn}</td>
+                          <td className="px-2 whitespace-nowrap">
+                            <div>{item.student.fullName}</div>
+                            <div className="text-xs">{item.student.regNo}</div>
+                          </td>
+                          <td className="px-2">{item.student.level || "-"}</td>
+                          <td className="px-2">{item.scores.objective}</td>
+                          <td className="px-2">{item.scores.subjective}</td>
+                          <td className="px-2">{item.scores.theory}</td>
+                          {sectionTitles.map((title) => {
+                            const section = item.sectionScores?.find(
+                              (sec) => sec.title === title,
+                            );
+
+                            return (
+                              <td className="px-2 whitespace-nowrap" key={title}>
+                                {section
+                                  ? `${section.score} / ${section.maxScore}`
+                                  : "-"}
+                              </td>
+                            );
+                          })}
+                          <td className="px-2">
+                            {item.scores.total} /{" "}
+                            {breakdown.assessment.totalPossibleScore}
+                          </td>
+                          <td
+                            className={`px-2 ${
+                              item.percentage >= 50
+                                ? "text-theme-success"
+                                : "text-theme-error"
+                            }`}
+                          >
+                            {item.percentage}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="h-20 flex items-center justify-center text-sm text-theme-gray">
+                  No submitted results for this assessment yet.
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 

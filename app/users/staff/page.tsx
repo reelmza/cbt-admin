@@ -30,9 +30,17 @@ import { toastConfig } from "@/utils/toastConfig";
 import { CloudUpload, User2 } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Preload from "@/components/preload";
+
+// Role tokens accepted by the /admin/all?role= filter, per the API spec enum
+const ROLE_FILTERS = [
+  { value: "superadmin", label: "Super Admin" },
+  { value: "admin", label: "Admin" },
+  { value: "invigilator", label: "Invigilator" },
+  { value: "examination_officer", label: "Examination Officer" },
+];
 
 const Page = () => {
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
@@ -57,7 +65,40 @@ const Page = () => {
   >(null);
   const [groups, setGroups] = useState<GroupType[] | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
+  const [roleFilter, setRoleFilter] = useState("");
   const { data: session } = useSession();
+
+  const fetchControllerRef = useRef<AbortController | null>(null);
+
+  const fetchStaff = async (role: string) => {
+    fetchControllerRef.current?.abort();
+    const controller = new AbortController();
+    fetchControllerRef.current = controller;
+
+    setLoading("roleFilter");
+
+    const query = new URLSearchParams({ pageNumber: "1" });
+    if (role) query.set("role", role);
+
+    try {
+      const api = await getAxios();
+      const res = await api.get(`/admin/all?${query.toString()}`, {
+        signal: controller.signal,
+      });
+
+      if (res.status === 200) {
+        setPageData(res.data.data.data);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      // A failed filter keeps the current rows on screen rather than
+      // dropping the whole page into its error state
+      if (error.name === "CanceledError") return;
+      toast.error("Unable to filter administrators, please retry.", toastConfig);
+      setLoading(null);
+    }
+  };
 
   const bulkUpload = async (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -216,14 +257,46 @@ const Page = () => {
           <Spacer size="lg" />
 
           {/* Actions */}
-          <div className="w-42 float-right justify-end mb-4">
-            <Button
-              title="Create Admin"
-              variant="fill"
-              icon={<User2 size={18} />}
-              onClick={() => setShowCreateDialog(true)}
-              loading={false}
-            />
+          <div className="flex items-center justify-between mb-4">
+            {/* Role filter */}
+            <div className="flex items-center gap-3">
+              <Select
+                value={roleFilter || "all"}
+                onValueChange={(val) => {
+                  const next = val === "all" ? "" : val;
+                  setRoleFilter(next);
+                  fetchStaff(next);
+                }}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All roles</SelectItem>
+                  {ROLE_FILTERS.map((item) => (
+                    <SelectItem value={item.value} key={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {loading === "roleFilter" ? (
+                <Spinner className="size-4 text-theme-gray" />
+              ) : (
+                ""
+              )}
+            </div>
+
+            <div className="w-42">
+              <Button
+                title="Create Admin"
+                variant="fill"
+                icon={<User2 size={18} />}
+                onClick={() => setShowCreateDialog(true)}
+                loading={false}
+              />
+            </div>
           </div>
 
           {/* Table */}
@@ -257,6 +330,14 @@ const Page = () => {
             showSearch={false}
             showOptions={false}
           />
+
+          {pageData.length === 0 ? (
+            <div className="h-20 flex items-center justify-center text-sm text-theme-gray">
+              No administrators match this role.
+            </div>
+          ) : (
+            ""
+          )}
 
           {/* Spacing */}
           <Spacer size="xl" />
