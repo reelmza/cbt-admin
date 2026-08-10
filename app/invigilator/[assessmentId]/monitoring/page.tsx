@@ -58,6 +58,16 @@ type Violation = {
   student?: { _id: string; fullName: string; regNumber: string; level: number };
 };
 
+// Per-student device and lock detail, reported only by the invigilator
+// analytics endpoint
+type LiveStudent = {
+  studentId: string;
+  deviceIp?: string;
+  isLocked?: boolean;
+  lockReason?: string | null;
+  lockedAt?: string | null;
+};
+
 type ViolationFilter = { isPardoned: string; violationType: string };
 
 const EMPTY_FILTER: ViolationFilter = { isPardoned: "", violationType: "" };
@@ -168,6 +178,17 @@ const StatCard = ({
   </div>
 );
 
+// Every reason to refetch the live analytics collapses into one request per
+// window, so a hall starting at once costs one call rather than hundreds
+const LIVE_INFO_DELAY = 2000;
+
+// A student whose device IP never arrives would otherwise be chased on every
+// event they produce, so the chase gives up until the next student joins
+const MAX_LIVE_INFO_CHASES = 8;
+
+const lockTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
 const studentStatusBadgeColor = (
   status: string,
 ): "success" | "info" | "warning" | "error" => {
@@ -237,6 +258,88 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     } catch {
       // Keep the previous tally rather than flashing a wrong number
     }
+  };
+
+  // Device IP and lock timestamps, keyed by student id. The ref mirrors the
+  // state so socket handlers can read the current value without re-binding.
+  const [liveInfo, setLiveInfo] = useState<Record<string, LiveStudent>>({});
+  const liveInfoRef = useRef<Record<string, LiveStudent>>({});
+  const liveInfoInFlight = useRef(false);
+  const pendingRefreshRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chaseCountRef = useRef(0);
+
+  // deviceIp is captured at exam start and only reported while a student is
+  // live, so entries are merged instead of replaced — a student who submits
+  // drops out of liveStudents but their device stays on screen
+  const refreshLiveInfo = async (signal?: AbortSignal) => {
+    if (liveInfoInFlight.current) return;
+    liveInfoInFlight.current = true;
+
+    try {
+      const api = await getAxios();
+      const res = await api.get(
+        `/assessment/invigilator/analytics/${assessmentId}`,
+        signal ? { signal } : undefined,
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        const live: LiveStudent[] = res.data.data?.liveStudents ?? [];
+        const next = { ...liveInfoRef.current };
+        let changed = false;
+        let gainedIp = false;
+
+        for (const item of live) {
+          const current = next[item.studentId];
+          if (
+            current?.deviceIp === item.deviceIp &&
+            current?.lockedAt === item.lockedAt &&
+            current?.isLocked === item.isLocked &&
+            current?.lockReason === item.lockReason
+          ) {
+            continue;
+          }
+
+          if (!current?.deviceIp && item.deviceIp) gainedIp = true;
+          next[item.studentId] = item;
+          changed = true;
+        }
+
+        // Re-rendering every roster row for an unchanged payload is the main
+        // cost of chasing, so state is only committed on a real difference
+        if (changed) {
+          liveInfoRef.current = next;
+          setLiveInfo(next);
+        }
+
+        if (gainedIp) chaseCountRef.current = 0;
+      }
+    } catch {
+      // Keep the last known devices rather than blanking the column
+    } finally {
+      liveInfoInFlight.current = false;
+    }
+  };
+
+  // force is for lock changes, which must land regardless of how long the
+  // device chase has been running
+  const scheduleLiveInfoRefresh = (force = false) => {
+    if (pendingRefreshRef.current) return;
+    if (!force && chaseCountRef.current >= MAX_LIVE_INFO_CHASES) return;
+    if (!force) chaseCountRef.current += 1;
+
+    pendingRefreshRef.current = setTimeout(() => {
+      pendingRefreshRef.current = null;
+      refreshLiveInfo();
+    }, LIVE_INFO_DELAY);
+  };
+
+  // The backend writes the device IP as the exam starts, so candidate-joined
+  // can beat it and the first fetch comes back empty. Every later event for
+  // that student re-checks until the IP lands, which is why this is gated on
+  // the value still being missing.
+  const ensureLiveInfo = (studentId: string) => {
+    if (liveInfoRef.current[studentId]?.deviceIp) return;
+    scheduleLiveInfoRefresh();
   };
 
   // Violations modal state
@@ -389,6 +492,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     if (!session?.user.token) return;
     const controller = new AbortController();
     refreshLockedStudents(controller.signal);
+    refreshLiveInfo(controller.signal);
     return () => controller.abort();
   }, [session?.user.token, assessmentId]);
 
@@ -497,6 +601,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                 : s,
             ),
           );
+          // A new student is worth chasing even if an earlier one gave up
+          chaseCountRef.current = 0;
+          ensureLiveInfo(studentId);
         },
       );
 
@@ -538,6 +645,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           // A fresh violation is by definition unpardoned, so this student is
           // now locked
           setLockedStudentIds((prev) => new Set(prev).add(data.studentId));
+          ensureLiveInfo(data.studentId);
         },
       );
 
@@ -552,6 +660,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           setStats((prev) =>
             prev ? { ...prev, locked: prev.locked + 1 } : prev,
           );
+          scheduleLiveInfoRefresh(true);
         },
       );
 
@@ -566,6 +675,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           setStats((prev) =>
             prev ? { ...prev, locked: Math.max(0, prev.locked - 1) } : prev,
           );
+          scheduleLiveInfoRefresh(true);
         },
       );
 
@@ -597,6 +707,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                 : s,
             ),
           );
+          ensureLiveInfo(studentId);
         },
       );
 
@@ -640,6 +751,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           setStats((prev) =>
             prev ? { ...prev, submitted: prev.submitted + 1 } : prev,
           );
+          // Last chance to capture the device before the student leaves
+          // liveStudents
+          ensureLiveInfo(studentId);
         },
       );
     };
@@ -648,6 +762,8 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
     return () => {
       cancelled = true;
+      if (pendingRefreshRef.current) clearTimeout(pendingRefreshRef.current);
+      pendingRefreshRef.current = null;
       const socket = socketRef.current;
       socketRef.current = null;
       if (socket) {
@@ -754,24 +870,57 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           {/* Student Table */}
           <Table
             tableHeading={[
-              { value: "Full Name", colSpan: "col-span-3" },
+              { value: "Full Name", colSpan: "col-span-2" },
               { value: "Reg Number", colSpan: "col-span-2" },
               { value: "Started?", colSpan: "col-span-2" },
               { value: "Con.", colSpan: "col-span-1" },
-              { value: "Progress", colSpan: "col-span-2" },
+              { value: "Progress", colSpan: "col-span-1" },
+              { value: "Device IP", colSpan: "col-span-2" },
               { value: "Violations", colSpan: "col-span-2" },
             ]}
             tableData={visibleStudents.map((student) => {
               const progress = progressMap[student.id];
+              const live = liveInfo[student.id];
               return [
-                { value: student.fullName, colSpan: "col-span-3" },
+                { value: student.fullName, colSpan: "col-span-2" },
                 { value: student.regNumber, colSpan: "col-span-2" },
                 {
-                  value:
-                    student.status === "in-progress" ? "yes" : student.status,
                   colSpan: "col-span-2",
-                  type: "badge" as const,
-                  color: studentStatusBadgeColor(student.status),
+                  render: () => (
+                    <div className="flex flex-col gap-0.5 leading-tight">
+                      <span
+                        className={`w-fit text-xs rounded-sm py-[1px] px-1.5 ${
+                          studentStatusBadgeColor(student.status) === "success"
+                            ? "bg-theme-success/5 text-theme-success"
+                            : studentStatusBadgeColor(student.status) === "info"
+                              ? "bg-theme-info/5 text-theme-info"
+                              : studentStatusBadgeColor(student.status) ===
+                                  "error"
+                                ? "bg-theme-error/5 text-theme-error"
+                                : "bg-theme-warning/5 text-theme-warning"
+                        }`}
+                      >
+                        {student.status === "in-progress"
+                          ? "yes"
+                          : student.status}
+                      </span>
+
+                      {live?.lockedAt ? (
+                        <span
+                          className="text-[10px] text-theme-error"
+                          title={`Locked at ${new Date(
+                            live.lockedAt,
+                          ).toLocaleString()}${
+                            live.lockReason ? ` — ${live.lockReason}` : ""
+                          }`}
+                        >
+                          locked {lockTime(live.lockedAt)}
+                        </span>
+                      ) : (
+                        ""
+                      )}
+                    </div>
+                  ),
                 },
                 {
                   value: student.connectionStatus ?? "offline",
@@ -786,6 +935,10 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                   value: progress
                     ? `${progress.answered} / ${progress.total}`
                     : "—",
+                  colSpan: "col-span-1",
+                },
+                {
+                  value: live?.deviceIp || "—",
                   colSpan: "col-span-2",
                 },
                 {
