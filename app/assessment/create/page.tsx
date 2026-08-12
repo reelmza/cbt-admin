@@ -31,6 +31,7 @@ import { getAxios } from "@/lib/axios";
 import {
   ArrowRight,
   Check,
+  Download,
   Pencil,
   Plus,
   RefreshCcw,
@@ -51,6 +52,7 @@ import Papa from "papaparse";
 import { toastConfig } from "@/utils/toastConfig";
 import { toast } from "sonner";
 import Image from "next/image";
+import { downloadImportTemplate } from "@/lib/bulkImport";
 
 const TERM_VALUES: Record<string, string> = {
   First: "1",
@@ -194,6 +196,12 @@ const Main = () => {
       console.log(error);
       setLoading(null);
     }
+  };
+
+  const getTemplate = async () => {
+    setLoading("questionTemplate");
+    await downloadImportTemplate("questions");
+    setLoading(null);
   };
 
   // Helper function
@@ -366,19 +374,32 @@ const Main = () => {
 
               {/* Bulk Upload */}
               {activeSection && activeSection[0] == "multiple_choice" && (
-                <div className="relative w-38 overflow-hidden">
-                  <input
-                    type="file"
-                    className="absolute opacity-0 h-full w-full cursor-pointer"
-                    name={"bulkFile"}
-                    accept=".csv"
-                    onChange={handleCsvUpload}
-                  />
-                  <Button
-                    title={"Bulk Upload"}
-                    loading={false}
-                    variant={"fill"}
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="w-44">
+                    <Button
+                      title={"Upload Template"}
+                      loading={loading === "questionTemplate"}
+                      variant={"outline"}
+                      icon={<Download size={16} strokeWidth={2.5} />}
+                      onClick={getTemplate}
+                      type="button"
+                    />
+                  </div>
+
+                  <div className="relative w-38 overflow-hidden">
+                    <input
+                      type="file"
+                      className="absolute opacity-0 h-full w-full cursor-pointer"
+                      name={"bulkFile"}
+                      accept=".csv"
+                      onChange={handleCsvUpload}
+                    />
+                    <Button
+                      title={"Bulk Upload"}
+                      loading={false}
+                      variant={"fill"}
+                    />
+                  </div>
                 </div>
               )}
             </div>

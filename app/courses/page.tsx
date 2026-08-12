@@ -12,10 +12,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Input from "@/components/input";
+import { Input as FileInput } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { getAxios } from "@/lib/axios";
 
-import { Pencil, Plus } from "lucide-react";
+import { CloudUpload, Download, Pencil, Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -23,9 +24,18 @@ import { toastConfig } from "@/utils/toastConfig";
 import { Course, CoursesPageMetaData } from "./courses.types";
 import Preload from "@/components/preload";
 import { useRole } from "@/lib/useRole";
+import {
+  BulkImportResult,
+  downloadImportTemplate,
+  runBulkImport,
+} from "@/lib/bulkImport";
+import BulkImportSummary from "@/components/bulk-import-result";
 
 const Page = () => {
   const [openAddCourse, setOpenAddCourse] = useState(false);
+  const [openBulkUpload, setOpenBulkUpload] = useState(false);
+  // Kept after the import so the skipped and failed rows stay readable
+  const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
   // Holds the course being edited; doubles as the edit dialog's open state
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState<string | null>("page");
@@ -156,6 +166,36 @@ const Page = () => {
     }
   };
 
+  const getTemplate = async () => {
+    setLoading("courseTemplate");
+    await downloadImportTemplate("courses");
+    setLoading(null);
+  };
+
+  const bulkUpload = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      bulkUpload: { files: FileList };
+    };
+    const file = target.bulkUpload.files[0];
+    if (!file) return;
+
+    setLoading("bulkUpload");
+    const result = await runBulkImport("courses", file);
+    setLoading(null);
+    if (!result) return;
+
+    setBulkResult(result);
+    toast.success(
+      `${result.created.length} course${result.created.length === 1 ? "" : "s"} imported`,
+      toastConfig,
+    );
+
+    // Even a partial import changes the list, so it is always refetched
+    fetchCourses({ keyword: filterKeyword, page: pageMetaData?.page ?? 1 });
+  };
+
   // Debounced keyword search
   useEffect(() => {
     if (!isMounted.current) {
@@ -220,7 +260,21 @@ const Page = () => {
 
               {/* Buttons */}
               {isSuperadmin && (
-                <div>
+                <div className="flex items-center gap-3">
+                  <div className="w-52">
+                    <Button
+                      title="Bulk Upload"
+                      icon={<CloudUpload size={16} strokeWidth={2.5} />}
+                      variant="outline"
+                      loading={false}
+                      onClick={() => {
+                        setBulkResult(null);
+                        setOpenBulkUpload(true);
+                      }}
+                      type="button"
+                    />
+                  </div>
+
                   <div className="w-52">
                     <Button
                       title="Add a course"
@@ -305,6 +359,64 @@ const Page = () => {
               showSearch={false}
               showOptions={false}
             />
+
+            {/* Bulk Upload Courses */}
+            <Dialog open={openBulkUpload} onOpenChange={setOpenBulkUpload}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Bulk Upload Courses</DialogTitle>
+                  <DialogDescription className="pr-28">
+                    Upload an Excel file (.xlsx) of courses. Codes that already
+                    exist are skipped.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <form className="pr-28" onSubmit={bulkUpload}>
+                  <FileInput
+                    id="bulkUpload"
+                    name="bulkUpload"
+                    type="file"
+                    accept=".xlsx"
+                    className="cursor-pointer"
+                    required
+                  />
+                  <Spacer size="md" />
+
+                  <Button
+                    title={"Upload File"}
+                    loading={loading === "bulkUpload"}
+                    variant={"fill"}
+                    icon={<CloudUpload size={20} />}
+                  />
+
+                  <Spacer size="md" />
+                  <div className="text-sm text-theme-gray">
+                    Columns: Course Title, Course Code, Description. <br />
+                    <br />
+                    <button
+                      type="button"
+                      onClick={getTemplate}
+                      disabled={loading === "courseTemplate"}
+                      className="inline-flex items-center gap-1 text-accent underline underline-offset-2 disabled:opacity-50 cursor-pointer"
+                    >
+                      {loading === "courseTemplate" ? (
+                        <Spinner className="size-3" />
+                      ) : (
+                        <Download size={12} />
+                      )}
+                      Download Upload Template
+                    </button>
+                  </div>
+
+                  {bulkResult && (
+                    <>
+                      <Spacer size="md" />
+                      <BulkImportSummary result={bulkResult} />
+                    </>
+                  )}
+                </form>
+              </DialogContent>
+            </Dialog>
 
             <Dialog open={openAddCourse} onOpenChange={setOpenAddCourse}>
               <DialogContent>

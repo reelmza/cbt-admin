@@ -26,8 +26,14 @@ import { Spinner } from "@/components/ui/spinner";
 import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
+import {
+  BulkImportResult,
+  downloadImportTemplate,
+  runBulkImport,
+} from "@/lib/bulkImport";
+import BulkImportSummary from "@/components/bulk-import-result";
 
-import { CloudUpload, User2 } from "lucide-react";
+import { CloudUpload, Download, User2 } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -63,9 +69,9 @@ const Page = () => {
         school: string;
       }[]
   >(null);
-  const [groups, setGroups] = useState<GroupType[] | null>(null);
-  const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
   const [roleFilter, setRoleFilter] = useState("");
+  // Kept after the import so the skipped and failed rows stay readable
+  const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
   const { data: session } = useSession();
 
   const fetchControllerRef = useRef<AbortController | null>(null);
@@ -104,40 +110,30 @@ const Page = () => {
     e.preventDefault();
 
     const target = e.target as typeof e.target & {
-      bulkUpload: { files: File[] };
-      group: { value: string };
-      subGroup: { value: string };
+      bulkUpload: { files: FileList };
     };
-
-    var formdata = new FormData();
-    formdata.append("file", target.bulkUpload.files[0], "students.csv");
-    formdata.append("group", target.group.value);
-    formdata.append("subGroup", target.subGroup.value);
+    const file = target.bulkUpload.files[0];
+    if (!file) return;
 
     setLoading("bulkUpload");
-    try {
-      const api = await getAxios();
-      const res = await api.post("/student/bulk-upload", formdata);
+    const result = await runBulkImport("faculty", file);
+    setLoading(null);
+    if (!result) return;
 
-      console.log(res);
+    setBulkResult(result);
+    toast.success(
+      `${result.created.length} account${result.created.length === 1 ? "" : "s"} imported`,
+      toastConfig,
+    );
 
-      if (res.status == 200) {
-        setLoading(null);
-        setOpenBulkUpload(false);
-        toast.success(res.data.message);
-        window.location.reload();
-      }
-    } catch (error: any) {
-      console.log(error);
+    // Even a partial import changes the list, so it is always refetched
+    fetchStaff(roleFilter);
+  };
 
-      if (error?.status == 400) {
-        toast.error(
-          "Error, Please check your user entries for duplicates",
-          toastConfig,
-        );
-      }
-      setLoading(null);
-    }
+  const getTemplate = async () => {
+    setLoading("facultyTemplate");
+    await downloadImportTemplate("faculty");
+    setLoading(null);
   };
 
   const createAdmin = async (e: React.SyntheticEvent) => {
@@ -288,14 +284,30 @@ const Page = () => {
               )}
             </div>
 
-            <div className="w-42">
-              <Button
-                title="Create Admin"
-                variant="fill"
-                icon={<User2 size={18} />}
-                onClick={() => setShowCreateDialog(true)}
-                loading={false}
-              />
+            <div className="flex items-center gap-3">
+              <div className="w-44">
+                <Button
+                  title="Bulk Upload"
+                  variant="outline"
+                  icon={<CloudUpload size={16} strokeWidth={2.5} />}
+                  onClick={() => {
+                    setBulkResult(null);
+                    setOpenBulkUpload(true);
+                  }}
+                  loading={false}
+                  type="button"
+                />
+              </div>
+
+              <div className="w-42">
+                <Button
+                  title="Create Admin"
+                  variant="fill"
+                  icon={<User2 size={18} />}
+                  onClick={() => setShowCreateDialog(true)}
+                  loading={false}
+                />
+              </div>
             </div>
           </div>
 
@@ -351,14 +363,14 @@ const Page = () => {
         errorMessage={errorMessage}
       />
 
-      {/* Dialogs - Student Bulk Upload */}
+      {/* Dialogs - Faculty Bulk Upload */}
       <Dialog open={openBulkUpload} onOpenChange={setOpenBulkUpload}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Bulk Upload Students</DialogTitle>
+            <DialogTitle>Bulk Upload Administrators</DialogTitle>
             <DialogDescription className="pr-28">
-              Add students to the database so that you can assign them to
-              assessments later on.
+              Upload an Excel file (.xlsx) of staff accounts. Emails that
+              already exist are skipped.
             </DialogDescription>
           </DialogHeader>
 
@@ -368,70 +380,11 @@ const Page = () => {
               id="bulkUpload"
               name="bulkUpload"
               type="file"
+              accept=".xlsx"
               className="cursor-pointer"
               required
             />
-            <Spacer size="sm" />
-
-            {/* Faculty */}
-            <Select
-              name="group"
-              onValueChange={(val) => {
-                if (!groups) return;
-                const target = groups.find((grp) => grp._id == val);
-                target && setSelectedGroup(target);
-              }}
-              required
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={
-                    groups && groups?.length > 1
-                      ? "Choose Faculty"
-                      : "No faculty created"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {groups
-                  ? groups.map((grp, key) => {
-                      return (
-                        <SelectItem value={grp._id} key={key}>
-                          {grp.name}
-                        </SelectItem>
-                      );
-                    })
-                  : ""}
-              </SelectContent>
-            </Select>
-            <Spacer size="sm" />
-
-            {/* Department */}
-            <Select name="subGroup" required>
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={
-                    selectedGroup && selectedGroup?.subGroups?.length > 0
-                      ? "Choose Department"
-                      : "No deparment created"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {selectedGroup?.subGroups ? (
-                  <>
-                    {selectedGroup.subGroups.map((grp, key) => (
-                      <SelectItem value={grp._id} key={key}>
-                        {grp.name}
-                      </SelectItem>
-                    ))}
-                  </>
-                ) : (
-                  ""
-                )}
-              </SelectContent>
-            </Select>
-            <Spacer size="sm" />
+            <Spacer size="md" />
 
             <Button
               title={"Upload File"}
@@ -442,9 +395,30 @@ const Page = () => {
 
             <Spacer size="md" />
             <div className="text-sm text-theme-gray">
-              Use the template provided, if there is an error, no student will
-              be uploaded.
+              Columns: Full Name, Email, Phone, Role, Password. Rows with
+              role=student are rejected. <br />
+              <br />
+              <button
+                type="button"
+                onClick={getTemplate}
+                disabled={loading === "facultyTemplate"}
+                className="inline-flex items-center gap-1 text-accent underline underline-offset-2 disabled:opacity-50 cursor-pointer"
+              >
+                {loading === "facultyTemplate" ? (
+                  <Spinner className="size-3" />
+                ) : (
+                  <Download size={12} />
+                )}
+                Download Upload Template
+              </button>
             </div>
+
+            {bulkResult && (
+              <>
+                <Spacer size="md" />
+                <BulkImportSummary result={bulkResult} />
+              </>
+            )}
           </form>
         </DialogContent>
       </Dialog>
