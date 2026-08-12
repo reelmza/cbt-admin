@@ -1,11 +1,14 @@
 "use client";
 
+import Button from "@/components/button";
+import Input from "@/components/input";
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
 import Table from "@/components/table";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -18,11 +21,19 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { getAxios } from "@/lib/axios";
-import { ArrowLeft, Radio, ShieldAlert } from "lucide-react";
+import { toastConfig } from "@/utils/toastConfig";
+import {
+  ArrowLeft,
+  FileSpreadsheet,
+  Flag,
+  Radio,
+  ShieldAlert,
+} from "lucide-react";
 import Link from "next/link";
 import { SessionProvider, useSession } from "next-auth/react";
-import { use, useEffect, useRef, useState } from "react";
+import { FormEvent, use, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import { toast } from "sonner";
 
 type AssignedStudent = {
   id: string;
@@ -477,6 +488,91 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
     if (violationsStudent) fetchStudentViolations(violationsStudent.id, filter);
   };
 
+  // The student being reported; doubles as the malpractice dialog's open state
+  const [malpracticeStudent, setMalpracticeStudent] =
+    useState<AssignedStudent | null>(null);
+  const [malpracticeForm, setMalpracticeForm] = useState({
+    description: "",
+    action: "",
+  });
+
+  const openMalpractice = (student: AssignedStudent) => {
+    setMalpracticeStudent(student);
+    setMalpracticeForm({ description: "", action: "" });
+  };
+
+  const reportMalpractice = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!malpracticeStudent) return;
+
+    const description = malpracticeForm.description.trim();
+    if (!description) {
+      toast.error("Describe what happened before submitting.", toastConfig);
+      return;
+    }
+
+    const action = malpracticeForm.action.trim();
+    setLoading("reportMalpractice");
+
+    try {
+      const api = await getAxios();
+      const res = await api.post(
+        `/assessment/physical-malpractice/${assessmentId}/${malpracticeStudent.id}`,
+        action ? { description, action } : { description },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        // The roster updates off the candidate-alert the server fires back, so
+        // the count is not bumped here — that would double-count it
+        toast.success(
+          `Malpractice recorded against ${malpracticeStudent.fullName}`,
+          toastConfig,
+        );
+        setMalpracticeStudent(null);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Unable to record the incident, please retry.",
+        toastConfig,
+      );
+      setLoading(null);
+    }
+  };
+
+  const downloadInvigilationReport = async () => {
+    setLoading("invigilationReport");
+
+    try {
+      const api = await getAxios();
+      const res = await api.get(
+        `/assessment/invigilation-report/${assessmentId}`,
+        { responseType: "blob" },
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        const url = URL.createObjectURL(res.data);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${assessment?.course?.code ?? "Assessment"} - Invigilation Report.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      setLoading(null);
+    } catch (error: any) {
+      // A blob response type turns an error body into a Blob too, so there is
+      // no server message to surface here
+      toast.error(
+        "Unable to generate the invigilation report, please retry.",
+        toastConfig,
+      );
+      setLoading(null);
+    }
+  };
+
   const openViolations = (student: AssignedStudent) => {
     setViolationsStudent(student);
     setViolations([]);
@@ -804,16 +900,29 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
               </div>
             </div>
 
-            {/* Connection status */}
-            <div
-              className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full border ${
-                connected
-                  ? "bg-theme-success/10 text-theme-succes border-theme-success/20"
-                  : "bg-theme-gray-light text-theme-gray border-theme-gray-mid"
-              }`}
-            >
-              <Radio size={12} className={connected ? "animate-pulse" : ""} />
-              {connected ? "Live" : "Connecting…"}
+            <div className="flex items-center gap-3">
+              <div className="w-52 shrink-0">
+                <Button
+                  type="button"
+                  title="Invigilation Report"
+                  loading={loading === "invigilationReport"}
+                  variant="outline"
+                  icon={<FileSpreadsheet size={16} />}
+                  onClick={downloadInvigilationReport}
+                />
+              </div>
+
+              {/* Connection status */}
+              <div
+                className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full border ${
+                  connected
+                    ? "bg-theme-success/10 text-theme-succes border-theme-success/20"
+                    : "bg-theme-gray-light text-theme-gray border-theme-gray-mid"
+                }`}
+              >
+                <Radio size={12} className={connected ? "animate-pulse" : ""} />
+                {connected ? "Live" : "Connecting…"}
+              </div>
             </div>
           </div>
 
@@ -944,18 +1053,30 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                 {
                   colSpan: "col-span-2",
                   render: () => (
-                    <button
-                      onClick={() => openViolations(student)}
-                      // Red flags a locked student, so it tracks unpardoned
-                      // violations rather than the pardon-inclusive count
-                      className={`flex items-center gap-1.5 text-xs cursor-pointer transition-colors ${
-                        lockedStudentIds.has(student.id)
-                          ? "text-theme-error hover:opacity-70"
-                          : "text-theme-gray hover:text-accent"
-                      }`}
-                    >
-                      <span>({student.violationCount}) View Details</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => openViolations(student)}
+                        // Red flags a locked student, so it tracks unpardoned
+                        // violations rather than the pardon-inclusive count
+                        className={`flex items-center gap-1.5 text-xs cursor-pointer transition-colors ${
+                          lockedStudentIds.has(student.id)
+                            ? "text-theme-error hover:opacity-70"
+                            : "text-theme-gray hover:text-accent"
+                        }`}
+                      >
+                        <span>({student.violationCount}) View Details</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openMalpractice(student)}
+                        title="Report physical malpractice"
+                        className="text-theme-gray hover:text-theme-error cursor-pointer transition-colors"
+                      >
+                        <Flag size={14} />
+                      </button>
+                    </div>
                   ),
                 },
               ];
@@ -972,6 +1093,70 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
           <Spacer size="xl" />
           <Spacer size="xl" />
+
+          {/* Physical Malpractice Modal */}
+          <Dialog
+            open={!!malpracticeStudent}
+            onOpenChange={(open) => !open && setMalpracticeStudent(null)}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Report Physical Malpractice</DialogTitle>
+                <DialogDescription>
+                  {malpracticeStudent?.fullName} &mdash;{" "}
+                  {malpracticeStudent?.regNumber}. This counts as a violation
+                  against the student and alerts every monitor.
+                </DialogDescription>
+              </DialogHeader>
+
+              <Spacer size="sm" />
+
+              <form onSubmit={reportMalpractice}>
+                <div className="text-sm text-theme-gray">What happened?</div>
+                <Spacer size="sm" />
+                <textarea
+                  className="w-full outline-none border border-accent-light rounded-md p-3 text-sm min-h-24 max-h-24"
+                  placeholder="e.g. Student found with a cheat sheet under the booklet"
+                  value={malpracticeForm.description}
+                  onChange={(e) =>
+                    setMalpracticeForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                />
+
+                <Spacer size="sm" />
+
+                <div className="text-sm text-theme-gray">
+                  Action taken (optional)
+                </div>
+                <Spacer size="sm" />
+                <Input
+                  name="action"
+                  type="text"
+                  placeholder="e.g. Confiscated material, issued warning"
+                  value={malpracticeForm.action}
+                  onChange={(e) =>
+                    setMalpracticeForm((prev) => ({
+                      ...prev,
+                      action: e.target.value,
+                    }))
+                  }
+                />
+
+                <Spacer size="md" />
+
+                <Button
+                  type="submit"
+                  title="Record Incident"
+                  loading={loading === "reportMalpractice"}
+                  variant="fillError"
+                  icon={<Flag size={18} />}
+                />
+              </form>
+            </DialogContent>
+          </Dialog>
 
           {/* Violations Modal */}
           <Dialog open={violationsOpen} onOpenChange={setViolationsOpen}>
