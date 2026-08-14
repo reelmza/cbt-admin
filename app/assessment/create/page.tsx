@@ -53,6 +53,7 @@ import { toastConfig } from "@/utils/toastConfig";
 import { toast } from "sonner";
 import Image from "next/image";
 import { downloadImportTemplate } from "@/lib/bulkImport";
+import { uploadImage } from "@/lib/fileUpload";
 
 const TERM_VALUES: Record<string, string> = {
   First: "1",
@@ -86,6 +87,8 @@ const Main = () => {
     null,
   );
   const [sections, setSections] = useState<SectionType | null>([]);
+  // Shared stimulus URL for the section modal currently open
+  const [sectionImage, setSectionImage] = useState("");
 
   // Question component states
   const [question, setQuestion] = useState("");
@@ -119,7 +122,7 @@ const Main = () => {
     setCorrectAnswer("A");
   };
 
-  // Update a section's title and per-question score
+  // Update a section's title, timing, image and per-question score
   const editSectionFn = (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!editSectionType) return;
@@ -127,6 +130,7 @@ const Main = () => {
     const target = e.target as typeof e.target & {
       sectionTitle: { value: string };
       score: { value: string };
+      sectionTimeLimit: { value: string };
     };
 
     const newScore = Number(target.score.value);
@@ -138,6 +142,8 @@ const Main = () => {
               ? {
                   ...sect,
                   title: target.sectionTitle.value,
+                  timeLimit: Number(target.sectionTimeLimit.value) || 0,
+                  image: sectionImage,
                   defaultQuestionScore: newScore,
                   questions: sect.questions.map((qst) => ({
                     ...qst,
@@ -150,7 +156,24 @@ const Main = () => {
     );
 
     setEditSectionType(null);
+    setSectionImage("");
     toast.success("Section updated", toastConfig);
+  };
+
+  // Uploads the shared stimulus for whichever section modal is open
+  const pickSectionImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    // Let the same file be picked again after a rejected upload
+    input.value = "";
+
+    setLoading("sectionImage");
+    const url = await uploadImage(file);
+    setLoading(null);
+
+    if (url) setSectionImage(url);
   };
 
   // Submit assessment
@@ -173,16 +196,25 @@ const Main = () => {
 
     setLoading("submitAss");
 
+    // Timed sections define the assessment's length between them; when none is
+    // timed the whole paper falls back to the original flat 30 minutes
+    const sectionMinutes = nonEmptySections.reduce(
+      (sum, sect) => sum + (sect.timeLimit || 0),
+      0,
+    );
+
     let formData = {
       ...assDetails,
       totalMarks,
-      timeLimit: 30, //deault 30 min
+      timeLimit: sectionMinutes || 30,
     };
 
     // @ts-expect-error Remove defaultQuestionScore property that is not in the database schema and causes error upon upload.
     formData.sections = nonEmptySections.map((sect) => {
-      const { defaultQuestionScore, ...formatedSect } = sect;
-      return formatedSect;
+      const { defaultQuestionScore, image, ...formatedSect } = sect;
+      // The API rejects an empty image with a 422 rather than ignoring it, so
+      // a section without one must omit the key entirely
+      return { ...formatedSect, ...(image && { image }) };
     });
 
     try {
@@ -494,6 +526,7 @@ const Main = () => {
                               tabIndex={0}
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setSectionImage(section.image ?? "");
                                 setEditSectionType(section.type);
                               }}
                               className="text-theme-gray hover:text-accent cursor-pointer"
@@ -595,7 +628,10 @@ const Main = () => {
             {/* Add Section Button */}
             <button
               className="text-sm flex items-center text-theme-gray hover:text-accent-dim gap-2 cursor-pointer"
-              onClick={() => setShowSectionsModal(true)}
+              onClick={() => {
+                setSectionImage("");
+                setShowSectionsModal(true);
+              }}
             >
               <span>Add a Section</span>
               <Plus size={14} />
@@ -874,12 +910,15 @@ const Main = () => {
                 sectionTitle: { value: string };
                 sectionInstructions: { value: string };
                 score: { value: string };
+                sectionTimeLimit: { value: string };
               };
 
               const newSection = {
                 type: target.sectionType.value,
                 title: target.sectionTitle.value,
                 instruction: target.sectionInstructions.value,
+                timeLimit: Number(target.sectionTimeLimit.value) || 0,
+                image: sectionImage,
                 defaultQuestionScore: Number(target.score.value),
                 questions: [],
               };
@@ -953,6 +992,23 @@ const Main = () => {
             />
             <Spacer size="sm" />
 
+            {/* Section timing & shared image */}
+            <Input
+              name="sectionTimeLimit"
+              type="number"
+              placeholder="Time limit in minutes, 0 for untimed"
+              defaultValue="0"
+            />
+            <Spacer size="sm" />
+
+            <SectionImageField
+              image={sectionImage}
+              uploading={loading === "sectionImage"}
+              onPick={pickSectionImage}
+              onClear={() => setSectionImage("")}
+            />
+            <Spacer size="sm" />
+
             <Button
               title={"Create Section"}
               loading={loading === "addAss"}
@@ -1001,6 +1057,23 @@ const Main = () => {
                   defaultValue={String(target.defaultQuestionScore)}
                   required
                 />
+                <Spacer size="sm" />
+
+                {/* Section timing & shared image */}
+                <Input
+                  name="sectionTimeLimit"
+                  type="number"
+                  placeholder="Time limit in minutes, 0 for untimed"
+                  defaultValue={String(target.timeLimit ?? 0)}
+                />
+                <Spacer size="sm" />
+
+                <SectionImageField
+                  image={sectionImage}
+                  uploading={loading === "sectionImage"}
+                  onPick={pickSectionImage}
+                  onClear={() => setSectionImage("")}
+                />
                 <Spacer size="md" />
 
                 <Button
@@ -1014,6 +1087,61 @@ const Main = () => {
           })()}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+};
+
+/*
+ * A section's image is one shared stimulus — a diagram or passage shown above
+ * every question in the section — so unlike a question it holds a single URL.
+ */
+const SectionImageField = ({
+  image,
+  uploading,
+  onPick,
+  onClear,
+}: {
+  image: string;
+  uploading: boolean;
+  onPick: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClear: () => void;
+}) => {
+  if (image) {
+    return (
+      <div className="flex items-center gap-3">
+        <Image
+          src={image}
+          height={48}
+          width={48}
+          alt="Section image"
+          className="h-12 w-12 object-cover rounded-md border"
+          unoptimized
+        />
+        <div className="text-sm text-theme-gray grow">Section image added</div>
+        <button
+          type="button"
+          className="text-sm text-theme-error cursor-pointer"
+          onClick={onClear}
+        >
+          Remove
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative overflow-hidden flex items-center justify-center gap-2 cursor-pointer text-accent bg-accent-light h-10 rounded-md">
+      <UploadCloud size={16} />
+      <div className="text-sm">
+        {uploading ? "Uploading…" : "Upload Section Image (optional)"}
+      </div>
+      <input
+        name="sectionImage"
+        type="file"
+        className="absolute inset-0 opacity-0 cursor-pointer"
+        accept=".jpeg,.png,.jpg"
+        onChange={onPick}
+      />
     </div>
   );
 };

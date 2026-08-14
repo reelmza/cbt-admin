@@ -5,6 +5,10 @@ export type SectionType = {
   type: string;
   instruction: string;
   defaultQuestionScore: number;
+  // Minutes allowed for this section on its own; 0 means it is not timed
+  timeLimit: number;
+  // A single shared stimulus shown above every question in the section
+  image: string;
   questions: {
     question: string;
     type: string;

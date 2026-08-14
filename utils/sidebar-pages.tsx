@@ -87,6 +87,12 @@ export const sideBarPages: SideBarPageType[] = [
       },
     ],
   },
+  {
+    name: "Question Banks",
+    route: "/question-banks",
+    icon: <CircleQuestionMark size={18} />,
+    roles: ["superadmin", "admin"],
+  },
   // {
   //   name: "Results",
   //   route: "/results",
