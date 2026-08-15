@@ -132,27 +132,24 @@ const Page = () => {
   }, [session?.user?.id, id]);
 
   return (
-    <div className="w-full h-full p-10 font-sans flex flex-col">
+    <div className="w-full h-full p-10 pt-5 font-sans flex flex-col">
       {bank && (
         <>
-          {/* Bank heading */}
-          <div className="shrink-0">
+          {/* Bank heading, kept to a single row so the panels below get the height */}
+          <div className="shrink-0 flex items-center gap-3">
             <Link
               href="/question-banks"
-              className="flex items-center gap-1 text-sm text-theme-gray hover:text-accent w-fit"
+              title="All question banks"
+              className="text-theme-gray hover:text-accent shrink-0"
             >
-              <ArrowLeft size={14} />
-              <span>All question banks</span>
+              <ArrowLeft size={18} />
             </Link>
-            <Spacer size="sm" />
 
-            <div className="text-xl font-bold text-accent">{bank.title}</div>
-            <div className="flex gap-3 text-sm text-theme-gray">
-              {bank.subject ? <span>{bank.subject}</span> : ""}
-              {bank.description ? <span>{bank.description}</span> : ""}
+            <div className="text-xl font-bold text-accent truncate">
+              {bank.title}
             </div>
           </div>
-          <Spacer size="md" />
+          <Spacer size="sm" />
 
           <div className="grow flex gap-5 min-h-0">
             {/* Added questions, kept narrow — it is a summary only */}

@@ -774,7 +774,7 @@ const Page = ({ id }: { id: string }) => {
       const res = await api.post(
         `/assessment/${target.action.value}/${id}`,
         {
-          level: target.level.value,
+          level: Number(target.level.value),
           ...(target.group.value &&
             !departmentOnly && {
               group: target.group.value,
@@ -2196,7 +2196,10 @@ const Page = ({ id }: { id: string }) => {
                             );
 
                             return (
-                              <td className="px-2 whitespace-nowrap" key={title}>
+                              <td
+                                className="px-2 whitespace-nowrap"
+                                key={title}
+                              >
                                 {section
                                   ? `${section.score} / ${section.maxScore}`
                                   : "-"}
