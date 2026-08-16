@@ -12,7 +12,7 @@ const AppearanceSetting = () => {
         Customise how the platform looks.
       </div>
 
-      <div className="border rounded-lg p-6 mb-4">
+      <div className="border rounded-xl bg-white p-6 mb-4">
         <div className="text-sm font-medium mb-4">Theme</div>
 
         <div className="flex gap-4">
@@ -36,14 +36,14 @@ const AppearanceSetting = () => {
         </div>
       </div>
 
-      <div className="border rounded-lg p-6">
+      <div className="border rounded-xl bg-white p-6">
         <div className="text-sm font-medium mb-4">Density</div>
 
         <div className="flex gap-3">
           {["Compact", "Default", "Comfortable"].map((d) => (
             <button
               key={d}
-              className="flex-1 h-10 rounded-md border text-sm text-theme-gray hover:border-accent hover:text-accent transition-all cursor-pointer"
+              className="flex-1 h-10 rounded-xl border text-sm text-theme-gray hover:border-accent hover:text-accent transition-all cursor-pointer"
             >
               {d}
             </button>

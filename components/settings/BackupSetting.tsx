@@ -96,10 +96,9 @@ const BackupSetting = () => {
           await api.post(`${base}/${collection}`, {});
           succeeded.push(collection);
         } catch (err: any) {
-          errors[collection] =
-            err?.response?.data?.message || "Request failed";
+          errors[collection] = err?.response?.data?.message || "Request failed";
         }
-      })
+      }),
     );
 
     setLoading(null);
@@ -109,14 +108,14 @@ const BackupSetting = () => {
     if (errorCount > 0 && succeeded.length > 0) {
       toast.warning(
         `${succeeded.length} synced, ${errorCount} failed.`,
-        toastConfig
+        toastConfig,
       );
     } else if (errorCount > 0) {
       toast.error("All selected collections failed to sync.", toastConfig);
     } else {
       toast.success(
         `${succeeded.length} collection(s) ${direction === "push" ? "pushed to cloud" : "pulled from cloud"} successfully.`,
-        toastConfig
+        toastConfig,
       );
     }
   };
@@ -146,12 +145,12 @@ const BackupSetting = () => {
         toast.warning(
           data.message ||
             `${succeeded.length} synced, ${errorKeys.length} failed.`,
-          toastConfig
+          toastConfig,
         );
       } else {
         toast.success(
           data.message || "All collections synced successfully.",
-          toastConfig
+          toastConfig,
         );
       }
     } catch (err: any) {
@@ -168,12 +167,12 @@ const BackupSetting = () => {
         setSyncResult({ direction, succeeded, errors: responseData });
         toast.error(
           `${direction === "push" ? "Push" : "Pull"} failed for ${errorKeys.length} collection(s).`,
-          toastConfig
+          toastConfig,
         );
       } else {
         toast.error(
           responseData?.message || `Failed to ${direction} all collections.`,
-          toastConfig
+          toastConfig,
         );
       }
     } finally {
@@ -195,7 +194,7 @@ const BackupSetting = () => {
         always wins.
       </div>
 
-      <div className="border rounded-lg p-6 mb-4">
+      <div className="border rounded-xl bg-white p-6 mb-4">
         <div className="text-sm font-medium mb-1">Collections</div>
         <div className="text-xs text-theme-gray mb-4">
           Select collections to push or pull individually.
@@ -237,7 +236,7 @@ const BackupSetting = () => {
         </div>
       </div>
 
-      <div className="border rounded-lg p-6 mb-4">
+      <div className="border rounded-xl bg-white p-6 mb-4">
         <div className="text-sm font-medium mb-1">Full Sync</div>
         <div className="text-xs text-theme-gray mb-4">
           Synchronize all collections at once. Requires Superadmin
@@ -265,7 +264,7 @@ const BackupSetting = () => {
       </div>
 
       {syncResult && (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-xl bg-white overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b">
             <div className="flex items-center gap-2">
               {syncResult.direction === "push" ? (

@@ -3,6 +3,7 @@ import Button from "@/components/button";
 import Input from "@/components/input";
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
+import Table from "@/components/table";
 import {
   Dialog,
   DialogContent,
@@ -134,9 +135,14 @@ const Page = () => {
   }, [session?.user?.id]);
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans">
       {pageData && (
         <>
+          <h1 className="text-xl font-serif font-bold text-accent-dim">
+            Faculties
+          </h1>
+          <Spacer size="sm" />
+
           <div className="flex items-center justify-between">
             <div className="w-10"></div>
             {isSuperadmin && (
@@ -154,62 +160,60 @@ const Page = () => {
 
           <Spacer size="lg" />
 
-          {/* Table Header */}
-          <div className="h-10 grid grid-cols-12 bg-accent-light font-medium text-accent rounded-xs">
-            {[
-              { label: "Faculty Code", span: "col-span-2" },
-              { label: "Faculty Name", span: "col-span-3" },
-              { label: "Description", span: "col-span-3" },
-              { label: "Depts.", span: "col-span-1" },
-              { label: "Created", span: "col-span-2" },
-              ...(isSuperadmin ? [{ label: "", span: "col-span-1" }] : []),
-            ].map((col, i, arr) => (
-              <div
-                key={i}
-                className={`h-full flex items-center pl-2 text-sm leading-none ${col.span} ${i < arr.length - 1 ? "border-r border-accent-mid" : ""}`}
-              >
-                {col.label}
-              </div>
-            ))}
-          </div>
+          <Table
+            className={
+              pageData.length === 0 ? "rounded-b-none border-b-0" : ""
+            }
+            tableHeading={[
+              { value: "Faculty Code", colSpan: "col-span-2" },
+              { value: "Faculty Name", colSpan: "col-span-3" },
+              { value: "Description", colSpan: "col-span-3" },
+              { value: "Depts.", colSpan: "col-span-1" },
+              { value: "Created", colSpan: "col-span-2" },
+              ...(isSuperadmin
+                ? [{ value: "", colSpan: "col-span-1" }]
+                : []),
+            ]}
+            tableData={pageData.map((item) => [
+              { value: item.code, colSpan: "col-span-2" },
+              { value: item.name, colSpan: "col-span-3" },
+              { value: item.description, colSpan: "col-span-3" },
+              { value: item.subGroups?.length, colSpan: "col-span-1" },
+              {
+                value: prettyDate(item.createdAt.split("T")[0]),
+                colSpan: "col-span-2",
+              },
+              ...(isSuperadmin
+                ? [
+                    {
+                      colSpan: "col-span-1",
+                      render: () => (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditGroup(item);
+                            setShowEditGroup(true);
+                          }}
+                          className="text-theme-gray hover:text-accent cursor-pointer"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      ),
+                    },
+                  ]
+                : []),
+            ])}
+            showSearch={false}
+            showOptions={false}
+          />
 
-          {/* Table Rows */}
-          {pageData.map((item) => (
-            <div
-              key={item._id}
-              className="h-12 grid grid-cols-12 border-b border-theme-gray-mid hover:bg-theme-gray-light/20 cursor-default"
-            >
-              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-2">
-                {item.code}
-              </div>
-              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-3">
-                {item.name}
-              </div>
-              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-3">
-                {item.description}
-              </div>
-              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-1">
-                {item.subGroups?.length}
-              </div>
-              <div className="h-full flex items-center pl-2 text-sm text-theme-gray col-span-2">
-                {prettyDate(item.createdAt.split("T")[0])}
-              </div>
-              {isSuperadmin && (
-                <div className="h-full flex items-center pl-2 col-span-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditGroup(item);
-                      setShowEditGroup(true);
-                    }}
-                    className="text-theme-gray hover:text-accent cursor-pointer"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                </div>
-              )}
+          {pageData.length === 0 ? (
+            <div className="border-x border-b rounded-b-xl bg-white h-20 flex items-center justify-center text-sm text-theme-gray">
+              No faculties yet.
             </div>
-          ))}
+          ) : (
+            ""
+          )}
 
           <Spacer size="xl" />
 

@@ -129,7 +129,7 @@ const DatabaseSetting = () => {
         be undone.
       </div>
 
-      <div className="border rounded-lg p-6">
+      <div className="border rounded-xl bg-white p-6">
         <div className="text-sm font-medium mb-4">Clear Collections</div>
 
         <div className="flex flex-col gap-3 mb-6">
@@ -164,7 +164,7 @@ const DatabaseSetting = () => {
       </div>
 
       {result && (
-        <div className="border rounded-lg overflow-hidden mt-4">
+        <div className="border rounded-xl bg-white overflow-hidden mt-4">
           <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b">
             <div className="flex items-center gap-2">
               <Database size={14} />

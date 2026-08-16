@@ -44,9 +44,29 @@ import Preload from "@/components/preload";
 const ROLE_FILTERS = [
   { value: "superadmin", label: "Super Admin" },
   { value: "admin", label: "Admin" },
+  { value: "lecturer", label: "Lecturer" },
   { value: "invigilator", label: "Invigilator" },
   { value: "examination_officer", label: "Examination Officer" },
 ];
+
+// Roles /admin/create accepts, which is not the same set the filter offers
+const ROLE_OPTIONS = [
+  { value: "admin", label: "Admin" },
+  { value: "lecturer", label: "Lecturer" },
+  { value: "invigilator", label: "Invigilator" },
+  { value: "examination_officer", label: "Examination Officer" },
+];
+
+const ROLE_LABELS: Record<string, string> = {
+  superadmin: "Super Admin",
+  admin: "Admin",
+  lecturer: "Lecturer",
+  invigilator: "Invigilator",
+  examination_officer: "Examination Officer",
+};
+
+const roleLabel = (role?: string) =>
+  role ? (ROLE_LABELS[role] ?? role.replace(/_/g, " ")) : "-";
 
 const Page = () => {
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
@@ -101,7 +121,10 @@ const Page = () => {
       // A failed filter keeps the current rows on screen rather than
       // dropping the whole page into its error state
       if (error.name === "CanceledError") return;
-      toast.error("Unable to filter administrators, please retry.", toastConfig);
+      toast.error(
+        "Unable to filter administrators, please retry.",
+        toastConfig,
+      );
       setLoading(null);
     }
   };
@@ -241,16 +264,21 @@ const Page = () => {
   }, [session?.user?.id]);
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans">
       {pageData && (
         <>
+          <h1 className="text-xl font-serif font-bold text-accent-dim">
+            Users
+          </h1>
+          <Spacer size="sm" />
+
           <PageNavigator
             navList={[
               { name: "Students", route: "/users" },
               { name: "Administrators", route: "/users/staff" },
             ]}
           />
-          <Spacer size="lg" />
+          <Spacer size="sm" />
 
           {/* Actions */}
           <div className="flex items-center justify-between mb-4">
@@ -264,7 +292,7 @@ const Page = () => {
                   fetchStaff(next);
                 }}
               >
-                <SelectTrigger className="w-56">
+                <SelectTrigger className="w-38 rounded-xl bg-white">
                   <SelectValue placeholder="Filter by role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -285,11 +313,10 @@ const Page = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-44">
+              <div className="w-38">
                 <Button
                   title="Bulk Upload"
                   variant="outline"
-                  icon={<CloudUpload size={16} strokeWidth={2.5} />}
                   onClick={() => {
                     setBulkResult(null);
                     setOpenBulkUpload(true);
@@ -299,11 +326,10 @@ const Page = () => {
                 />
               </div>
 
-              <div className="w-42">
+              <div className="w-38">
                 <Button
-                  title="Create Admin"
+                  title="Create Staff"
                   variant="fill"
-                  icon={<User2 size={18} />}
                   onClick={() => setShowCreateDialog(true)}
                   loading={false}
                 />
@@ -313,6 +339,9 @@ const Page = () => {
 
           {/* Table */}
           <Table
+            className={
+              pageData.length === 0 ? "rounded-b-none border-b-0" : ""
+            }
             tableHeading={[
               { value: "Admin Name", colSpan: "col-span-3" },
               { value: "Email", colSpan: "col-span-3" },
@@ -326,7 +355,7 @@ const Page = () => {
                 ? pageData.map((item, key) => [
                     { value: item?.fullName, colSpan: "col-span-3" },
                     { value: item?.email, colSpan: "col-span-3" },
-                    { value: item?.role, colSpan: "col-span-1" },
+                    { value: roleLabel(item?.role), colSpan: "col-span-1" },
                     { value: item?.phoneNumber, colSpan: "col-span-2" },
                     {
                       value: prettyDate(item?.createdAt.split("T")[0]) || "-",
@@ -344,7 +373,7 @@ const Page = () => {
           />
 
           {pageData.length === 0 ? (
-            <div className="h-20 flex items-center justify-center text-sm text-theme-gray">
+            <div className="border-x border-b rounded-b-xl bg-white h-20 flex items-center justify-center text-sm text-theme-gray">
               No administrators match this role.
             </div>
           ) : (
@@ -427,9 +456,9 @@ const Page = () => {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Admin</DialogTitle>
+            <DialogTitle>Create Staff Account</DialogTitle>
             <DialogDescription className="pr-28">
-              Add a new administrator to the system.
+              Add a new staff member and pick the role they sign in with.
             </DialogDescription>
           </DialogHeader>
 
@@ -467,15 +496,17 @@ const Page = () => {
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="super-admin">Super Admin</SelectItem>
-                <SelectItem value="invigilator">Invigilator</SelectItem>
+                {ROLE_OPTIONS.map((item) => (
+                  <SelectItem value={item.value} key={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Spacer size="md" />
 
             <Button
-              title="Create Admin"
+              title={`Create ${roleLabel(createRole)}`}
               loading={loading === "createAdmin"}
               variant="fill"
               icon={<User2 size={20} />}

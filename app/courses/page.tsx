@@ -40,7 +40,9 @@ const Page = () => {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<Course[] | null>(null);
-  const [pageMetaData, setPageMetaData] = useState<CoursesPageMetaData | null>(null);
+  const [pageMetaData, setPageMetaData] = useState<CoursesPageMetaData | null>(
+    null,
+  );
   const [filterKeyword, setFilterKeyword] = useState("");
 
   const fetchControllerRef = useRef<AbortController | null>(null);
@@ -92,7 +94,8 @@ const Page = () => {
 
   const getPage = (dir: string) => {
     if (!pageMetaData?.page) return;
-    const targetPage = dir === "next" ? pageMetaData.page + 1 : pageMetaData.page - 1;
+    const targetPage =
+      dir === "next" ? pageMetaData.page + 1 : pageMetaData.page - 1;
     fetchCourses({
       keyword: filterKeyword,
       page: targetPage,
@@ -246,10 +249,15 @@ const Page = () => {
   }, [session?.user?.id]);
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans">
       <>
         {pageData && (
           <>
+            <h1 className="text-xl font-serif font-bold text-accent-dim">
+              Courses
+            </h1>
+            <Spacer size="sm" />
+
             {/* Table Options */}
             <div className="flex items-center justify-between">
               {/* Search bar */}
@@ -292,35 +300,40 @@ const Page = () => {
             {/* Navigation */}
             <div className="flex items-center justify-between w-4/10">
               <button
-                className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
+                className="flex items-center justify-center gap-2 h-8 w-28 rounded-xl border text-theme-gray bg-white cursor-pointer text-sm"
                 onClick={() => getPage("prev")}
               >
                 <span>Previous</span>
                 {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
               </button>
-              <div className="text-sm">
+              <div className="text-sm text-theme-gray">
                 Page {pageMetaData?.page} of {pageMetaData?.pages}{" "}
                 {`(${pageMetaData?.coursesCount})`}
               </div>
               <button
-                className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
+                className="flex items-center justify-center gap-2 h-8 w-28 rounded-xl border text-theme-gray bg-white cursor-pointer text-sm"
                 onClick={() => getPage("next")}
               >
                 <span>Next</span>
                 {loading === "nextPage" ? <Spinner className="size-4" /> : ""}
               </button>
             </div>
+            <Spacer size="md" />
 
             {/* Table */}
             <Table
+              className={
+                pageData?.length === 0 ? "rounded-b-none border-b-0" : ""
+              }
               tableHeading={[
                 { value: "Course Code", colSpan: "col-span-2" },
                 { value: "Course Title", colSpan: "col-span-3" },
-                { value: "Description", colSpan: isSuperadmin ? "col-span-4" : "col-span-5" },
+                {
+                  value: "Description",
+                  colSpan: isSuperadmin ? "col-span-4" : "col-span-5",
+                },
                 { value: "Created", colSpan: "col-span-2" },
-                ...(isSuperadmin
-                  ? [{ value: "", colSpan: "col-span-1" }]
-                  : []),
+                ...(isSuperadmin ? [{ value: "", colSpan: "col-span-1" }] : []),
               ]}
               tableData={
                 pageData
@@ -359,6 +372,16 @@ const Page = () => {
               showSearch={false}
               showOptions={false}
             />
+
+            {pageData?.length === 0 ? (
+              <div className="border-x border-b rounded-b-xl bg-white h-20 flex items-center justify-center text-sm text-theme-gray">
+                {filterKeyword
+                  ? "No courses match this search."
+                  : "No courses yet."}
+              </div>
+            ) : (
+              ""
+            )}
 
             {/* Bulk Upload Courses */}
             <Dialog open={openBulkUpload} onOpenChange={setOpenBulkUpload}>

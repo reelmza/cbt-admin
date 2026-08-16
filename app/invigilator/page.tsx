@@ -53,7 +53,7 @@ const StatCard = ({
   value: number;
   accent?: string;
 }) => (
-  <div className="flex-1 min-w-0 border border-theme-gray-mid rounded-xl px-5 py-4">
+  <div className="flex-1 min-w-0 border border-theme-gray-mid rounded-xl bg-white px-5 py-4">
     <div className={`text-2xl font-bold ${accent ?? "text-accent-dim"}`}>
       {value}
     </div>
@@ -93,16 +93,15 @@ const Page = () => {
     const getData = async () => {
       try {
         const api = await getAxios();
-        const res = await api.get(
-          "/assessment/my-invigilator-assessments",
-          { signal: controller.signal },
-        );
+        const res = await api.get("/assessment/my-invigilator-assessments", {
+          signal: controller.signal,
+        });
 
         if (res.status === 200 || res.status === 201) {
           const raw = res.data.data;
-          const list: InvigilatorAssessment[] = (Array.isArray(raw)
-            ? raw
-            : [raw]).reverse();
+          const list: InvigilatorAssessment[] = (
+            Array.isArray(raw) ? raw : [raw]
+          ).reverse();
           setPageData(list);
           if (list.length > 0) setSelected(list[0]);
         }
@@ -128,12 +127,12 @@ const Page = () => {
   }, [session?.user?.id]);
 
   return (
-    <div className="w-full h-full p-10 font-sans min-w-0 overflow-x-hidden">
+    <div className="w-full h-full px-10 py-5 font-sans min-w-0 overflow-x-hidden">
       {pageData && (
         <>
-          <div className="text-2xl font-bold text-accent-dim">
+          <h1 className="text-xl font-serif font-bold text-accent-dim">
             Invigilator Dashboard
-          </div>
+          </h1>
           <Spacer size="lg" />
 
           {/* Assessment Tabs — only rendered when more than one */}
@@ -163,7 +162,7 @@ const Page = () => {
           {selected && (
             <>
               {/* Assessment Info Card */}
-              <div className="border border-theme-gray-mid rounded-xl overflow-hidden">
+              <div className="border border-theme-gray-mid rounded-xl bg-white overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 bg-accent-light/40">
                   <div className="flex items-center gap-3">

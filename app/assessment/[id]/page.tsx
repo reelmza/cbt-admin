@@ -215,7 +215,7 @@ const ExportFilters = ({
 const Page = ({ id }: { id: string }) => {
   const router = useRouter();
   const { data: session } = useSession();
-  const { isSuperadmin, isAdmin } = useRole();
+  const { isSuperadmin, isAdmin, isLecturer, isExamOfficer } = useRole();
 
   const [loading, setLoading] = useState<string | null>("page");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -1125,6 +1125,16 @@ const Page = ({ id }: { id: string }) => {
         });
 
         if (res.status === 201 && groupRes.status === 200) {
+          // The list endpoint may hand a lecturer someone else's assessment,
+          // so ownership is checked again before anything is rendered
+          if (isLecturer && res.data.data.createdBy !== session.user.id) {
+            setErrorMessage(
+              "Access Denied$You don't have permission to view this assessment.",
+            );
+            setLoading("pageError");
+            return;
+          }
+
           setGroups(groupRes.data.data);
           setPageData(res.data.data);
         }
@@ -1159,7 +1169,9 @@ const Page = ({ id }: { id: string }) => {
   }, [session?.user?.id]);
 
   const canControl =
-    isSuperadmin || (isAdmin && session?.user?.id === pageData?.createdBy);
+    isSuperadmin ||
+    ((isAdmin || isLecturer || isExamOfficer) &&
+      session?.user?.id === pageData?.createdBy);
 
   // Sections are per assessment, but a student who skipped one may be missing
   // it, so the columns come from the union across every result
@@ -1174,7 +1186,7 @@ const Page = ({ id }: { id: string }) => {
     : [];
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans">
       {pageData && (
         <>
           <div className="w-full min-h-full">
@@ -1208,7 +1220,7 @@ const Page = ({ id }: { id: string }) => {
                 return (
                   <div
                     key={key}
-                    className="col-span-3 p-5 rounded-lg border flex flex-col gap-5"
+                    className="col-span-3 p-5 rounded-xl border bg-white flex flex-col gap-5"
                   >
                     <div className="text-theme-gray text-sm">{card.title}</div>
 
@@ -1245,7 +1257,7 @@ const Page = ({ id }: { id: string }) => {
               aria-disabled={!canControl}
             >
               {/* Left Cards */}
-              <div className="col-span-5 border rounded-md p-5">
+              <div className="col-span-5 border rounded-xl bg-white p-5">
                 {/* Test Duration */}
                 <div className="text-sm text-theme-gray">
                   Test Duration (in minutes e.g 40 or 120)
@@ -1261,6 +1273,7 @@ const Page = ({ id }: { id: string }) => {
                     name="duration"
                     type="number"
                     placeholder="Enter duration in minutes"
+                    extraClasses="rounded-xl"
                   />
 
                   <div className="w-32 shrink-0">
@@ -1280,7 +1293,7 @@ const Page = ({ id }: { id: string }) => {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="grow">
-                    <div className="h-10 w-full border rounded-md p-3 flex items-center text-sm">
+                    <div className="h-10 w-full border rounded-xl p-3 flex items-center text-sm">
                       {/* Ended by admin */}
                       {pageData?.authorizedToStart && pageData.endReason
                         ? pageData.endReason
@@ -1350,6 +1363,7 @@ const Page = ({ id }: { id: string }) => {
                     name="startDate"
                     type="date"
                     placeholder=""
+                    extraClasses="rounded-xl"
                   />
 
                   <div className="w-32 shrink-0">
@@ -1375,6 +1389,7 @@ const Page = ({ id }: { id: string }) => {
                     name="dueDate"
                     type="date"
                     placeholder=""
+                    extraClasses="rounded-xl"
                   />
 
                   <div className="w-32 shrink-0">
@@ -1401,6 +1416,7 @@ const Page = ({ id }: { id: string }) => {
                     name="totalMarks"
                     type="number"
                     placeholder="Enter total marks"
+                    extraClasses="rounded-xl"
                   />
                   <div className="w-32 shrink-0">
                     <Button
@@ -1425,6 +1441,7 @@ const Page = ({ id }: { id: string }) => {
                     name="passmark"
                     type="number"
                     placeholder="Enter pass mark percentage"
+                    extraClasses="rounded-xl"
                   />
                   <div className="w-32 shrink-0">
                     <Button
@@ -1464,7 +1481,7 @@ const Page = ({ id }: { id: string }) => {
                             : [...current, section];
                           updateShuffle(next);
                         }}
-                        className={`cursor-pointer capitalize text-xs px-3 py-1.5 rounded-sm border transition-colors disabled:opacity-50 disabled:pointer-events-none ${
+                        className={`cursor-pointer capitalize text-xs px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-50 disabled:pointer-events-none ${
                           active
                             ? "bg-accent text-white border-accent"
                             : "text-theme-gray border-border hover:border-accent/50"
@@ -1517,7 +1534,7 @@ const Page = ({ id }: { id: string }) => {
               </div>
 
               {/* Right Cards */}
-              <div className="col-span-7 border rounded-md p-5">
+              <div className="col-span-7 border rounded-xl bg-white p-5">
                 {/* Assign students */}
                 <div className="text-sm text-theme-gray">
                   Assign to level, faculty and/or department
@@ -1527,7 +1544,7 @@ const Page = ({ id }: { id: string }) => {
                 <form onSubmit={assignToFaculty}>
                   {/* Action */}
                   <Select name="action">
-                    <SelectTrigger className="w-full max-w-48">
+                    <SelectTrigger className="w-full max-w-48 rounded-xl">
                       <SelectValue placeholder={"Select Action"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -1539,7 +1556,7 @@ const Page = ({ id }: { id: string }) => {
 
                   {/* Level */}
                   <Select name="level">
-                    <SelectTrigger className="w-full max-w-48">
+                    <SelectTrigger className="w-full max-w-48 rounded-xl">
                       <SelectValue placeholder={"Select Level"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -1564,7 +1581,7 @@ const Page = ({ id }: { id: string }) => {
                       }}
                       disabled={departmentOnly}
                     >
-                      <SelectTrigger className="w-full max-w-48">
+                      <SelectTrigger className="w-full max-w-48 rounded-xl">
                         <SelectValue
                           placeholder={
                             groups && groups?.length < 1
@@ -1588,7 +1605,7 @@ const Page = ({ id }: { id: string }) => {
 
                     {/* Department */}
                     <Select name="subgroup">
-                      <SelectTrigger className="max-w-42 min-w-42">
+                      <SelectTrigger className="max-w-42 min-w-42 rounded-xl">
                         <SelectValue
                           placeholder={
                             selectedGroup && selectedGroup.subGroups?.length < 1
@@ -1635,6 +1652,7 @@ const Page = ({ id }: { id: string }) => {
                     name="regNumber"
                     type="text"
                     placeholder="Enter registration number"
+                    extraClasses="rounded-xl"
                   />
 
                   <div className="w-38 shrink-0">

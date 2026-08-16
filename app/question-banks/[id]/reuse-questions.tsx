@@ -13,7 +13,7 @@ import {
   questionTypeLabel,
 } from "@/lib/questionBanks";
 import { toastConfig } from "@/utils/toastConfig";
-import { ArrowLeft, Check, Plus } from "lucide-react";
+import { Check, Plus, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -45,11 +45,11 @@ const MODE_COPY: Record<
 
 const CheckMark = ({ checked }: { checked: boolean }) => (
   <span
-    className={`size-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+    className={`size-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
       checked ? "bg-accent border-accent text-white" : "border-theme-gray-mid"
     }`}
   >
-    {checked && <Check size={10} />}
+    {checked && <Check size={12} />}
   </span>
 );
 
@@ -196,7 +196,7 @@ const ReuseQuestions = ({
               key={source._id}
               type="button"
               onClick={() => openSource(source)}
-              className="border border-theme-gray-mid rounded-md p-3 text-left hover:border-accent hover:bg-accent-light/30 cursor-pointer"
+              className="border border-theme-gray-mid rounded-xl p-3 text-left hover:border-theme-gray-dim transition-colors cursor-pointer"
             >
               <div className="text-sm font-medium">{source.title}</div>
               {source.subtitle ? (
@@ -210,7 +210,7 @@ const ReuseQuestions = ({
           ))}
 
           {sources?.length === 0 ? (
-            <div className="text-sm text-theme-gray border border-dashed border-theme-gray-mid rounded-md p-4 text-center">
+            <div className="text-sm text-theme-gray border border-dashed border-theme-gray-mid rounded-xl p-4 text-center">
               {copy.emptySources}
             </div>
           ) : (
@@ -225,13 +225,6 @@ const ReuseQuestions = ({
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="font-semibold">{selectedSource.title}</div>
-          <div className="text-xs text-theme-gray">
-            {questions ? `${questions.length} question(s)` : "Loading…"}
-          </div>
-        </div>
-
         <button
           type="button"
           className="flex items-center gap-1 text-sm text-theme-gray hover:text-accent cursor-pointer shrink-0"
@@ -241,9 +234,16 @@ const ReuseQuestions = ({
             setCheckedIds([]);
           }}
         >
-          <ArrowLeft size={14} />
+          <RefreshCw size={14} />
           <span>Change {copy.sourceName}</span>
         </button>
+
+        <div className="min-w-0 text-right">
+          <div className="font-semibold truncate">{selectedSource.title}</div>
+          <div className="text-xs text-theme-gray">
+            {questions ? `${questions.length} question(s)` : "Loading…"}
+          </div>
+        </div>
       </div>
       <Spacer size="sm" />
 
@@ -285,12 +285,12 @@ const ReuseQuestions = ({
                   type="button"
                   disabled={alreadyAdded}
                   onClick={() => toggleQuestion(item._id)}
-                  className={`flex items-start gap-3 border rounded-md p-3 text-left ${
+                  className={`flex items-start gap-3 border rounded-xl p-3 text-left transition-colors ${
                     alreadyAdded
                       ? "border-theme-gray-mid opacity-50 cursor-not-allowed"
                       : checked
                         ? "border-accent bg-accent-light/30 cursor-pointer"
-                        : "border-theme-gray-mid hover:border-accent cursor-pointer"
+                        : "border-theme-gray-mid hover:border-theme-gray-dim cursor-pointer"
                   }`}
                 >
                   <CheckMark checked={checked || alreadyAdded} />

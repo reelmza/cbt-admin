@@ -209,7 +209,7 @@ const Page = () => {
   }, [filters]);
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans">
       {pageData && (
         <>
           <div className="flex items-center justify-between">
@@ -230,7 +230,7 @@ const Page = () => {
               {filters.tag ? (
                 <button
                   type="button"
-                  className="text-xs text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer"
+                  className="text-sm text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer"
                   onClick={() =>
                     setFilters((prev) => ({ ...prev, tag: "" }))
                   }
@@ -250,7 +250,7 @@ const Page = () => {
                   }))
                 }
               >
-                <SelectTrigger className="w-56">
+                <SelectTrigger className="w-56 text-sm text-theme-gray bg-white rounded-xl">
                   <SelectValue placeholder="Tag" />
                 </SelectTrigger>
                 <SelectContent>
@@ -268,6 +268,9 @@ const Page = () => {
           <Spacer size="lg" />
 
           <Table
+            className={
+              filteredPageData?.length === 0 ? "rounded-b-none border-b-0" : ""
+            }
             tableHeading={[
               { value: "Assessment", colSpan: "col-span-3" },
               { value: "Tags", colSpan: "col-span-2" },
@@ -338,7 +341,7 @@ const Page = () => {
           />
 
           {filteredPageData?.length === 0 ? (
-            <div className="h-20 flex items-center justify-center text-sm text-theme-gray">
+            <div className="border-x border-b rounded-b-xl bg-white h-20 flex items-center justify-center text-sm text-theme-gray">
               No archives match these filters.
             </div>
           ) : (

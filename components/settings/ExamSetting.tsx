@@ -12,7 +12,7 @@ const ExamSetting = () => {
         Default behaviour and rules applied to all assessments.
       </div>
 
-      <div className="border rounded-lg p-6 mb-4">
+      <div className="border rounded-xl bg-white p-6 mb-4">
         <div className="text-sm font-medium mb-4">Time & Attempts</div>
 
         <div className="text-xs text-theme-gray mb-1">Default Time Limit (minutes)</div>
@@ -28,7 +28,7 @@ const ExamSetting = () => {
         </div>
       </div>
 
-      <div className="border rounded-lg p-6 mb-4">
+      <div className="border rounded-xl bg-white p-6 mb-4">
         <div className="text-sm font-medium mb-4">Exam Rules</div>
 
         <div className="flex items-center justify-between py-3 border-b">
@@ -56,7 +56,7 @@ const ExamSetting = () => {
         </div>
       </div>
 
-      <div className="border rounded-lg p-6">
+      <div className="border rounded-xl bg-white p-6">
         <div className="text-sm font-medium mb-4">Auto-marking</div>
 
         <div className="flex items-center justify-between py-3">

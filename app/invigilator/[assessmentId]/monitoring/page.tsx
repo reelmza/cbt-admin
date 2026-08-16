@@ -128,7 +128,7 @@ const ViolationFilters = ({
         onChange({ ...filter, isPardoned: val === "all" ? "" : val })
       }
     >
-      <SelectTrigger className="w-40 h-9 text-sm">
+      <SelectTrigger className="w-40 h-9 text-sm text-theme-gray bg-white rounded-xl">
         <SelectValue placeholder="All Violations" />
       </SelectTrigger>
       <SelectContent>
@@ -145,7 +145,7 @@ const ViolationFilters = ({
         onChange({ ...filter, violationType: val === "all" ? "" : val })
       }
     >
-      <SelectTrigger className="w-48 h-9 text-sm">
+      <SelectTrigger className="w-48 h-9 text-sm text-theme-gray bg-white rounded-xl">
         <SelectValue placeholder="All Types" />
       </SelectTrigger>
       <SelectContent>
@@ -181,7 +181,7 @@ const StatCard = ({
   value: number;
   accent?: string;
 }) => (
-  <div className="flex-1 min-w-0 border border-theme-gray-mid rounded-xl px-5 py-4">
+  <div className="flex-1 min-w-0 border border-theme-gray-mid rounded-xl bg-white px-5 py-4">
     <div className={`text-2xl font-bold ${accent ?? "text-accent-dim"}`}>
       {value}
     </div>
@@ -873,7 +873,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
   }, [session?.user.id]);
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans">
       {assessment && (
         <>
           {/* Header */}
@@ -881,9 +881,9 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
             <div className="flex items-center gap-3">
               <Link
                 href="/invigilator"
-                className="flex items-center justify-center w-8 h-8 rounded-md border border-theme-gray-mid hover:bg-theme-gray-light transition-colors"
+                className="flex items-center justify-center w-8 h-8 shrink-0 text-theme-gray hover:text-accent transition-colors"
               >
-                <ArrowLeft size={16} className="text-theme-gray" />
+                <ArrowLeft size={24} />
               </Link>
               <div>
                 <div className="flex items-center gap-2">
@@ -893,9 +893,6 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
                   <span className="text-lg font-bold text-accent-dim">
                     {assessment.course?.title ?? assessment.title}
                   </span>
-                </div>
-                <div className="text-xs text-theme-gray mt-0.5">
-                  Live Monitoring
                 </div>
               </div>
             </div>
@@ -978,10 +975,15 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
 
           {/* Student Table */}
           <Table
+            className={
+              filteredCounts && visibleStudents.length === 0
+                ? "rounded-b-none border-b-0"
+                : ""
+            }
             tableHeading={[
-              { value: "Full Name", colSpan: "col-span-2" },
+              { value: "Full Name", colSpan: "col-span-3" },
               { value: "Reg Number", colSpan: "col-span-2" },
-              { value: "Started?", colSpan: "col-span-2" },
+              { value: "Started?", colSpan: "col-span-1" },
               { value: "Con.", colSpan: "col-span-1" },
               { value: "Progress", colSpan: "col-span-1" },
               { value: "Device IP", colSpan: "col-span-2" },
@@ -991,10 +993,10 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
               const progress = progressMap[student.id];
               const live = liveInfo[student.id];
               return [
-                { value: student.fullName, colSpan: "col-span-2" },
+                { value: student.fullName, colSpan: "col-span-3" },
                 { value: student.regNumber, colSpan: "col-span-2" },
                 {
-                  colSpan: "col-span-2",
+                  colSpan: "col-span-1",
                   render: () => (
                     <div className="flex flex-col gap-0.5 leading-tight">
                       <span
@@ -1086,7 +1088,7 @@ const Page = ({ assessmentId }: { assessmentId: string }) => {
           />
 
           {filteredCounts && visibleStudents.length === 0 && (
-            <div className="border-b border-theme-gray-mid py-8 text-center text-sm text-theme-gray">
+            <div className="border-x border-b rounded-b-xl bg-white py-8 text-center text-sm text-theme-gray">
               No students have violations matching these filters.
             </div>
           )}

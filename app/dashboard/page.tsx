@@ -1,79 +1,67 @@
 "use client";
 import Spacer from "@/components/spacer";
 
-import { CloudUpload, Notebook, UsersRound } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import {
+  ActivityCard,
+  AssessmentStatusCard,
+  AssessmentsStat,
+  CatalogueStat,
+  QuestionBanksCard,
+  StudentLevelsCard,
+  StudentsStat,
+  useActivity,
+  useAssessments,
+  useCatalogue,
+  useQuestionBanks,
+  useStudents,
+} from "./cards";
 
 const Page = () => {
-  const router = useRouter();
-  const isMounted = useRef(false);
   const { data: session } = useSession();
 
-  const quickLinks = [
-    {
-      name: "Bulk Upload Students",
-      description: "Bulk upload students from a template file.",
-      icon: <CloudUpload size={38} className="text-accent-dim" />,
-      route: "/users",
-    },
+  // Every request waits on the session, since each one carries the bearer token
+  const ready = !!session?.user?.id;
 
-    {
-      name: "Create an Assessment",
-      description: "Create an instant assesment or schedule for a future date.",
-      icon: <Notebook size={38} className="text-accent-dim" />,
-      route: "/assessment",
-    },
-
-    {
-      name: "Create a Faulty",
-      description: "Create a faculty or a department for a particular.",
-      icon: <UsersRound size={38} className="text-accent-dim" />,
-      route: "/faculties",
-    },
-  ];
-
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    if (isMounted.current) return;
-
-    isMounted.current = true;
-    console.log(session?.user);
-  }, [session?.user?.id]);
+  const students = useStudents(ready);
+  const catalogue = useCatalogue(ready);
+  const assessments = useAssessments(ready);
+  const questionBanks = useQuestionBanks(ready);
+  const activity = useActivity(ready);
 
   return (
-    <div className="grow min-h-full p-10 font-sans">
-      {/* Top Banner */}
-      <div className="px-10 py-14 bg-accent rounded-xs">
-        <div className="text-3xl font-extrabold text-white">
-          {session?.user.fullName}
-        </div>
-        <div className="text-accent-light text-lg">{session?.user.email}</div>
+    <div className="w-full h-full px-10 py-5 font-sans">
+      <h1 className="text-xl font-serif font-bold text-accent-dim">
+        Dashboard
+      </h1>
+      <div className="text-sm text-theme-gray mt-0.5">
+        Welcome back, {session?.user?.fullName}
       </div>
-      <Spacer size="xl" />
+      <Spacer size="lg" />
 
-      {/* Quick Links */}
-      <div className="text-2xl font-bold text-accent-dim">Quick Actions</div>
-      <Spacer size="md" />
-      <div className="flex flex-wrap justify-between">
-        {quickLinks.map((link, key) => {
-          return (
-            <button
-              className="w-[32%] min-h-52 p-10 pr-14 border border-theme-gray-mid shadow-xl shadow-theme-gray/5 rounded-xs cursor-pointer text-left hover:bg-accent-light/50 hover:border-accent-light animate-all duration-500 ease-in-out"
-              key={key}
-              onClick={() => router.push(link.route)}
-            >
-              {link.icon}
-              <Spacer size="md" />
-              <div className="font-bold text-accent-dim text-xl">
-                {link.name}
-              </div>
-              <div className="text-sm text-theme-gray">{link.description}</div>
-            </button>
-          );
-        })}
+      {/* Counts */}
+      <div className="grid grid-cols-12 gap-5">
+        <StudentsStat state={students} className="col-span-4" />
+        <CatalogueStat state={catalogue} className="col-span-4" />
+        <AssessmentsStat state={assessments} className="col-span-4" />
       </div>
+      <Spacer size="lg" />
+
+      {/* Breakdowns — the level chart shares the student request above */}
+      <div className="grid grid-cols-12 gap-5">
+        <StudentLevelsCard state={students} className="col-span-4" />
+        <AssessmentStatusCard state={assessments} className="col-span-4" />
+        <QuestionBanksCard state={questionBanks} className="col-span-4" />
+      </div>
+      <Spacer size="lg" />
+
+      {/* Activity */}
+      <div className="grid grid-cols-12 gap-5">
+        <ActivityCard state={activity} className="col-span-12" />
+      </div>
+
+      <Spacer size="xl" />
+      <Spacer size="xl" />
     </div>
   );
 };

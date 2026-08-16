@@ -407,7 +407,7 @@ const Main = () => {
               {/* Bulk Upload */}
               {activeSection && activeSection[0] == "multiple_choice" && (
                 <div className="flex items-center gap-3">
-                  <div className="w-44">
+                  <div className="hidden w-44">
                     <Button
                       title={"Upload Template"}
                       loading={loading === "questionTemplate"}
@@ -497,7 +497,7 @@ const Main = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="w-3/10 border rounded-md shadow-xl shadow-theme-gray-light/30 px-5 py-3 overflow-hidden">
+          <div className="w-3/10 border rounded-xl bg-white shadow-xl shadow-theme-gray-light/30 px-5 py-3 overflow-hidden">
             {/* Sidebar Heading */}
             <div className="font-semibold text-xl">Sections & Questions</div>
 
@@ -640,7 +640,7 @@ const Main = () => {
             {/* Submit Assessment */}
             {sections && sections?.length > 0 && (
               <button
-                className="w-full rounded-md h-8 px-5 text-sm border border-emerald-600 mt-10 flex items-center justify-center text-emerald-600 cursor-pointer gap-2"
+                className="w-full rounded-xl h-8 px-5 text-sm border border-emerald-600 mt-10 flex items-center justify-center text-emerald-600 cursor-pointer gap-2"
                 type="button"
                 onClick={submitAss}
               >
@@ -726,7 +726,7 @@ const Main = () => {
               >
                 {/* Course id */}
                 <Select name="courseId">
-                  <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+                  <SelectTrigger className="w-full h-9 rounded-xl bg-white shadow-none text-foreground border-accent-light">
                     <SelectValue placeholder="Select a course" />
                   </SelectTrigger>
                   <SelectContent>
@@ -747,7 +747,7 @@ const Main = () => {
                 <div className="flex items-center justify-between gap-2">
                   {/* Year */}
                   <Select name="session" defaultValue={""}>
-                    <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+                    <SelectTrigger className="w-full h-9 rounded-xl bg-white shadow-none text-foreground border-accent-light">
                       <SelectValue placeholder="Select a session" />
                     </SelectTrigger>
                     <SelectContent>
@@ -764,7 +764,7 @@ const Main = () => {
 
                   {/* Semester */}
                   <Select name="term" defaultValue={""}>
-                    <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+                    <SelectTrigger className="w-full h-9 rounded-xl bg-white shadow-none text-foreground border-accent-light">
                       <SelectValue placeholder="Select a term" />
                     </SelectTrigger>
                     <SelectContent>
@@ -793,13 +793,14 @@ const Main = () => {
                     type="text"
                     placeholder="Assessment Instruction"
                     required
+                    extraClasses="h-9 rounded-xl bg-white"
                   />
                 </div>
                 <Spacer size="sm" />
 
                 {/* Status */}
                 <Select name="status" required>
-                  <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+                  <SelectTrigger className="w-full h-9 rounded-xl bg-white shadow-none text-foreground border-accent-light">
                     <SelectValue placeholder="Select a status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -823,7 +824,7 @@ const Main = () => {
                       value={startDate}
                       min={today}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="h-10 border rounded-md border-accent-light text-theme-gray text-sm w-full px-2 outline-none"
+                      className="h-9 border rounded-xl bg-white border-accent-light text-theme-gray text-sm w-full px-2 outline-none"
                       placeholder="Start Date"
                       required
                     />
@@ -836,7 +837,7 @@ const Main = () => {
                       type="date"
                       name="dueDate"
                       min={startDate || undefined}
-                      className="h-10 border rounded-md border-accent-light text-theme-gray text-sm w-full px-2 outline-none"
+                      className="h-9 border rounded-xl bg-white border-accent-light text-theme-gray text-sm w-full px-2 outline-none"
                       placeholder="Due Date"
                       required
                     />
@@ -867,7 +868,7 @@ const Main = () => {
 
             {/* Loading screen */}
             {loading === "page" && !courses ? (
-              <div className="w-full flex flex-col items-center border rounded-md p-10">
+              <div className="w-full flex flex-col items-center border rounded-xl bg-white p-10">
                 <Spinner className="size-6 text-theme-gray" />
                 <Spacer size="sm" />
                 <div className="text-theme-gray tex-xl">Fetching Courses</div>
@@ -878,7 +879,7 @@ const Main = () => {
 
             {/* Error Screen */}
             {loading === "pageError" && !courses ? (
-              <div className="w-full flex flex-col items-center border rounded-md p-10">
+              <div className="w-full flex flex-col items-center border rounded-xl bg-white p-10">
                 <RefreshCcw size={48} className="text-theme-gray" />
                 <Spacer size="sm" />
                 <div className="text-theme-gray tex-xl">
@@ -942,13 +943,14 @@ const Main = () => {
               name={"sectionTitle"}
               type={"text"}
               placeholder={"Section Title"}
+              extraClasses="h-9 rounded-xl bg-white"
             />
             <Spacer size="sm" />
 
             <div className="flex items-center gap-2">
               {/* Section Type */}
               <Select name="sectionType" required>
-                <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+                <SelectTrigger className="w-full h-9 rounded-xl bg-white shadow-none text-foreground border-accent-light">
                   <SelectValue placeholder="Section Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -978,6 +980,7 @@ const Main = () => {
                 type="number"
                 placeholder="Each Question's Score"
                 required
+                extraClasses="h-9 rounded-xl bg-white"
               />
             </div>
 
@@ -989,6 +992,7 @@ const Main = () => {
               type={"text"}
               placeholder={"Section Description"}
               required
+              extraClasses="h-9 rounded-xl bg-white"
             />
             <Spacer size="sm" />
 
@@ -998,6 +1002,7 @@ const Main = () => {
               type="number"
               placeholder="Time limit in minutes, 0 for untimed"
               defaultValue="0"
+              extraClasses="h-9 rounded-xl bg-white"
             />
             <Spacer size="sm" />
 
@@ -1046,6 +1051,7 @@ const Main = () => {
                   placeholder={"Section Title"}
                   defaultValue={target.title}
                   required
+                  extraClasses="h-9 rounded-xl bg-white"
                 />
                 <Spacer size="sm" />
 
@@ -1056,6 +1062,7 @@ const Main = () => {
                   placeholder="Each Question's Score"
                   defaultValue={String(target.defaultQuestionScore)}
                   required
+                  extraClasses="h-9 rounded-xl bg-white"
                 />
                 <Spacer size="sm" />
 
@@ -1065,6 +1072,7 @@ const Main = () => {
                   type="number"
                   placeholder="Time limit in minutes, 0 for untimed"
                   defaultValue={String(target.timeLimit ?? 0)}
+                  extraClasses="h-9 rounded-xl bg-white"
                 />
                 <Spacer size="sm" />
 
@@ -1114,7 +1122,7 @@ const SectionImageField = ({
           height={48}
           width={48}
           alt="Section image"
-          className="h-12 w-12 object-cover rounded-md border"
+          className="h-12 w-12 object-cover rounded-xl border"
           unoptimized
         />
         <div className="text-sm text-theme-gray grow">Section image added</div>
@@ -1130,7 +1138,7 @@ const SectionImageField = ({
   }
 
   return (
-    <div className="relative overflow-hidden flex items-center justify-center gap-2 cursor-pointer text-accent bg-accent-light h-10 rounded-md">
+    <div className="relative overflow-hidden flex items-center justify-center gap-2 cursor-pointer text-accent bg-accent-light h-10 rounded-xl">
       <UploadCloud size={16} />
       <div className="text-sm">
         {uploading ? "Uploading…" : "Upload Section Image (optional)"}
@@ -1180,6 +1188,29 @@ const QuestionForm = ({
     }
   };
 
+  // Returns the first problem found, or null when the question is ready to add
+  const findValidationError = () => {
+    if (!question.trim()) return "Enter the question text.";
+
+    if (formType === "multiple_choice" || formType === "multiple_select") {
+      if (options.length < 2) return "Add at least two answer options.";
+      if (options.some((option) => !option.trim()))
+        return "Every answer option needs text.";
+      if (!correctAnswer) return "Mark which option is correct.";
+    }
+
+    if (formType === "subjective") {
+      if (options.length < 1) return "Add at least one answer slot.";
+      if (options.some((option) => !option.trim()))
+        return "Every answer slot needs at least one accepted answer.";
+    }
+
+    if (formType === "theory" && !options[0]?.trim())
+      return "Enter the expected answer.";
+
+    return null;
+  };
+
   const addQuestion = (e: React.SyntheticEvent) => {
     e.preventDefault();
     let formatedQuestion: any;
@@ -1187,6 +1218,12 @@ const QuestionForm = ({
     // Check for important state dependencies
     if (!sections) return;
     if (!activeSection) return;
+
+    const validationError = findValidationError();
+    if (validationError) {
+      toast.error(validationError, toastConfig);
+      return;
+    }
 
     // Initialzie a shortcut for refferencing the target section
     const targetSection = sections.find((item) => item.type === formType);
@@ -1341,7 +1378,7 @@ const QuestionForm = ({
 
       {/* Question Text Box */}
       <textarea
-        className="w-full outline-none border rounded-md p-3 min-h-38 max-h-38"
+        className="w-full outline-none border rounded-xl bg-white p-3 min-h-38 max-h-38"
         placeholder="Type your question"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
@@ -1394,7 +1431,7 @@ const QuestionForm = ({
           {qstImage.map((img, key) => (
             <div
               key={img}
-              className="flex items-center gap-2 pl-2 h-7 rounded-md overflow-hidden text-accent bg-accent-light"
+              className="flex items-center gap-2 pl-2 h-7 rounded-xl overflow-hidden text-accent bg-accent-light"
             >
               <button
                 className="text-sm cursor-pointer"
@@ -1417,7 +1454,7 @@ const QuestionForm = ({
           ))}
 
           {qstImage.length < 2 && (
-            <div className="relative overflow-hidden flex items-center gap-2 px-2 cursor-pointer text-accent bg-accent-light h-7 rounded-md">
+            <div className="relative overflow-hidden flex items-center gap-2 px-2 cursor-pointer text-accent bg-accent-light h-7 rounded-xl">
               <UploadCloud size={16} />
               <div className="text-accent text-sm">Upload Image</div>
               <input
@@ -1485,7 +1522,7 @@ const QuestionForm = ({
                 {options.map((_, key) => {
                   const opt: any = { 0: "A", 1: "B", 2: "C", 3: "D" };
                   return (
-                    <div className="flex items-center h-10 mb-1" key={key}>
+                    <div className="flex items-center h-9 mb-1" key={key}>
                       <RadioGroupItem
                         value={opt[`${key}`]}
                         id={`R${key + 1}`}
@@ -1509,7 +1546,7 @@ const QuestionForm = ({
                   ? correctAnswer.split(",").includes(label)
                   : false;
                 return (
-                  <div className="flex items-center h-10 mb-1" key={key}>
+                  <div className="flex items-center h-9 mb-1" key={key}>
                     <button
                       type="button"
                       onClick={() => {
@@ -1523,13 +1560,13 @@ const QuestionForm = ({
                           updated.length ? updated.join(",") : null,
                         );
                       }}
-                      className={`size-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer ${
+                      className={`size-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
                         selected
                           ? "bg-accent border-accent text-white"
                           : "border-theme-gray-mid"
                       }`}
                     >
-                      {selected && <Check size={10} />}
+                      {selected && <Check size={12} />}
                     </button>
                   </div>
                 );
@@ -1582,11 +1619,12 @@ const QuestionForm = ({
                         return next;
                       })
                     }
+                    extraClasses="h-9 rounded-xl bg-white"
                   />
 
                   {/* Delete a Question */}
                   <button
-                    className="h-10 w-10 hover:text-theme-error flex items-center justify-center cursor-pointer"
+                    className="h-9 w-10 hover:text-theme-error flex items-center justify-center cursor-pointer"
                     type="button"
                     onClick={() => {
                       setOptions((opts) => opts.filter((_, i) => i !== key));
@@ -1610,6 +1648,7 @@ const QuestionForm = ({
                 value={options[0] || ""}
                 onChange={(e) => setOptions([e.target.value])}
                 required
+                extraClasses="h-9 rounded-xl bg-white"
               />
             </div>
           )}

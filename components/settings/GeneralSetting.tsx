@@ -137,7 +137,7 @@ const GeneralSetting = () => {
   };
 
   return (
-    <div className="h-full">
+    <div className="max-w-xl">
       {pageData && (
         <div className="max-w-xl">
           <div className="font-semibold text-lg">General</div>
@@ -146,7 +146,7 @@ const GeneralSetting = () => {
           </div>
 
           <form onSubmit={saveInstitution}>
-            <div className="border rounded-lg p-6 mb-4">
+            <div className="border rounded-xl bg-white p-6 mb-4">
               <div className="text-sm font-medium mb-4">
                 Institution Details
               </div>
@@ -242,7 +242,7 @@ const GeneralSetting = () => {
           </form>
 
           <form onSubmit={saveSession}>
-            <div className="border rounded-lg p-6">
+            <div className="border rounded-xl bg-white p-6">
               <div className="text-sm font-medium mb-4">Academic Session</div>
 
               <div className="text-xs text-theme-gray mb-1">

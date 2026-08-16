@@ -140,16 +140,16 @@ const Page = () => {
             <Link
               href="/question-banks"
               title="All question banks"
-              className="text-theme-gray hover:text-accent shrink-0"
+              className="flex items-center justify-center w-8 h-8 shrink-0 text-theme-gray hover:text-accent transition-colors"
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={24} />
             </Link>
 
-            <div className="text-xl font-bold text-accent truncate">
+            <h1 className="text-xl font-serif font-bold text-accent-dim truncate">
               {bank.title}
-            </div>
+            </h1>
           </div>
-          <Spacer size="sm" />
+          <Spacer size="lg" />
 
           <div className="grow flex gap-5 min-h-0">
             {/* Added questions, kept narrow — it is a summary only */}
@@ -162,8 +162,22 @@ const Page = () => {
             </div>
 
             {/* Question creation, given the room to work in */}
-            <div className="w-7/10 border rounded-md shadow-xl shadow-theme-gray-light/30 px-5 py-4 overflow-y-auto">
-              <div className="flex items-center justify-between gap-3">
+            <div className="w-7/10 border rounded-xl bg-white shadow-xl shadow-theme-gray-light/30 px-5 py-4 overflow-y-auto">
+              <div className="flex items-center gap-3">
+                {/* Always available, so a half-finished flow is never a dead end */}
+                {source ? (
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-sm text-theme-gray hover:text-accent cursor-pointer shrink-0"
+                    onClick={() => setSource(null)}
+                  >
+                    <ArrowLeft size={14} />
+                    <span>Back</span>
+                  </button>
+                ) : (
+                  ""
+                )}
+
                 <div className="w-80">
                   <Select
                     value={source ?? undefined}
@@ -171,7 +185,7 @@ const Page = () => {
                       setSource(value as QuestionSource)
                     }
                   >
-                    <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+                    <SelectTrigger className="w-full h-9 rounded-xl bg-white shadow-none text-foreground border-accent-light">
                       <SelectValue placeholder="How do you want to add a question?" />
                     </SelectTrigger>
                     <SelectContent>
@@ -183,20 +197,6 @@ const Page = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                {/* Always available, so a half-finished flow is never a dead end */}
-                {source ? (
-                  <button
-                    type="button"
-                    className="flex items-center gap-1 text-sm text-theme-gray hover:text-accent cursor-pointer"
-                    onClick={() => setSource(null)}
-                  >
-                    <ArrowLeft size={14} />
-                    <span>Back</span>
-                  </button>
-                ) : (
-                  ""
-                )}
               </div>
               <Spacer size="md" />
 
@@ -230,7 +230,7 @@ const Page = () => {
               )}
 
               {!source ? (
-                <div className="text-sm text-theme-gray border border-dashed border-theme-gray-mid rounded-md p-10 text-center">
+                <div className="text-sm text-theme-gray border border-dashed border-theme-gray-mid rounded-xl p-10 text-center">
                   Pick an option above to write a new question, or to reuse
                   questions from an assessment or another question bank.
                 </div>

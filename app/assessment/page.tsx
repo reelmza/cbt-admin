@@ -58,15 +58,24 @@ const Page = () => {
   const [loading, setLoading] = useState<string | null>("page");
   const { data: session } = useSession();
   const router = useRouter();
-  const { isSuperadmin, isAdmin } = useRole();
+  const { isSuperadmin, isAdmin, isLecturer, isExamOfficer } = useRole();
 
   // Which step of the create flow is on screen: the path picker, the question
   // bank form, or neither
   const [createFlow, setCreateFlow] = useState<"choose" | "bank" | null>(null);
 
+  const owns = (item: AssesmentApiResponse) =>
+    !!session?.user?.id && session.user.id === item.createdBy;
+
   const canViewRow = (item: AssesmentApiResponse) =>
-    isSuperadmin || (isAdmin && session?.user?.id === item.createdBy);
-  const showActionsColumn = isSuperadmin || isAdmin;
+    isSuperadmin || ((isAdmin || isLecturer || isExamOfficer) && owns(item));
+  const showActionsColumn =
+    isSuperadmin || isAdmin || isLecturer || isExamOfficer;
+
+  // A lecturer may only ever see what they authored, whatever the list endpoint
+  // hands back
+  const scopeToRole = (items: AssesmentApiResponse[]) =>
+    isLecturer ? items.filter(owns) : items;
   const [pageData, setPageData] = useState<AssesmentApiResponse[] | null>(null);
   const [filteredPageData, setFilteredPageData] = useState<
     AssesmentApiResponse[] | null
@@ -95,7 +104,9 @@ const Page = () => {
 
     const query = new URLSearchParams();
     if (archived) query.set("include_archived", "true");
-    Object.entries(next).forEach(([key, value]) => value && query.set(key, value));
+    Object.entries(next).forEach(
+      ([key, value]) => value && query.set(key, value),
+    );
 
     try {
       const api = await getAxios();
@@ -104,8 +115,9 @@ const Page = () => {
       });
 
       if (res.status === 201) {
-        setPageData(res.data.data.assessments);
-        setFilteredPageData(res.data.data.assessments);
+        const assessments = scopeToRole(res.data.data.assessments);
+        setPageData(assessments);
+        setFilteredPageData(assessments);
       }
 
       setLoading(null);
@@ -133,8 +145,9 @@ const Page = () => {
         ]);
 
         if (assessmentsRes.status === 201) {
-          const assessments: AssesmentApiResponse[] =
-            assessmentsRes.data.data.assessments;
+          const assessments: AssesmentApiResponse[] = scopeToRole(
+            assessmentsRes.data.data.assessments,
+          );
           setPageData(assessments);
           setFilteredPageData(assessments);
 
@@ -142,7 +155,9 @@ const Page = () => {
           // the option needed to widen it again
           setSessionOptions([
             ...new Set(
-              assessments.map((item) => item.session).filter(Boolean) as string[],
+              assessments
+                .map((item) => item.session)
+                .filter(Boolean) as string[],
             ),
           ]);
         }
@@ -183,73 +198,13 @@ const Page = () => {
   }, [filters, includeArchived]);
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans">
       {pageData && (
         <>
-          {/* Page Navigator */}
-          <PageNavigator
-            navList={[
-              {
-                name: "All Assessment",
-                fx: () => {
-                  if (!pageData) return;
-                  setFilteredPageData(pageData);
-                },
-              },
-              {
-                name: "Not Started",
-                fx: () => {
-                  setFilteredPageData((prev) => {
-                    if (!pageData) return prev;
-
-                    const newData = pageData?.filter(
-                      (dt) => dt.authorizedToStart == false
-                    );
-                    if (newData) {
-                      return newData;
-                    }
-
-                    return prev;
-                  });
-                },
-              },
-              {
-                name: "Completed",
-                fx: () => {
-                  setFilteredPageData((prev) => {
-                    if (!pageData) return prev;
-
-                    const newData = pageData?.filter(
-                      (dt) => dt.endReason !== null
-                    );
-                    if (newData) {
-                      return newData;
-                    }
-
-                    return prev;
-                  });
-                },
-              },
-              {
-                name: "Ongoing",
-                fx: () => {
-                  setFilteredPageData((prev) => {
-                    if (!pageData) return prev;
-                    const newData = pageData?.filter(
-                      (dt) =>
-                        dt.authorizedToStart === true && dt.endReason === null
-                    );
-                    if (newData) {
-                      return newData;
-                    }
-
-                    return prev;
-                  });
-                },
-              },
-            ]}
-          />
-          <Spacer size="lg" />
+          <h1 className="text-xl font-serif font-bold text-accent-dim">
+            Assessments
+          </h1>
+          <Spacer size="sm" />
 
           {/* Table Headers */}
           <div className="flex items-center justify-between">
@@ -264,31 +219,34 @@ const Page = () => {
               {isSuperadmin && (
                 <div className="w-36">
                   <Button
-                    title="Archived"
+                    title="Archives"
                     loading={false}
                     variant={includeArchived ? "fill" : "outline"}
-                    icon={<Archive size={16} />}
                     type="button"
                     onClick={() => setIncludeArchived((prev) => !prev)}
                   />
                 </div>
               )}
 
-              {(isSuperadmin || isAdmin) && (
+              {(isSuperadmin || isAdmin || isLecturer || isExamOfficer) && (
                 <div className="w-52">
                   <Button
-                    title={"Create an Assessment"}
+                    title={"Create Assessment"}
                     loading={false}
                     variant={"fill"}
                     type="button"
-                    icon={<Plus size={16} />}
-                    onClick={() => setCreateFlow("choose")}
+                    icon={<Plus size={18} strokeWidth="2.5" />}
+                    onClick={() =>
+                      isLecturer
+                        ? router.push("/assessment/create")
+                        : setCreateFlow("choose")
+                    }
                   />
                 </div>
               )}
             </div>
           </div>
-          <Spacer size="sm" />
+          <Spacer size="md" />
 
           {/* Filters */}
           <div className="flex items-center gap-3">
@@ -301,7 +259,7 @@ const Page = () => {
                 }))
               }
             >
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-44 text-sm text-theme-gray bg-white rounded-xl">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -323,7 +281,7 @@ const Page = () => {
                 }))
               }
             >
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-44 text-sm text-theme-gray bg-white rounded-xl">
                 <SelectValue placeholder="Session" />
               </SelectTrigger>
               <SelectContent>
@@ -345,7 +303,7 @@ const Page = () => {
                 }))
               }
             >
-              <SelectTrigger className="w-60">
+              <SelectTrigger className="w-60 text-sm text-theme-gray bg-white rounded-xl">
                 <SelectValue placeholder="Course" />
               </SelectTrigger>
               <SelectContent>
@@ -369,7 +327,7 @@ const Page = () => {
             {filters.status || filters.session || filters.course ? (
               <button
                 type="button"
-                className="text-xs text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer"
+                className="text-sm text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer"
                 onClick={() =>
                   setFilters((prev) => ({
                     ...EMPTY_ASSESSMENT_FILTER,
@@ -383,8 +341,12 @@ const Page = () => {
               ""
             )}
           </div>
+          <Spacer size="md" />
 
           <Table
+            className={
+              filteredPageData?.length === 0 ? "rounded-b-none border-b-0" : ""
+            }
             tableHeading={[
               { value: "Course", colSpan: "col-span-3" },
               { value: "Due Date", colSpan: "col-span-3" },
@@ -417,7 +379,7 @@ const Page = () => {
                           }
                           return 0;
                         },
-                        0
+                        0,
                       ),
                       colSpan: "col-span-1",
                     },
@@ -431,8 +393,8 @@ const Page = () => {
                         item.status === "closed"
                           ? "warning"
                           : item.status === "ongoing"
-                          ? "info"
-                          : "success"
+                            ? "info"
+                            : "success"
                       }`,
                     },
                     ...(showActionsColumn
@@ -454,7 +416,7 @@ const Page = () => {
           />
 
           {filteredPageData?.length === 0 ? (
-            <div className="h-20 flex items-center justify-center text-sm text-theme-gray">
+            <div className="border-x border-b rounded-b-xl bg-white h-20 flex items-center justify-center text-sm text-theme-gray">
               No assessments match these filters.
             </div>
           ) : (
@@ -478,9 +440,9 @@ const Page = () => {
                 <button
                   type="button"
                   onClick={() => router.push("/assessment/create")}
-                  className="flex items-start gap-3 border border-theme-gray-mid rounded-md p-4 text-left hover:border-accent hover:bg-accent-light/30 cursor-pointer"
+                  className="flex items-start gap-3 border border-theme-gray-mid rounded-xl p-4 text-left hover:border-theme-gray-dim transition-colors cursor-pointer"
                 >
-                  <PencilLine size={20} className="text-accent shrink-0 mt-1" />
+                  <PencilLine size={20} className="text-foreground shrink-0 mt-1" />
                   <span>
                     <span className="block font-medium">
                       Create Assessment Manually
@@ -494,9 +456,9 @@ const Page = () => {
                 <button
                   type="button"
                   onClick={() => setCreateFlow("bank")}
-                  className="flex items-start gap-3 border border-theme-gray-mid rounded-md p-4 text-left hover:border-accent hover:bg-accent-light/30 cursor-pointer"
+                  className="flex items-start gap-3 border border-theme-gray-mid rounded-xl p-4 text-left hover:border-theme-gray-dim transition-colors cursor-pointer"
                 >
-                  <Layers size={20} className="text-accent shrink-0 mt-1" />
+                  <Layers size={20} className="text-foreground shrink-0 mt-1" />
                   <span>
                     <span className="block font-medium">
                       Create Assessment from Question Bank
@@ -512,7 +474,7 @@ const Page = () => {
           </Dialog>
 
           <CreateFromBank
-            open={createFlow === "bank"}
+            open={!isLecturer && createFlow === "bank"}
             onOpenChange={(open) => !open && setCreateFlow(null)}
             courses={courses}
             onCreated={() => fetchAssessments(filters, includeArchived)}

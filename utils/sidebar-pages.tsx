@@ -20,12 +20,12 @@ import {
 } from "lucide-react";
 import { JSX } from "react";
 
+// Visibility is not declared here — it comes from ROUTE_ROLES in lib/access.ts,
+// the same policy the middleware enforces
 type SideBarStructure = {
   name: string;
   route: string;
   icon: JSX.Element;
-  // Restrict visibility to these roles; omit to show for everyone.
-  roles?: string[];
 };
 
 type SideBarPageType = {
@@ -33,19 +33,17 @@ type SideBarPageType = {
   route: string;
   icon: JSX.Element;
   children?: SideBarStructure[];
-  // Restrict visibility to these roles; omit to show for everyone.
-  roles?: string[];
 };
 export const sideBarPages: SideBarPageType[] = [
   {
     name: "Dashboard",
     route: "/dashboard",
-    icon: <GaugeCircle size={18} />,
+    icon: <GaugeCircle size={18} strokeWidth={1.5} />,
   },
   {
     name: "Users",
     route: "/users",
-    icon: <UserRound size={18} />,
+    icon: <UserRound size={18} strokeWidth={1.5} />,
     // children: [
     //   { name: "Staff", route: "/users", icon: <UsersRound size={16} /> },
     //   {
@@ -59,39 +57,37 @@ export const sideBarPages: SideBarPageType[] = [
   {
     name: "Faculties",
     route: "/faculties",
-    icon: <Building2 size={18} />,
+    icon: <Building2 size={18} strokeWidth={1.5} />,
     children: [
       {
         name: "Departments",
         route: "/faculties/departments",
-        icon: <Building size={16} />,
+        icon: <Building size={16} strokeWidth={1.5} />,
       },
     ],
   },
   {
     name: "Courses",
     route: "/courses",
-    icon: <NotebookPen size={18} />,
+    icon: <NotebookPen size={18} strokeWidth={1.5} />,
   },
 
   {
     name: "Assessments",
     route: "/assessment",
-    icon: <Library size={18} />,
+    icon: <Library size={18} strokeWidth={1.5} />,
     children: [
       {
         name: "Archived",
         route: "/assessment/archives",
-        icon: <Clock size={16} />,
-        roles: ["superadmin"],
+        icon: <Clock size={16} strokeWidth={1.5} />,
       },
     ],
   },
   {
     name: "Question Banks",
     route: "/question-banks",
-    icon: <CircleQuestionMark size={18} />,
-    roles: ["superadmin", "admin"],
+    icon: <CircleQuestionMark size={18} strokeWidth={1.5} />,
   },
   // {
   //   name: "Results",
@@ -111,19 +107,16 @@ export const sideBarPages: SideBarPageType[] = [
   {
     name: "Invigilator",
     route: "/invigilator",
-    icon: <ScanEye size={18} />,
-    roles: ["invigilator", "superadmin"],
+    icon: <ScanEye size={18} strokeWidth={1.5} />,
   },
   {
     name: "Audit Logs",
     route: "/audit-logs",
-    icon: <ScrollText size={18} />,
-    roles: ["superadmin"],
+    icon: <ScrollText size={18} strokeWidth={1.5} />,
   },
   {
     name: "Settings",
     route: "/settings",
-    icon: <Cog size={18} />,
-    roles: ["superadmin"],
+    icon: <Cog size={18} strokeWidth={1.5} />,
   },
 ];

@@ -1,6 +1,9 @@
 import { auth } from "./auth";
+import { canAccessRoute, landingRoute } from "./lib/access";
 
 export default auth((req) => {
+  const role = req.auth?.user?.role;
+
   // If no auth and user is on an auth requiring page
   if (
     !(
@@ -24,8 +27,14 @@ export default auth((req) => {
       req.nextUrl.pathname.includes("/signup")) &&
     req.auth
   ) {
-    const newUrl = new URL("/dashboard", req.nextUrl.origin);
-    console.log(newUrl, "from proxy");
+    const newUrl = new URL(landingRoute(role), req.nextUrl.origin);
+    return Response.redirect(newUrl);
+  }
+
+  // Signed in, but this role may not open this area. Enforced here rather than
+  // only hiding the link, so a typed-in URL is turned away too.
+  if (req.auth && !canAccessRoute(role, req.nextUrl.pathname)) {
+    const newUrl = new URL(landingRoute(role), req.nextUrl.origin);
     return Response.redirect(newUrl);
   }
 });

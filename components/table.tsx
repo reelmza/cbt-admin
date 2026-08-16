@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { ArrowRight, CloudUpload, Plus } from "lucide-react";
 import Link from "next/link";
 import CheckBox from "./table-checkbox";
@@ -19,6 +20,7 @@ type TableType = {
   }[][];
   showSearch?: boolean | undefined;
   showOptions?: boolean | undefined;
+  className?: string;
 };
 
 const Table = ({
@@ -26,14 +28,20 @@ const Table = ({
   tableData,
   showSearch,
   showOptions,
+  className,
 }: TableType) => {
   const [checkList, setCheckList] = useState<number[]>([]);
   return (
-    <div className="w-full h-fit flex flex-col font-sans">
+    <div
+      className={cn(
+        "w-full h-fit flex flex-col font-sans rounded-xl border bg-white",
+        className,
+      )}
+    >
       {/* Options Row */}
-      <div className="flex items-center justify-between">
-        {/* Options Buttons */}
-        {showOptions ? (
+      {showOptions ? (
+        <div className="flex items-center justify-between">
+          {/* Options Buttons */}
           <div className="w-fit flex items-center gap-2">
             <div className="w-48">
               <Button
@@ -55,19 +63,19 @@ const Table = ({
               />
             </div>
           </div>
-        ) : (
-          ""
-        )}
-      </div>
 
-      <Spacer size="lg" />
+          <Spacer size="lg" />
+        </div>
+      ) : (
+        ""
+      )}
 
       {/* Table Heading */}
-      <div className="h-10 grid grid-cols-12 bg-accent-light font-medium text-accent rounded-xs">
+      <div className="h-12 grid grid-cols-12 font-medium border-b rounded-t-xl">
         {tableHeading.map((rowCol, key) => (
           <div
             className={`h-full flex items-center pl-2 text-sm leading-none gap-2 ${
-              key < tableHeading.length - 1 ? "border-r" : ""
+              key < tableHeading.length - 1 ? "border-sr" : ""
             } border-accent-mid ${rowCol.colSpan}`}
             key={key}
           >
@@ -90,7 +98,7 @@ const Table = ({
       {/* Table Content */}
       {tableData.map((row, key) => (
         <div
-          className={`h-12 grid grid-cols-12  border-b border-theme-gray-mid hover:bg-theme-gray-light/20 cursor-default`}
+          className={`h-12 grid grid-cols-12 ${key < tableData.length - 1 ? "border-b" : ""} hover:bg-theme-gray-light/20 cursor-default`}
           key={key}
         >
           {row.map((rowCol, rowColKey) => (

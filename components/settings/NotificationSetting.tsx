@@ -34,7 +34,7 @@ const NotificationSetting = () => {
       </div>
 
       {sections.map((section) => (
-        <div key={section.title} className="border rounded-lg p-6 mb-4">
+        <div key={section.title} className="border rounded-xl bg-white p-6 mb-4">
           <div className="text-sm font-medium mb-2">{section.title}</div>
 
           {section.items.map((item, key) => (

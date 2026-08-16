@@ -8,6 +8,7 @@ import GeneralSetting from "@/components/settings/GeneralSetting";
 import NotificationSetting from "@/components/settings/NotificationSetting";
 import SecuritySetting from "@/components/settings/SecuritySetting";
 import Preload from "@/components/preload";
+import Spacer from "@/components/spacer";
 import { useState } from "react";
 import { useSession, SessionProvider } from "next-auth/react";
 
@@ -57,33 +58,38 @@ const Page = () => {
   }
 
   return (
-    <div className="w-full h-full font-sans flex">
-      {/* Settings Sidebar */}
-      <div className="w-[25%] shrink-0 border-r h-full py-10 px-4">
-        <div className="text-xs font-semibold text-theme-gray uppercase tracking-widest mb-4 px-2">
+    <div className="w-full h-full font-sans">
+      {/* Heading & tabs — lifted out of the flow; the content below offsets for it */}
+      <div className="fixed top-0 left-[20%] w-[80%] z-20 bg-background px-10 pt-5">
+        <h1 className="text-xl font-serif font-bold text-accent-dim">
           Settings
-        </div>
+        </h1>
+        <Spacer size="sm" />
 
-        <ul className="flex flex-col gap-1">
-          {navItems.map((item) => (
-            <li key={item.key}>
+        <div className="h-10 w-full overflow-x-auto border-b border-theme-gray-light">
+          <div className="h-full flex items-center pr-4 w-max">
+            {navItems.map((item, key) => (
               <button
+                key={item.key}
                 onClick={() => setActive(item.key)}
-                className={`w-full flex items-center gap-2.5 h-9 px-2 rounded-md text-sm cursor-pointer transition-colors ${
+                className={`flex items-center justify-center h-full text-sm ${
+                  key > 0 ? "ml-6" : ""
+                } py-2 shrink-0 ${
                   active === item.key
-                    ? "bg-accent-light text-accent font-semibold"
-                    : "text-theme-gray hover:bg-theme-gray-light"
-                }`}
+                    ? "border-b-3 text-accent"
+                    : "border-none text-theme-gray hover:text-accent"
+                } border-accent cursor-pointer`}
               >
-                <span>{item.label}</span>
+                {item.label}
               </button>
-            </li>
-          ))}
-        </ul>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Settings Content */}
-      <div className="grow overflow-y-auto p-10">{contentMap[active]}</div>
+      {/* Clears the fixed header above: 20 top pad + 28 heading + 8 gap + 40 tabs */}
+      <div className="px-10 pt-[120px] pb-5">{contentMap[active]}</div>
     </div>
   );
 };

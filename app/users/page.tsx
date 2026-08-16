@@ -25,7 +25,7 @@ import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
 
-import { CloudUpload, Download, User2 } from "lucide-react";
+import { CloudUpload, Download, Link2, User2 } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ import { useRole } from "@/lib/useRole";
 const Page = () => {
   const [openBulkUpload, setOpenBulkUpload] = useState(false);
   const [openPassUpload, setOpenPassUpload] = useState(false);
+  const [openLinkGroup, setOpenLinkGroup] = useState(false);
 
   const [loading, setLoading] = useState<string | null>("page");
   const [pageData, setPageData] = useState<User[] | null>(null);
@@ -129,6 +130,62 @@ const Page = () => {
       if (error?.status == 400) {
         toast.error("Error occured, Please check your file", toastConfig);
       }
+      setLoading(null);
+    }
+  };
+
+  // Students imported before faculties existed carry no group/subGroup. This
+  // links them by level, which is the only handle the backend has on them.
+  const linkGroup = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      group: { value: string };
+      subGroup: { value: string };
+      level: { value: string };
+    };
+
+    const levels =
+      target.level.value === "all"
+        ? ["100", "200", "300", "400", "500"]
+        : [target.level.value];
+
+    setLoading("linkGroup");
+    try {
+      const api = await getAxios();
+
+      // The endpoint takes one level per call, so "All Levels" fans out
+      let updated = 0;
+      for (const level of levels) {
+        const res = await api.post("/student/bulk-link-group", {
+          group: target.group.value,
+          subGroup: target.subGroup.value,
+          level,
+        });
+        const data = res.data?.data ?? {};
+        updated += data.updated ?? data.modifiedCount ?? data.matchedCount ?? 0;
+      }
+
+      setLoading(null);
+      setOpenLinkGroup(false);
+      setSelectedGroup(null);
+      toast.success(
+        `${updated} student${updated === 1 ? "" : "s"} linked`,
+        toastConfig,
+      );
+      fetchStudents({
+        keyword: filterKeyword,
+        level: filterLevel,
+        group: filterGroupId,
+        subGroup: filterSubGroupId,
+        page: 1,
+      });
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Unable to link the students, please retry.",
+        toastConfig,
+      );
       setLoading(null);
     }
   };
@@ -290,9 +347,14 @@ const Page = () => {
   }, [session?.user?.id]);
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans bg-background">
       {pageData && (
         <>
+          <h1 className="text-xl font-serif font-bold text-accent-dim">
+            Users
+          </h1>
+          <Spacer size="sm" />
+
           <PageNavigator
             navList={[
               { name: "Students", route: "/users" },
@@ -301,38 +363,37 @@ const Page = () => {
                 : []),
             ]}
           />
-          <Spacer size="lg" />
+          <Spacer size="sm" />
 
           {/* Table Options */}
           <div className="flex items-center justify-between">
             {/* Search bar */}
             <TableSearchBox
-              placeholder="Search by name, reg number, email or phone"
+              placeholder="Search by name or Reg. No."
               onChange={(e) => setFilterKeyword(e.target.value)}
             />
 
             {/* Buttons */}
             {isSuperadmin && (
               <div className="flex items-center gap-4">
-                {/* Bulk Upload Students */}
-                <div className="w-52">
+                {/* Bulk Upload Passports */}
+                <div className="w-40">
                   <Button
-                    title="Bulk Upload Students"
-                    icon={<CloudUpload size={16} strokeWidth={2.5} />}
-                    variant="fill"
+                    title="Upload Passports"
+                    variant="outline"
                     loading={false}
-                    onClick={() => setOpenBulkUpload((prev) => !prev)}
+                    onClick={() => setOpenPassUpload((prev) => !prev)}
                   />
                 </div>
 
-                {/* Bulk Upload Passports */}
-                <div className="w-52">
+                {/* Bulk Upload Students */}
+                <div className="w-44">
                   <Button
-                    title="Bulk Upload Passports"
-                    icon={<User2 size={16} strokeWidth={2.5} />}
+                    title="Upload Students"
+                    icon={<CloudUpload size={18} strokeWidth={2.5} />}
                     variant="fill"
                     loading={false}
-                    onClick={() => setOpenPassUpload((prev) => !prev)}
+                    onClick={() => setOpenBulkUpload((prev) => !prev)}
                   />
                 </div>
               </div>
@@ -340,132 +401,130 @@ const Page = () => {
           </div>
           <Spacer size="md" />
 
-          {/* Filters */}
-          <div className="flex items-center gap-3">
-            {/* Level */}
-            <Select
-              value={filterLevel || "all"}
-              onValueChange={(val) => {
-                const newLevel = val === "all" ? "" : val;
-                setFilterLevel(newLevel);
-                fetchStudents({
-                  keyword: filterKeyword,
-                  level: newLevel,
-                  group: filterGroupId,
-                  subGroup: filterSubGroupId,
-                  page: 1,
-                });
-              }}
-            >
-              <SelectTrigger className="w-36 h-9 text-sm">
-                <SelectValue placeholder="All Levels" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
-                <SelectItem value="100">100L</SelectItem>
-                <SelectItem value="200">200L</SelectItem>
-                <SelectItem value="300">300L</SelectItem>
-                <SelectItem value="400">400L</SelectItem>
-                <SelectItem value="500">500L</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Faculty */}
-            <Select
-              value={filterGroupId || "all"}
-              onValueChange={(val) => {
-                const newGroup = val === "all" ? "" : val;
-                setFilterGroupId(newGroup);
-                setFilterSubGroupId("");
-                setFilterGroup(groups?.find((g) => g._id === newGroup) ?? null);
-                fetchStudents({
-                  keyword: filterKeyword,
-                  level: filterLevel,
-                  group: newGroup,
-                  subGroup: "",
-                  page: 1,
-                });
-              }}
-            >
-              <SelectTrigger className="w-44 h-9 text-sm">
-                <SelectValue placeholder="All Faculties" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Faculties</SelectItem>
-                {groups?.map((grp) => (
-                  <SelectItem key={grp._id} value={grp._id}>
-                    {grp.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Department */}
-            <Select
-              value={filterSubGroupId || "all"}
-              onValueChange={(val) => {
-                const newSubGroup = val === "all" ? "" : val;
-                setFilterSubGroupId(newSubGroup);
-                fetchStudents({
-                  keyword: filterKeyword,
-                  level: filterLevel,
-                  group: filterGroupId,
-                  subGroup: newSubGroup,
-                  page: 1,
-                });
-              }}
-              disabled={!filterGroup}
-            >
-              <SelectTrigger className="w-44 h-9 text-sm">
-                <SelectValue placeholder="All Departments" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
-                {filterGroup?.subGroups.map((sg) => (
-                  <SelectItem key={sg._id} value={sg._id}>
-                    {sg.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Clear */}
-            {(filterKeyword ||
-              filterLevel ||
-              filterGroupId ||
-              filterSubGroupId) && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-sm text-theme-gray hover:text-accent cursor-pointer underline underline-offset-2"
+          {/* Filters & Re-Link Button */}
+          <div className="w-full flex justify-between">
+            {/* Filters */}
+            <div className="flex items-center gap-2">
+              {/* Level */}
+              <Select
+                value={filterLevel || "all"}
+                onValueChange={(val) => {
+                  const newLevel = val === "all" ? "" : val;
+                  setFilterLevel(newLevel);
+                  fetchStudents({
+                    keyword: filterKeyword,
+                    level: newLevel,
+                    group: filterGroupId,
+                    subGroup: filterSubGroupId,
+                    page: 1,
+                  });
+                }}
               >
-                Clear Filters
-              </button>
+                <SelectTrigger className="w-30 text-sm text-theme-gray bg-white rounded-xl">
+                  <SelectValue placeholder="All Levels" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="100">100L</SelectItem>
+                  <SelectItem value="200">200L</SelectItem>
+                  <SelectItem value="300">300L</SelectItem>
+                  <SelectItem value="400">400L</SelectItem>
+                  <SelectItem value="500">500L</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Faculty */}
+              <Select
+                value={filterGroupId || "all"}
+                onValueChange={(val) => {
+                  const newGroup = val === "all" ? "" : val;
+                  setFilterGroupId(newGroup);
+                  setFilterSubGroupId("");
+                  setFilterGroup(
+                    groups?.find((g) => g._id === newGroup) ?? null,
+                  );
+                  fetchStudents({
+                    keyword: filterKeyword,
+                    level: filterLevel,
+                    group: newGroup,
+                    subGroup: "",
+                    page: 1,
+                  });
+                }}
+              >
+                <SelectTrigger className="w-32 text-sm text-theme-gray bg-white rounded-xl">
+                  <SelectValue placeholder="All Faculties" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Faculties</SelectItem>
+                  {groups?.map((grp) => (
+                    <SelectItem key={grp._id} value={grp._id}>
+                      {grp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Department */}
+              <Select
+                value={filterSubGroupId || "all"}
+                onValueChange={(val) => {
+                  const newSubGroup = val === "all" ? "" : val;
+                  setFilterSubGroupId(newSubGroup);
+                  fetchStudents({
+                    keyword: filterKeyword,
+                    level: filterLevel,
+                    group: filterGroupId,
+                    subGroup: newSubGroup,
+                    page: 1,
+                  });
+                }}
+                disabled={!filterGroup}
+              >
+                <SelectTrigger className="w-32 text-sm text-theme-gray bg-white rounded-xl">
+                  <SelectValue placeholder="All Departments" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Departments</SelectItem>
+                  {filterGroup?.subGroups.map((sg) => (
+                    <SelectItem key={sg._id} value={sg._id}>
+                      {sg.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Clear */}
+              {(filterKeyword ||
+                filterLevel ||
+                filterGroupId ||
+                filterSubGroupId) && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-sm text-theme-gray hover:text-accent cursor-pointer underline underline-offset-2"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+
+            {/* Link Unassigned Students */}
+            {isSuperadmin && (
+              <Button
+                title="Re-Link Students"
+                icon={<Link2 size={16} strokeWidth={2.5} />}
+                variant="ghost"
+                loading={false}
+                onClick={() => {
+                  setSelectedGroup(null);
+                  setOpenLinkGroup((prev) => !prev);
+                }}
+              />
             )}
           </div>
-          <Spacer size="sm" />
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between w-4/10">
-            <button
-              className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
-              onClick={() => getPage("prev")}
-            >
-              <span>Previous</span>
-              {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
-            </button>
-            <div className="text-sm">
-              Page {pageMetaData?.page} of {pageMetaData?.pages}{" "}
-              {`(${pageMetaData?.totalItems})`}
-            </div>
-            <button
-              className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
-              onClick={() => getPage("next")}
-            >
-              <span>Next</span>
-              {loading === "nextPage" ? <Spinner className="size-4" /> : ""}
-            </button>
-          </div>
+          <Spacer size="md" />
 
           {/* Table */}
           <Table
@@ -503,34 +562,29 @@ const Page = () => {
             showSearch={false}
             showOptions={false}
           />
-          {(pageMetaData?.totalItems ?? 0) > 10 && (
-            <>
-              <Spacer size="sm" />
+          <Spacer size="lg" />
 
-              {/* Navigation */}
-              <div className="flex items-center justify-between w-4/10">
-                <button
-                  className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
-                  onClick={() => getPage("prev")}
-                >
-                  <span>Previous</span>
-                  {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
-                </button>
-                <div className="text-sm">
-                  Page {pageMetaData?.page} of {pageMetaData?.pages}{" "}
-                  {`(${pageMetaData?.totalItems})`}
-                </div>
-                <button
-                  className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
-                  onClick={() => getPage("next")}
-                >
-                  <span>Next</span>
-                  {loading === "nextPage" ? <Spinner className="size-4" /> : ""}
-                </button>
-              </div>
-            </>
-          )}
-
+          {/* Navigation */}
+          <div className="flex items-center justify-between w-4/10">
+            <button
+              className="flex items-center justify-center gap-2 h-8 w-28 rounded-xl border text-theme-gray bg-white cursor-pointer text-sm"
+              onClick={() => getPage("prev")}
+            >
+              <span>Previous</span>
+              {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
+            </button>
+            <div className="text-sm text-theme-gray">
+              Page {pageMetaData?.page} of {pageMetaData?.pages}{" "}
+              {`(${pageMetaData?.totalItems})`}
+            </div>
+            <button
+              className="flex items-center justify-center gap-2 h-8 w-28  rounded-xl border text-theme-gray bg-white cursor-pointer text-sm"
+              onClick={() => getPage("next")}
+            >
+              <span>Next</span>
+              {loading === "nextPage" ? <Spinner className="size-4" /> : ""}
+            </button>
+          </div>
           {/* Spacing */}
           <Spacer size="xl" />
           <Spacer size="xl" />
@@ -683,6 +737,109 @@ const Page = () => {
                 <div className="text-sm text-theme-gray">
                   All passports will be matched to corresponding registration
                   numbers.
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialogs - Link Unassigned Students */}
+          <Dialog
+            open={isSuperadmin && openLinkGroup}
+            onOpenChange={(open) => {
+              setOpenLinkGroup(open);
+              if (!open) setSelectedGroup(null);
+            }}
+          >
+            <DialogContent
+              onEscapeKeyDown={(e) => e.preventDefault()}
+              onInteractOutside={(e) => e.preventDefault()}
+            >
+              <DialogHeader>
+                <DialogTitle>Link Students</DialogTitle>
+                <DialogDescription className="pr-28">
+                  Attach students that have no faculty or department yet to the
+                  ones you choose here.
+                </DialogDescription>
+              </DialogHeader>
+
+              <form className="pr-28" onSubmit={linkGroup}>
+                {/* Faculty */}
+                <Select
+                  name="group"
+                  onValueChange={(val) => {
+                    if (!groups) return;
+                    const target = groups.find((grp) => grp._id == val);
+                    target && setSelectedGroup(target);
+                  }}
+                  required
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        groups && groups?.length > 0
+                          ? "Choose Faculty"
+                          : "No faculty created"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups?.map((grp, key) => (
+                      <SelectItem value={grp._id} key={key}>
+                        {grp.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Spacer size="sm" />
+
+                {/* Department */}
+                <Select name="subGroup" required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        selectedGroup && selectedGroup?.subGroups?.length > 0
+                          ? "Choose Department"
+                          : "No department created"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedGroup?.subGroups?.map((grp, key) => (
+                      <SelectItem value={grp._id} key={key}>
+                        {grp.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Spacer size="sm" />
+
+                {/* Level */}
+                <Select name="level" defaultValue="all" required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Levels (100 - 500)</SelectItem>
+                    <SelectItem value="100">100L</SelectItem>
+                    <SelectItem value="200">200L</SelectItem>
+                    <SelectItem value="300">300L</SelectItem>
+                    <SelectItem value="400">400L</SelectItem>
+                    <SelectItem value="500">500L</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Spacer size="sm" />
+
+                <Button
+                  title="Link Students"
+                  loading={loading === "linkGroup"}
+                  variant="fill"
+                  icon={<Link2 size={20} />}
+                />
+
+                <Spacer size="md" />
+                <div className="text-sm text-theme-gray">
+                  Only students without a faculty or department are affected,
+                  students already linked are left untouched.
                 </div>
               </form>
             </DialogContent>

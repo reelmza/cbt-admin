@@ -162,9 +162,14 @@ const Page = () => {
   }, [session?.user?.id]);
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans">
       {banks && (
         <>
+          <h1 className="text-xl font-serif font-bold text-accent-dim">
+            Question Banks
+          </h1>
+          <Spacer size="sm" />
+
           {/* Table Options */}
           <div className="flex items-center justify-between">
             <TableSearchBox
@@ -187,7 +192,7 @@ const Page = () => {
               </div>
             </div>
           </div>
-          <Spacer size="sm" />
+          <Spacer size="md" />
 
           {/* Filters */}
           <div className="flex items-center gap-3">
@@ -200,7 +205,7 @@ const Page = () => {
                 }))
               }
             >
-              <SelectTrigger className="w-60">
+              <SelectTrigger className="w-60 text-sm text-theme-gray bg-white rounded-xl">
                 <SelectValue placeholder="Subject" />
               </SelectTrigger>
               <SelectContent>
@@ -222,10 +227,8 @@ const Page = () => {
             {filters.subject ? (
               <button
                 type="button"
-                className="text-xs text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer"
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, subject: "" }))
-                }
+                className="text-sm text-theme-gray underline underline-offset-2 hover:text-accent cursor-pointer"
+                onClick={() => setFilters((prev) => ({ ...prev, subject: "" }))}
               >
                 Clear filter
               </button>
@@ -235,42 +238,39 @@ const Page = () => {
           </div>
           <Spacer size="md" />
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between w-4/10">
-            <button
-              className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
-              onClick={() => getPage("prev")}
-            >
-              <span>Previous</span>
-              {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
-            </button>
-            <div className="text-sm">
-              Page {pageMetaData?.page} of {pageMetaData?.pages}{" "}
-              {`(${pageMetaData?.total})`}
-            </div>
-            <button
-              className="flex items-center justify-center gap-2 h-8 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm"
-              onClick={() => getPage("next")}
-            >
-              <span>Next</span>
-              {loading === "nextPage" ? <Spinner className="size-4" /> : ""}
-            </button>
-          </div>
-
+          {/* Main table */}
           <Table
+            className={banks.length === 0 ? "rounded-b-none border-b-0" : ""}
             tableHeading={[
-              { value: "Title", colSpan: "col-span-3" },
+              { value: "Title", colSpan: "col-span-5" },
               { value: "Subject", colSpan: "col-span-2" },
-              { value: "Description", colSpan: "col-span-4" },
+              { value: "Description", colSpan: "col-span-2" },
               // The list route returns no question count, so it is only shown
               // inside the bank itself
               { value: "Created", colSpan: "col-span-2" },
               { value: "", colSpan: "col-span-1" },
             ]}
             tableData={banks.map((bank) => [
-              { value: bank.title, colSpan: "col-span-3" },
+              {
+                colSpan: "col-span-5",
+                render: () => (
+                  <span className="w-full min-w-0 truncate" title={bank.title}>
+                    {bank.title}
+                  </span>
+                ),
+              },
               { value: bank.subject || "—", colSpan: "col-span-2" },
-              { value: bank.description || "—", colSpan: "col-span-4" },
+              {
+                colSpan: "col-span-2",
+                render: () => (
+                  <span
+                    className="w-full min-w-0 truncate pr-2"
+                    title={bank.description || ""}
+                  >
+                    {bank.description || "—"}
+                  </span>
+                ),
+              },
               {
                 value: bank.createdAt?.split("T")[0] ?? "—",
                 colSpan: "col-span-2",
@@ -286,12 +286,37 @@ const Page = () => {
           />
 
           {banks.length === 0 ? (
-            <div className="h-20 flex items-center justify-center text-sm text-theme-gray">
+            <div className="border-x border-b rounded-b-xl bg-white h-20 flex items-center justify-center text-sm text-theme-gray">
               No question banks yet. Create one to start pooling questions.
             </div>
           ) : (
             ""
           )}
+
+          <Spacer size="md" />
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between w-4/10">
+            <button
+              className="flex items-center justify-center gap-2 h-8 w-28 rounded-xl border text-theme-gray bg-white cursor-pointer text-sm"
+              onClick={() => getPage("prev")}
+            >
+              <span>Previous</span>
+              {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
+            </button>
+            <div className="text-sm text-theme-gray">
+              Page {pageMetaData?.page} of {pageMetaData?.pages}{" "}
+              {`(${pageMetaData?.total})`}
+            </div>
+            <button
+              className="flex items-center justify-center gap-2 h-8 w-28 rounded-xl border text-theme-gray bg-white cursor-pointer text-sm"
+              onClick={() => getPage("next")}
+            >
+              <span>Next</span>
+              {loading === "nextPage" ? <Spinner className="size-4" /> : ""}
+            </button>
+          </div>
+
 
           {/* Create a question bank */}
           <Dialog open={openCreateBank} onOpenChange={setOpenCreateBank}>

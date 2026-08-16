@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import React, { JSX } from "react";
 type InputType = {
   name: string;
@@ -26,9 +27,11 @@ const Input = ({
 }: InputType) => {
   return (
     <div
-      className={`w-full ${
-        !size || size == "small" ? "h-10" : "12"
-      } ${extraClasses} flex border border-accent-light rounded-md`}
+      className={cn(
+        "w-full flex border border-accent-light rounded-md",
+        !size || size == "small" ? "h-10" : "12",
+        extraClasses,
+      )}
     >
       {/* Input Icon */}
       {icon ? (

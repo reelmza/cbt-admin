@@ -9,7 +9,7 @@ const TableSearchBox = ({
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }) => {
   return (
-    <form className="flex items-center justify-betweenh-12 w-4/10 rounded-xs border border-theme-gray-light">
+    <form className="flex items-center justify-between h-9 w-98 rounded-xl border border-theme-gray-light bg-white">
       <input
         type="text"
         className="bg-transparent h-full grow px-3 text-sm outline-none text-theme-gray"
@@ -17,7 +17,7 @@ const TableSearchBox = ({
         onChange={(e) => onChange(e)}
       />
       <button
-        className="flex items-center justify-center h-10 w-12 bg-transparent border-l border-theme-gray-light hover:bg-theme-gray-light/50 cursor-pointer animate-all duration-200 ease-in"
+        className="flex items-center justify-center h-9 w-12 bg-transparent border-l border-theme-gray-light hover:bg-theme-gray-light/50 cursor-pointer animate-all duration-200 ease-in"
         type="submit"
       >
         <Search size={16} className="text-theme-gray" />

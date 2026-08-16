@@ -1,14 +1,10 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { ROLES, type Role } from "./access";
 
-export const ROLES = {
-  superadmin: "superadmin",
-  admin: "admin",
-  invigilator: "invigilator",
-} as const;
-
-export type Role = (typeof ROLES)[keyof typeof ROLES];
+export { ROLES };
+export type { Role };
 
 export const useRole = () => {
   const { data: session, status } = useSession();
@@ -16,10 +12,13 @@ export const useRole = () => {
 
   return {
     role,
+    userId: session?.user?.id,
     loading: status === "loading",
     is: (...roles: Role[]) => !!role && roles.includes(role),
     isSuperadmin: role === ROLES.superadmin,
     isAdmin: role === ROLES.admin,
+    isLecturer: role === ROLES.lecturer,
     isInvigilator: role === ROLES.invigilator,
+    isExamOfficer: role === ROLES.examOfficer,
   };
 };

@@ -138,7 +138,7 @@ const Page = () => {
   }
 
   return (
-    <div className="w-full h-full p-10 font-sans">
+    <div className="w-full h-full px-10 py-5 font-sans">
       {logs && meta && (
         <>
           <h1 className="text-xl font-serif font-bold text-accent-dim">
@@ -156,7 +156,7 @@ const Page = () => {
                 fetchLogs({ action: newAction, page: 1, loadingKey: "search" });
               }}
             >
-              <SelectTrigger className="w-48 h-9 text-sm">
+              <SelectTrigger className="w-48 h-9 text-sm text-theme-gray bg-white rounded-xl">
                 <SelectValue placeholder="All Actions" />
               </SelectTrigger>
               <SelectContent>
@@ -172,18 +172,18 @@ const Page = () => {
             {/* Navigation */}
             <div className="flex items-center gap-4">
               <button
-                className="flex items-center justify-center gap-2 h-9 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm disabled:opacity-50"
+                className="flex items-center justify-center gap-2 h-8 w-28 rounded-xl border text-theme-gray bg-white cursor-pointer text-sm disabled:opacity-50"
                 onClick={() => getPage("prev")}
                 disabled={meta.page <= 1 || loading === "prevPage"}
               >
                 <span>Previous</span>
                 {loading === "prevPage" ? <Spinner className="size-4" /> : ""}
               </button>
-              <div className="text-sm">
+              <div className="text-sm text-theme-gray">
                 Page {meta.page} of {meta.pages} {`(${meta.total})`}
               </div>
               <button
-                className="flex items-center justify-center gap-2 h-9 w-28 rounded-xs border text-theme-gray cursor-pointer text-sm disabled:opacity-50"
+                className="flex items-center justify-center gap-2 h-8 w-28 rounded-xl border text-theme-gray bg-white cursor-pointer text-sm disabled:opacity-50"
                 onClick={() => getPage("next")}
                 disabled={meta.page >= meta.pages || loading === "nextPage"}
               >

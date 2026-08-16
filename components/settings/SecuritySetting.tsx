@@ -58,7 +58,7 @@ const SecuritySetting = () => {
         Manage account security and access policies.
       </div>
 
-      <div className="border rounded-lg p-6 mb-4">
+      <div className="border rounded-xl bg-white p-6 mb-4">
         <div className="text-sm font-medium mb-4">Change Password</div>
 
         <form onSubmit={changePassword}>
@@ -68,6 +68,7 @@ const SecuritySetting = () => {
             type="password"
             placeholder="Enter current password"
             required
+            extraClasses="rounded-xl bg-white"
           />
           <Spacer size="sm" />
 
@@ -77,6 +78,7 @@ const SecuritySetting = () => {
             type="password"
             placeholder="Enter new password"
             required
+            extraClasses="rounded-xl bg-white"
           />
           <Spacer size="sm" />
 
@@ -88,6 +90,7 @@ const SecuritySetting = () => {
             type="password"
             placeholder="Repeat new password"
             required
+            extraClasses="rounded-xl bg-white"
           />
           <Spacer size="md" />
 
@@ -101,7 +104,7 @@ const SecuritySetting = () => {
         </form>
       </div>
 
-      <div className="hidden border rounded-lg p-6 mb-4">
+      <div className="hidden border rounded-xl bg-white p-6 mb-4">
         <div className="text-sm font-medium mb-4">Session Policy</div>
 
         <div className="flex items-center justify-between py-3 border-b">
@@ -125,7 +128,7 @@ const SecuritySetting = () => {
         </div>
       </div>
 
-      <div className="hidden border rounded-lg p-6">
+      <div className="hidden border rounded-xl bg-white p-6">
         <div className="text-sm font-medium mb-1">Student Login Policy</div>
         <div className="text-xs text-theme-gray mb-4">
           Control how students authenticate

@@ -197,7 +197,7 @@ const CreateQuestion = ({
         <div className="w-60">
           <div className="text-xs text-theme-gray mb-1">Question type</div>
           <Select value={questionType} onValueChange={changeQuestionType}>
-            <SelectTrigger className="w-full min-h-10 shadow-none text-accent-dim border-accent-light">
+            <SelectTrigger className="w-full h-9 rounded-xl bg-white shadow-none text-foreground border-accent-light">
               <SelectValue placeholder="Question type" />
             </SelectTrigger>
             <SelectContent>
@@ -219,6 +219,7 @@ const CreateQuestion = ({
             value={score}
             onChange={(e) => setScore(e.target.value)}
             required
+            extraClasses="h-9 rounded-xl bg-white"
           />
         </div>
       </div>
@@ -226,7 +227,7 @@ const CreateQuestion = ({
 
       {/* Question Text Box */}
       <textarea
-        className="w-full outline-none border rounded-md p-3 min-h-38 max-h-38"
+        className="w-full outline-none border rounded-xl bg-white p-3 min-h-38 max-h-38"
         placeholder="Type your question"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
@@ -273,7 +274,7 @@ const CreateQuestion = ({
           {images.map((img, key) => (
             <div
               key={img}
-              className="flex items-center gap-2 pl-2 h-7 rounded-md overflow-hidden text-accent bg-accent-light"
+              className="flex items-center gap-2 pl-2 h-7 rounded-xl overflow-hidden text-accent bg-accent-light"
             >
               <button
                 className="text-sm cursor-pointer"
@@ -296,7 +297,7 @@ const CreateQuestion = ({
           ))}
 
           {images.length < MAX_IMAGES && (
-            <div className="relative overflow-hidden flex items-center gap-2 px-2 cursor-pointer text-accent bg-accent-light h-7 rounded-md">
+            <div className="relative overflow-hidden flex items-center gap-2 px-2 cursor-pointer text-accent bg-accent-light h-7 rounded-xl">
               <UploadCloud size={16} />
               <div className="text-accent text-sm">
                 {loading === "uploadImage" ? "Uploading…" : "Upload Image"}
@@ -325,7 +326,7 @@ const CreateQuestion = ({
               onValueChange={(value: string) => setCorrectAnswer(value)}
             >
               {options.map((_, key) => (
-                <div className="flex items-center h-10 mb-1" key={key}>
+                <div className="flex items-center h-9 mb-1" key={key}>
                   <RadioGroupItem
                     value={OPTION_LABELS[key]}
                     id={`option-${key + 1}`}
@@ -346,7 +347,7 @@ const CreateQuestion = ({
                 : false;
 
               return (
-                <div className="flex items-center h-10 mb-1" key={key}>
+                <div className="flex items-center h-9 mb-1" key={key}>
                   <button
                     type="button"
                     onClick={() => {
@@ -360,13 +361,13 @@ const CreateQuestion = ({
                         updated.length ? updated.join(",") : null,
                       );
                     }}
-                    className={`size-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer ${
+                    className={`size-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
                       selected
                         ? "bg-accent border-accent text-white"
                         : "border-theme-gray-mid"
                     }`}
                   >
-                    {selected && <Check size={10} />}
+                    {selected && <Check size={12} />}
                   </button>
                 </div>
               );
@@ -401,10 +402,11 @@ const CreateQuestion = ({
                       return next;
                     })
                   }
+                  extraClasses="h-9 rounded-xl bg-white"
                 />
 
                 <button
-                  className="h-10 w-10 hover:text-theme-error flex items-center justify-center cursor-pointer"
+                  className="h-9 w-10 hover:text-theme-error flex items-center justify-center cursor-pointer"
                   type="button"
                   onClick={() => {
                     setOptions((prev) => prev.filter((_, i) => i !== key));
@@ -428,6 +430,7 @@ const CreateQuestion = ({
                 placeholder="Enter expected answer"
                 value={options[0] || ""}
                 onChange={(e) => setOptions([e.target.value])}
+                extraClasses="h-9 rounded-xl bg-white"
               />
             </div>
           )}
