@@ -1,5 +1,6 @@
 import { StaticImageData } from "next/image";
 import adsuLogo from "@/public/images/adsu-logo-auth.webp";
+import ascohtLogo from "@/public/images/ascoht.png";
 import ebsuLogo from "@/public/images/ebsu-logo-auth.webp";
 import ijbcoeLogo from "@/public/images/ijbcoe-logo-auth.webp";
 
@@ -15,6 +16,12 @@ export type School = {
 };
 
 export const schools: Record<string, School> = {
+  ascoht: {
+    image: ascohtLogo,
+    shortName: "ASCOHT Portal",
+    fullName: "College of Health Science and Technology.",
+    name: "College of Health Science and Technology, Michika",
+  },
   adsu: {
     image: adsuLogo,
     shortName: "ADSU Portal",

@@ -87,6 +87,13 @@
 }
 
 
+[data-school="ascoht"] {
+  --accent-light: #e9f4ec;
+  --accent-mid: #bfdcc9;
+  --accent: #15603a;
+  --accent-dim:#0e4527;
+}
+
 @theme inline {
   /* Colors */
   --color-background: var(--background);

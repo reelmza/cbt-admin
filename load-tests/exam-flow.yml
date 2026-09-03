@@ -1,0 +1,49 @@
+config:
+  target: "http://127.0.0.1:4000"
+  processor: "./exam-flow-processor.cjs"
+  http:
+    timeout: 40
+  variables:
+    assessmentId:
+      - "6a888c2ea152a099484ae1bf"
+  phases:
+    - name: gradual-login
+      duration: 60
+      arrivalRate: 2
+    - name: peak-start
+      duration: 1
+      arrivalRate: 40
+    - name: steady-login
+      duration: 40
+      arrivalRate: 1
+  plugins:
+    ensure:
+      thresholds:
+        - "http.response_time.p95": 5000
+        - "http.response_time.p99": 40000
+      conditions:
+        - expression: "vusers.failed / vusers.created <= 0.01"
+
+scenarios:
+  - name: student-login-and-start-test
+    flow:
+      - function: assignStudent
+      - post:
+          url: "/api/v1/student/complete-login"
+          json:
+            email: "{{ username }}"
+            regNumber: "{{ username }}"
+            passCode: "{{ username }}"
+            authMethod: "password"
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "$.token"
+              as: authToken
+      - think: 1
+      - post:
+          url: "/api/v1/assessment/start-test/{{ assessmentId }}"
+          headers:
+            authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200

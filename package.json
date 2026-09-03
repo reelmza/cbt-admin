@@ -8,7 +8,9 @@
     "bundle": "cp -r .next/standalone/.next build/ && cp -r .next/standalone/public build/ && cp .next/standalone/package.json build/ && cp .next/standalone/server.js build/",
     "start": "next start -p 7000",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "load:exam": "artillery run load-tests/exam-flow.yml",
+    "load:exam:report": "artillery run --output reports/exam-flow.json load-tests/exam-flow.yml && artillery report reports/exam-flow.json"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
