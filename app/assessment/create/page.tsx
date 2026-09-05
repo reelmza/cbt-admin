@@ -2,6 +2,7 @@
 
 import Button from "@/components/button";
 import Input from "@/components/input";
+import { Input as FileInput } from "@/components/ui/input";
 import Spacer from "@/components/spacer";
 import {
   Accordion,
@@ -31,6 +32,7 @@ import { getAxios } from "@/lib/axios";
 import {
   ArrowRight,
   Check,
+  CloudUpload,
   Download,
   Pencil,
   Plus,
@@ -52,7 +54,6 @@ import Papa from "papaparse";
 import { toastConfig } from "@/utils/toastConfig";
 import { toast } from "sonner";
 import Image from "next/image";
-import { downloadImportTemplate } from "@/lib/bulkImport";
 import { uploadImage } from "@/lib/fileUpload";
 
 const TERM_VALUES: Record<string, string> = {
@@ -63,6 +64,9 @@ const TERM_VALUES: Record<string, string> = {
 // Per-image cap; a question holds at most 2 images, so 1MB in total
 const MAX_IMAGE_SIZE = 500 * 1024;
 
+// Shipped in /public, so the template needs no API round-trip
+const QUESTION_TEMPLATE_URL = "/templates/objective-questions-template.csv";
+
 const Main = () => {
   const { data: session } = useSession();
   const router = useRouter();
@@ -71,6 +75,7 @@ const Main = () => {
   const [showDetailModal, setShowDetailModal] = useState(true);
   const [showSectionsModal, setShowSectionsModal] = useState(false);
   const [editSectionType, setEditSectionType] = useState<string | null>(null);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   // Main Page States
   const [loading, setLoading] = useState<string | null>("page");
@@ -230,12 +235,6 @@ const Main = () => {
     }
   };
 
-  const getTemplate = async () => {
-    setLoading("questionTemplate");
-    await downloadImportTemplate("questions");
-    setLoading(null);
-  };
-
   // Helper function
   function formatCsvRowToQuestion(row: CsvRow): any {
     return {
@@ -265,9 +264,12 @@ const Main = () => {
   }
 
   // Handle CSV upload event
-  function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function handleCsvUpload(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const form = e.currentTarget;
+    const file = new FormData(form).get("bulkFile") as File | null;
+    if (!file?.size) return;
 
     Papa.parse<CsvRow>(file, {
       header: true, // column headers in CSV
@@ -321,6 +323,8 @@ const Main = () => {
           results.data[0].option_c,
           results.data[0].option_d,
         ]);
+        form.reset();
+        setShowBulkUpload(false);
         toast.success("Questions uploaded successfully", toastConfig);
       },
       error: (err) => {
@@ -406,32 +410,15 @@ const Main = () => {
 
               {/* Bulk Upload */}
               {activeSection && activeSection[0] == "multiple_choice" && (
-                <div className="flex items-center gap-3">
-                  <div className="hidden w-44">
-                    <Button
-                      title={"Upload Template"}
-                      loading={loading === "questionTemplate"}
-                      variant={"outline"}
-                      icon={<Download size={16} strokeWidth={2.5} />}
-                      onClick={getTemplate}
-                      type="button"
-                    />
-                  </div>
-
-                  <div className="relative w-38 overflow-hidden">
-                    <input
-                      type="file"
-                      className="absolute opacity-0 h-full w-full cursor-pointer"
-                      name={"bulkFile"}
-                      accept=".csv"
-                      onChange={handleCsvUpload}
-                    />
-                    <Button
-                      title={"Bulk Upload"}
-                      loading={false}
-                      variant={"fill"}
-                    />
-                  </div>
+                <div className="w-38">
+                  <Button
+                    title={"Bulk Upload"}
+                    loading={false}
+                    variant={"fill"}
+                    type="button"
+                    icon={<CloudUpload size={16} strokeWidth={2.5} />}
+                    onClick={() => setShowBulkUpload(true)}
+                  />
                 </div>
               )}
             </div>
@@ -1093,6 +1080,53 @@ const Main = () => {
               </form>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Upload Questions */}
+      <Dialog open={showBulkUpload} onOpenChange={setShowBulkUpload}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Questions</DialogTitle>
+            <DialogDescription className="pr-28">
+              Upload a CSV file of objective questions. It replaces whatever is
+              currently in the objective section.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="pr-28" onSubmit={handleCsvUpload}>
+            <FileInput
+              id="bulkFile"
+              name="bulkFile"
+              type="file"
+              accept=".csv"
+              className="cursor-pointer"
+              required
+            />
+            <Spacer size="md" />
+
+            <Button
+              title={"Upload File"}
+              loading={false}
+              variant={"fill"}
+              icon={<CloudUpload size={20} />}
+            />
+
+            <Spacer size="md" />
+            <div className="text-sm text-theme-gray">
+              Columns: question, option_a, option_b, option_c, option_d,
+              correct_answer, score. <br />
+              <br />
+              <a
+                href={QUESTION_TEMPLATE_URL}
+                download
+                className="inline-flex items-center gap-1 text-accent underline underline-offset-2 cursor-pointer"
+              >
+                <Download size={12} />
+                Download Upload Template
+              </a>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
