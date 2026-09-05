@@ -15,20 +15,38 @@ export const schooLogin: (
   user: any,
 ) => Promise<User | null> = async (credentials) => {
   const api = await getAxios();
+  const url = `${process.env.SERVER_API_URL}/admin/login`;
+  const email = (credentials.email as string)?.trim();
 
   let res;
   try {
-    res = await api.post(`${process.env.SERVER_API_URL}/admin/login`, {
-      email: (credentials.email as string)?.trim(),
+    res = await api.post(url, {
+      email,
       password: (credentials.password as string)?.trim(),
     });
   } catch (e: any) {
+    console.log("[admin-login] failed", {
+      url,
+      email,
+      status: e?.response?.status,
+      data: e?.response?.data,
+      code: e?.code,
+      message: e?.message,
+    });
+
     // axios throws on non-2xx: a 4xx is the server rejecting the credentials,
     // anything else (5xx, network, no response) is infrastructure.
     const status = e?.response?.status;
     if (status >= 400 && status < 500) throw new InvalidCredentials();
     throw new Error("server_unavailable");
   }
+
+  console.log("[admin-login] ok", {
+    url,
+    email,
+    status: res.status,
+    data: res.data,
+  });
 
   const user = res.data?.data?.user;
   if (!user) throw new InvalidCredentials();

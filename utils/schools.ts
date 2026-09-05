@@ -19,8 +19,8 @@ export const schools: Record<string, School> = {
   ascoht: {
     image: ascohtLogo,
     shortName: "ASCOHT Portal",
-    fullName: "College of Health Science and Technology.",
-    name: "College of Health Science and Technology, Michika",
+    fullName: "Adamawa State College of Health Science and Technology.",
+    name: "Adamawa State College of Health Science and Technology, Michika",
   },
   adsu: {
     image: adsuLogo,
