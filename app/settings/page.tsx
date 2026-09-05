@@ -9,7 +9,7 @@ import NotificationSetting from "@/components/settings/NotificationSetting";
 import SecuritySetting from "@/components/settings/SecuritySetting";
 import Preload from "@/components/preload";
 import Spacer from "@/components/spacer";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession, SessionProvider } from "next-auth/react";
 
 type SettingKey =
@@ -24,12 +24,18 @@ type SettingKey =
 const navItems: { key: SettingKey; label: string }[] = [
   { key: "general", label: "General" },
   // { key: "exams", label: "Exams" },
-  { key: "appearance", label: "Appearance" },
+  // { key: "appearance", label: "Appearance" },
   { key: "security", label: "Security" },
   // { key: "notifications", label: "Notifications" },
   { key: "backup", label: "Backup & Sync" },
-  { key: "database", label: "Database" },
 ];
+
+/* Kept out of navItems on purpose — the database tab is only reachable through
+ * the Ctrl + Shift + D shortcut below */
+const databaseItem: { key: SettingKey; label: string } = {
+  key: "database",
+  label: "Database",
+};
 
 const contentMap: Record<SettingKey, React.ReactNode> = {
   general: <GeneralSetting />,
@@ -43,7 +49,21 @@ const contentMap: Record<SettingKey, React.ReactNode> = {
 
 const Page = () => {
   const [active, setActive] = useState<SettingKey>("general");
+  const [showDatabase, setShowDatabase] = useState(false);
   const { data: session } = useSession();
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      // e.code, not e.key — Shift rewrites e.key on several layouts
+      if (!e.ctrlKey || !e.shiftKey || e.code !== "KeyD") return;
+      e.preventDefault();
+      setShowDatabase(true);
+      setActive("database");
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   if (!session) return null;
 
@@ -57,6 +77,8 @@ const Page = () => {
     );
   }
 
+  const tabs = showDatabase ? [...navItems, databaseItem] : navItems;
+
   return (
     <div className="w-full h-full font-sans">
       {/* Heading & tabs — lifted out of the flow; the content below offsets for it */}
@@ -68,7 +90,7 @@ const Page = () => {
 
         <div className="h-10 w-full overflow-x-auto border-b border-theme-gray-light">
           <div className="h-full flex items-center pr-4 w-max">
-            {navItems.map((item, key) => (
+            {tabs.map((item, key) => (
               <button
                 key={item.key}
                 onClick={() => setActive(item.key)}
