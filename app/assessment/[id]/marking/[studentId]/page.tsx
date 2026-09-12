@@ -159,11 +159,12 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full h-full min-h-full p-10 font-sans">
+    <div className="w-full min-h-full px-10 pb-10 font-sans">
       {pageData && (
         <>
-          {/* Sticky header — student info */}
-          <div className="flex items-center justify-between fixed top-0 pt-5 pb-5 right-0 w-8/10 bg-white px-8">
+          {/* Sticky header — student info. Bleeds past the page padding so the
+           * background still covers the full row as content passes under it */}
+          <div className="flex items-center justify-between sticky top-0 z-20 pt-5 pb-5 -mx-10 px-10 bg-white">
             <div className="flex items-start">
               <div className="flex gap-4">
                 <button
@@ -209,7 +210,7 @@ const Page = ({ id, studentId }: { id: string; studentId: string }) => {
           </div>
 
           {/* Answer list — only pending (unmarked) answers */}
-          <div className="pt-28 pb-10">
+          <div className="pb-10">
             {pageData?.answers.map((ans, key) => {
               return (
                 <div key={key} className="w-full flex gap-10">

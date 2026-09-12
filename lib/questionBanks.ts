@@ -266,16 +266,73 @@ export const listAssessments = async (
   }
 };
 
+/*
+ * Read off the assessment document rather than /admin/questions, which filters
+ * on a question's own `assessment` field — a question imported from a bank
+ * still points at the paper it was first written for, so that route returns
+ * nothing for it.
+ */
 export const getAssessmentQuestions = async (
   assessmentId: string,
   signal?: AbortSignal,
 ) => {
   try {
     const api = await getAxios();
-    const res = await api.get(`/admin/questions/${assessmentId}`, { signal });
-    return (unwrap(res, "questions") ?? []) as BankQuestion[];
+    const res = await api.get(`/admin/assessment/${assessmentId}`, { signal });
+    const sections = (unwrap(res, "assessment")?.sections ?? []) as {
+      questions?: BankQuestion[];
+    }[];
+
+    return sections
+      .flatMap((section) => section.questions ?? [])
+      .filter((question) => question?._id);
   } catch (error: any) {
     reportError(error, "Unable to load the assessment questions, retry.");
     return null;
   }
+};
+
+/*
+ * Reshapes a saved question into the embedded form /school/create-assessment
+ * expects. Every id is dropped — the assessment stores its own copy, which is
+ * what lets one question carry a different mark in each assessment it is used
+ * in without editing the original.
+ */
+export const toSectionQuestion = (question: BankQuestion, score: number) => {
+  const images = questionImages(question);
+
+  const base = {
+    question: question.question,
+    type: question.type,
+    score,
+    ...(images.length > 0 && { image: images.join(",") }),
+  };
+
+  const options = (question.options ?? []).map(({ label, text }) => ({
+    label,
+    text,
+  }));
+
+  if (question.type === "multiple_choice")
+    return { ...base, options, correctAnswer: question.correctAnswer ?? "A" };
+
+  if (question.type === "multiple_select")
+    return { ...base, options, correctAnswers: question.correctAnswers ?? [] };
+
+  if (question.type === "subjective")
+    return {
+      ...base,
+      answerSlots: (question.answerSlots ?? []).map(
+        ({ slotNumber, possibleAnswers }) => ({ slotNumber, possibleAnswers }),
+      ),
+    };
+
+  if (question.type === "theory")
+    return {
+      ...base,
+      expectedAnswer: question.expectedAnswer ?? "",
+      requiresManualMarking: true,
+    };
+
+  return base;
 };

@@ -80,9 +80,10 @@ const Page = () => {
   const tabs = showDatabase ? [...navItems, databaseItem] : navItems;
 
   return (
-    <div className="w-full h-full font-sans">
-      {/* Heading & tabs — lifted out of the flow; the content below offsets for it */}
-      <div className="fixed top-0 left-[20%] w-[80%] z-20 bg-background px-10 pt-5">
+    <div className="w-full min-h-full font-sans">
+      {/* Heading & tabs — sticky rather than fixed, so the row is measured
+       * against the content area itself and follows the sidebar's width */}
+      <div className="sticky top-0 z-20 bg-background px-10 pt-5">
         <h1 className="text-xl font-serif font-bold text-accent-dim">
           Settings
         </h1>
@@ -110,8 +111,7 @@ const Page = () => {
       </div>
 
       {/* Settings Content */}
-      {/* Clears the fixed header above: 20 top pad + 28 heading + 8 gap + 40 tabs */}
-      <div className="px-10 pt-[120px] pb-5">{contentMap[active]}</div>
+      <div className="px-10 pt-5 pb-5">{contentMap[active]}</div>
     </div>
   );
 };

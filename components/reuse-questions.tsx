@@ -57,6 +57,10 @@ const ReuseQuestions = ({
   mode,
   excludeBankId,
   existingIds,
+  typeFilter,
+  isAdded,
+  addLabel = "to Bank",
+  addedNote = "already in this bank",
   onAdd,
 }: {
   mode: ReuseMode;
@@ -64,6 +68,12 @@ const ReuseQuestions = ({
   excludeBankId?: string;
   // Questions already in the bank are shown but cannot be picked again
   existingIds: string[];
+  // A section renders one question type, so only that type can be pulled into it
+  typeFilter?: string;
+  // For destinations that hold copies rather than ids, and so match on content
+  isAdded?: (question: BankQuestion) => boolean;
+  addLabel?: string;
+  addedNote?: string;
   onAdd: (questions: BankQuestion[]) => Promise<boolean>;
 }) => {
   const [sources, setSources] = useState<SourceItem[] | null>(null);
@@ -76,8 +86,14 @@ const ReuseQuestions = ({
   const controllerRef = useRef<AbortController | null>(null);
   const copy = MODE_COPY[mode];
 
-  const selectableQuestions =
-    questions?.filter((item) => !existingIds.includes(item._id)) ?? [];
+  const alreadyAdded = (item: BankQuestion) =>
+    existingIds.includes(item._id) || (isAdded?.(item) ?? false);
+
+  const visibleQuestions =
+    questions?.filter((item) => !typeFilter || item.type === typeFilter) ?? [];
+  const selectableQuestions = visibleQuestions.filter(
+    (item) => !alreadyAdded(item),
+  );
   const allSelected =
     selectableQuestions.length > 0 &&
     checkedIds.length === selectableQuestions.length;
@@ -241,7 +257,7 @@ const ReuseQuestions = ({
         <div className="min-w-0 text-right">
           <div className="font-semibold truncate">{selectedSource.title}</div>
           <div className="text-xs text-theme-gray">
-            {questions ? `${questions.length} question(s)` : "Loading…"}
+            {questions ? `${visibleQuestions.length} question(s)` : "Loading…"}
           </div>
         </div>
       </div>
@@ -256,16 +272,14 @@ const ReuseQuestions = ({
         ""
       )}
 
-      {questions && questions.length > 0 && (
+      {visibleQuestions.length > 0 && (
         <>
           <button
             type="button"
             className="flex items-center gap-2 text-sm text-accent cursor-pointer"
             onClick={() =>
               setCheckedIds(
-                allSelected
-                  ? []
-                  : selectableQuestions.map((item) => item._id),
+                allSelected ? [] : selectableQuestions.map((item) => item._id),
               )
             }
           >
@@ -275,31 +289,31 @@ const ReuseQuestions = ({
           <Spacer size="sm" />
 
           <div className="flex flex-col gap-2 max-h-[45vh] overflow-y-auto">
-            {questions.map((item) => {
-              const alreadyAdded = existingIds.includes(item._id);
+            {visibleQuestions.map((item) => {
+              const added = alreadyAdded(item);
               const checked = checkedIds.includes(item._id);
 
               return (
                 <button
                   key={item._id}
                   type="button"
-                  disabled={alreadyAdded}
+                  disabled={added}
                   onClick={() => toggleQuestion(item._id)}
                   className={`flex items-start gap-3 border rounded-xl p-3 text-left transition-colors ${
-                    alreadyAdded
+                    added
                       ? "border-theme-gray-mid opacity-50 cursor-not-allowed"
                       : checked
                         ? "border-accent bg-accent-light/30 cursor-pointer"
                         : "border-theme-gray-mid hover:border-theme-gray-dim cursor-pointer"
                   }`}
                 >
-                  <CheckMark checked={checked || alreadyAdded} />
+                  <CheckMark checked={checked || added} />
 
                   <span className="grow">
                     <span className="block text-sm">{item.question}</span>
                     <span className="block text-xs text-theme-gray mt-1">
                       {questionTypeLabel(item.type)}
-                      {alreadyAdded ? " · already in this bank" : ""}
+                      {added ? ` · ${addedNote}` : ""}
                     </span>
                   </span>
                 </button>
@@ -312,8 +326,8 @@ const ReuseQuestions = ({
             <Button
               title={
                 checkedIds.length
-                  ? `Add ${checkedIds.length} to Bank`
-                  : "Add to Bank"
+                  ? `Add ${checkedIds.length} ${addLabel}`
+                  : `Add ${addLabel}`
               }
               loading={loading === "add"}
               variant="fill"
@@ -325,9 +339,11 @@ const ReuseQuestions = ({
         </>
       )}
 
-      {questions?.length === 0 && loading !== "questions" ? (
+      {questions && visibleQuestions.length === 0 && loading !== "questions" ? (
         <div className="text-sm text-theme-gray border border-dashed border-theme-gray-mid rounded-md p-4 text-center">
-          This {copy.sourceName} has no questions to pull from.
+          This {copy.sourceName} has no
+          {typeFilter ? ` ${questionTypeLabel(typeFilter).toLowerCase()}` : ""}{" "}
+          questions to pull from.
         </div>
       ) : (
         ""

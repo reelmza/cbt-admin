@@ -34,6 +34,7 @@ import {
   Check,
   CloudUpload,
   Download,
+  Layers,
   Pencil,
   Plus,
   RefreshCcw,
@@ -55,11 +56,15 @@ import { toastConfig } from "@/utils/toastConfig";
 import { toast } from "sonner";
 import Image from "next/image";
 import { uploadImage } from "@/lib/fileUpload";
+import ReuseIntoSection from "./reuse-into-section";
 
 const TERM_VALUES: Record<string, string> = {
   First: "1",
   Second: "2",
 };
+
+// The cap the sidebar and the question form already enforce one at a time
+const MAX_SECTION_QUESTIONS = 60;
 
 // Per-image cap; a question holds at most 2 images, so 1MB in total
 const MAX_IMAGE_SIZE = 500 * 1024;
@@ -76,6 +81,7 @@ const Main = () => {
   const [showSectionsModal, setShowSectionsModal] = useState(false);
   const [editSectionType, setEditSectionType] = useState<string | null>(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showReuse, setShowReuse] = useState(false);
 
   // Main Page States
   const [loading, setLoading] = useState<string | null>("page");
@@ -179,6 +185,57 @@ const Main = () => {
     setLoading(null);
 
     if (url) setSectionImage(url);
+  };
+
+  /*
+   * Questions pulled from a bank or another assessment land in the active
+   * section as copies carrying the marks just assigned to them, so they travel
+   * in the same payload as the ones typed here.
+   */
+  const addReusedQuestions = (incoming: Record<string, unknown>[]) => {
+    if (!sections || !activeSection) return;
+
+    const target = sections.find((sect) => sect.type === activeSection[0]);
+    if (!target) return;
+
+    const room = MAX_SECTION_QUESTIONS - target.questions.length;
+    const added = incoming.slice(0, Math.max(0, room));
+
+    if (added.length === 0) {
+      toast.error(
+        `This section already holds ${MAX_SECTION_QUESTIONS} questions.`,
+        toastConfig,
+      );
+      return;
+    }
+
+    setSections((prev) =>
+      prev
+        ? prev.map((sect) =>
+            sect.type === target.type
+              ? {
+                  ...sect,
+                  questions: [...sect.questions, ...(added as any)],
+                }
+              : sect,
+          )
+        : prev,
+    );
+
+    // Park the cursor past the last question, or the empty form would read as
+    // an edit of whichever question now sits at the old index
+    setActiveSection([target.type, target.questions.length + added.length]);
+    setQuestion("");
+    setOptions([]);
+    setCorrectAnswer(target.type === "multiple_select" ? null : "A");
+    setQstImage([]);
+
+    toast.success(
+      added.length < incoming.length
+        ? `Added ${added.length} question(s); the rest were left out to stay under ${MAX_SECTION_QUESTIONS}.`
+        : `Added ${added.length} question${added.length === 1 ? "" : "s"} to ${target.title}.`,
+      toastConfig,
+    );
   };
 
   // Submit assessment
@@ -369,58 +426,71 @@ const Main = () => {
     };
   }, [session?.user?.id]);
 
+  /* min-w-0 throughout the flex chain below: a flex item will not shrink past
+   * its own content by default, so the button row and the nowrap title would
+   * otherwise widen the page past whatever space the sidebar leaves */
   return (
-    <div className="w-full h-full flex p-10 font-sans">
+    <div className="w-full min-w-0 h-full flex p-10 font-sans">
       {/* Main Page Content */}
       {assDetails && (
         <>
           {/* Main Content */}
-          <div className="w-7/10 pr-5">
-            {/* Assessment Details & Upload*/}
-            <div className="flex items-center justify-between">
-              {/* Assesment Details */}
-              <div className="w-fit">
-                {/* Assesment title */}
-                <div className="text-xl font-bold text-accent">
-                  {courses?.find((item) => item._id == assDetails?.course)
-                    ?.code +
-                    " - " +
-                    courses?.find((item) => item._id == assDetails?.course)
-                      ?.title}
-                </div>
-
-                {/* Other Details */}
-                <div className="flex gap-2">
-                  <div className="text-sm flex">
-                    <div className="font-semibold mr-1">Session:</div>
-                    <div>{assDetails?.session}</div>
-                  </div>
-
-                  <div className="text-sm flex">
-                    <div className="font-semibold mr-1">Due Date:</div>
-                    <div>{assDetails?.dueDate.split("T")[0]}</div>
-                  </div>
-
-                  <div className="text-sm flex">
-                    <div className="font-semibold mr-1">Total Marks:</div>
-                    <div>{totalMarks}</div>
-                  </div>
-                </div>
+          <div className="w-7/10 min-w-0 pr-5">
+            {/* Assessment title & where questions come from */}
+            <div className="flex items-center justify-between gap-4">
+              {/* Assesment title */}
+              <div className="min-w-0 text-xl font-bold text-accent truncate">
+                {courses?.find((item) => item._id == assDetails?.course)?.code +
+                  " - " +
+                  courses?.find((item) => item._id == assDetails?.course)
+                    ?.title}
               </div>
 
-              {/* Bulk Upload */}
-              {activeSection && activeSection[0] == "multiple_choice" && (
-                <div className="w-38">
-                  <Button
-                    title={"Bulk Upload"}
-                    loading={false}
-                    variant={"fill"}
-                    type="button"
-                    icon={<CloudUpload size={16} strokeWidth={2.5} />}
-                    onClick={() => setShowBulkUpload(true)}
-                  />
+              {activeSection && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="w-52">
+                    <Button
+                      title={"Add Existing Questions"}
+                      loading={false}
+                      variant={"outline"}
+                      type="button"
+                      icon={<Layers size={16} strokeWidth={2.5} />}
+                      onClick={() => setShowReuse(true)}
+                    />
+                  </div>
+
+                  {activeSection[0] == "multiple_choice" && (
+                    <div className="w-38">
+                      <Button
+                        title={"Bulk Upload"}
+                        loading={false}
+                        variant={"fill"}
+                        type="button"
+                        icon={<CloudUpload size={16} strokeWidth={2.5} />}
+                        onClick={() => setShowBulkUpload(true)}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
+
+            {/* Other Details — their own row, so the buttons cannot squeeze them */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+              <div className="text-sm flex">
+                <div className="font-semibold mr-1">Session:</div>
+                <div>{assDetails?.session}</div>
+              </div>
+
+              <div className="text-sm flex">
+                <div className="font-semibold mr-1">Due Date:</div>
+                <div>{assDetails?.dueDate.split("T")[0]}</div>
+              </div>
+
+              <div className="text-sm flex">
+                <div className="font-semibold mr-1">Total Marks:</div>
+                <div>{totalMarks}</div>
+              </div>
             </div>
 
             <Spacer size="md" />
@@ -1082,6 +1152,27 @@ const Main = () => {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Reuse Saved Questions */}
+      {activeSection &&
+        (() => {
+          const target = sections?.find(
+            (sect) => sect.type === activeSection[0],
+          );
+          if (!target) return null;
+
+          return (
+            <ReuseIntoSection
+              open={showReuse}
+              onOpenChange={setShowReuse}
+              sectionType={target.type}
+              sectionTitle={target.title}
+              defaultScore={target.defaultQuestionScore}
+              existingQuestions={target.questions.map((qst) => qst.question)}
+              onAdd={addReusedQuestions}
+            />
+          );
+        })()}
 
       {/* Bulk Upload Questions */}
       <Dialog open={showBulkUpload} onOpenChange={setShowBulkUpload}>

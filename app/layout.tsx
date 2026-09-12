@@ -52,8 +52,10 @@ export default async function RootLayout({
           </div>
         </div>
 
-        {/* Show app only on desktop */}
-        <div className="hidden md:flex items-center justify-center h-full w-full">
+        {/* Show app only on desktop. Deliberately not centred: a page taller
+         * than the viewport would overflow upward as well as down, putting its
+         * first rows above the top of the screen where nothing can reach them */}
+        <div className="hidden md:flex h-full w-full">
           <SideBar schoolName={schoolName} role={session?.user?.role} />
           {children}
         </div>

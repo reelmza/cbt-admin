@@ -27,7 +27,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import AddedQuestions from "./added-questions";
 import CreateQuestion from "./create-question";
-import ReuseQuestions from "./reuse-questions";
+import ReuseQuestions from "@/components/reuse-questions";
 
 /*
  * Which interface is showing in the creation panel. Each one ends in the same
