@@ -109,7 +109,7 @@ const ReuseIntoSection = ({
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {picked ? "Assign Marks" : "Add Existing Questions"}
+            {picked ? "Assign Marks" : "Add From Existing Questions"}
           </DialogTitle>
           <DialogDescription>
             {picked
