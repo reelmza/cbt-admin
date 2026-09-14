@@ -16,21 +16,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { getAxios } from "@/lib/axios";
 import { prettyDate } from "@/lib/dateFormater";
 import { toastConfig } from "@/utils/toastConfig";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Archive, Layers, PencilLine, Plus } from "lucide-react";
+import { Archive, Plus } from "lucide-react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useRole } from "@/lib/useRole";
-import CreateFromBank from "./create-from-bank";
 
 type AssessmentFilter = {
   status: string;
@@ -59,10 +51,6 @@ const Page = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const { isSuperadmin, isAdmin, isLecturer, isExamOfficer } = useRole();
-
-  // Which step of the create flow is on screen: the path picker, the question
-  // bank form, or neither
-  const [createFlow, setCreateFlow] = useState<"choose" | "bank" | null>(null);
 
   const owns = (item: AssesmentApiResponse) =>
     !!session?.user?.id && session.user.id === item.createdBy;
@@ -236,11 +224,7 @@ const Page = () => {
                     variant={"fill"}
                     type="button"
                     icon={<Plus size={18} strokeWidth="2.5" />}
-                    onClick={() =>
-                      isLecturer
-                        ? router.push("/assessment/create")
-                        : setCreateFlow("choose")
-                    }
+                    onClick={() => router.push("/assessment/create")}
                   />
                 </div>
               )}
@@ -423,62 +407,6 @@ const Page = () => {
             ""
           )}
 
-          {/* Pick how the assessment gets its questions */}
-          <Dialog
-            open={createFlow === "choose"}
-            onOpenChange={(open) => !open && setCreateFlow(null)}
-          >
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create an Assessment</DialogTitle>
-                <DialogDescription>
-                  Choose where this assessment's questions will come from.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={() => router.push("/assessment/create")}
-                  className="flex items-start gap-3 border border-theme-gray-mid rounded-xl p-4 text-left hover:border-theme-gray-dim transition-colors cursor-pointer"
-                >
-                  <PencilLine size={20} className="text-foreground shrink-0 mt-1" />
-                  <span>
-                    <span className="block font-medium">
-                      Create Assessment Manually
-                    </span>
-                    <span className="block text-sm text-theme-gray mt-1">
-                      Set up sections and write each question yourself.
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setCreateFlow("bank")}
-                  className="flex items-start gap-3 border border-theme-gray-mid rounded-xl p-4 text-left hover:border-theme-gray-dim transition-colors cursor-pointer"
-                >
-                  <Layers size={20} className="text-foreground shrink-0 mt-1" />
-                  <span>
-                    <span className="block font-medium">
-                      Create Assessment from Question Bank
-                    </span>
-                    <span className="block text-sm text-theme-gray mt-1">
-                      Pull a bank's questions in and skip the question builder.
-                    </span>
-                  </span>
-                </button>
-              </div>
-              <Spacer size="sm" />
-            </DialogContent>
-          </Dialog>
-
-          <CreateFromBank
-            open={!isLecturer && createFlow === "bank"}
-            onOpenChange={(open) => !open && setCreateFlow(null)}
-            courses={courses}
-            onCreated={() => fetchAssessments(filters, includeArchived)}
-          />
         </>
       )}
 
