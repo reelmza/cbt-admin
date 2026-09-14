@@ -448,9 +448,9 @@ const Main = () => {
 
               {activeSection && (
                 <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-52">
+                  <div className="w-60">
                     <Button
-                      title={"Add Existing Questions"}
+                      title={"Add From Existing Questions"}
                       loading={false}
                       variant={"outline"}
                       type="button"
